@@ -10,8 +10,8 @@ from argparse import ArgumentParser
 import cv2
 import numpy as np
 
-from NEM.utils.image_utils import save_vid_array_as_frames
-from NEM.utils.general_utils import (
+from NEMO.utils.image_utils import save_vid_array_as_frames
+from NEMO.utils.general_utils import (
     get_fpaths_in_dir,
     read_csv,
     str2float_list,

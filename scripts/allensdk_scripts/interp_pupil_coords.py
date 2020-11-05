@@ -1,14 +1,12 @@
 import os, sys
-sys.path.append('/'.join(os.getcwd().split('/')[:-3]))
-from v1_response_prediction.utils.general_utils import multiproc, read_csv, write_csv
 
 from argparse import ArgumentParser
-from imageio import imread, imwrite
-import numpy as np
 from fancyimpute import SoftImpute, IterativeSVD, MatrixFactorization, BiScaler
-from sklearn.impute import IterativeImputer
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.impute import IterativeImputer
 
+from NEMO.utils.general_utils import multiproc, read_csv, write_csv
 
 parser = ArgumentParser()
 parser.add_argument('data_dir_parent',

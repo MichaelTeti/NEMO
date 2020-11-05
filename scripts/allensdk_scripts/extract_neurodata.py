@@ -7,12 +7,12 @@ from argparse import ArgumentParser
 from cv2 import imwrite
 import numpy as np
 
-from NEM.utils.image_utils import (
+from NEMO.utils.image_utils import (
     max_min_scale,
     save_vid_array_as_frames,
     get_img_frame_names
 )
-from NEM.utils.general_utils import (
+from NEMO.utils.general_utils import (
     write_csv,
     multiproc,
     write_h5
