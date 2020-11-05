@@ -1,9 +1,9 @@
+from argparse import ArgumentParser
 import os, sys
 
 from allensdk.brain_observatory.receptive_field_analysis.receptive_field import \
     compute_receptive_field_with_postprocessing as get_rf
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
-from argparse import ArgumentParser
 from cv2 import imwrite
 import numpy as np
 

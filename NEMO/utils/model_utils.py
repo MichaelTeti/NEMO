@@ -1,15 +1,14 @@
-import sys
-sys.path.append('../')
-from utils.general_utils import read_csv
+from argparse import ArgumentParser
+import os, sys
 
 import h5py
 from imageio import imread
 import numpy as np
-import os
-from argparse import ArgumentParser
+import torch
 from torchvision import transforms, utils
 from torch.utils.data import Dataset
-import torch
+
+from NEMO.utils.general_utils import read_csv
 
 
 class NeuralResponseDataset(Dataset):

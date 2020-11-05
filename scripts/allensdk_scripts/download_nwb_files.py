@@ -1,8 +1,8 @@
+from argparse import ArgumentParser
 import os, sys
 
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
 import allensdk.brain_observatory.stimulus_info as stim_info
-from argparse import ArgumentParser
 
 from NEMO.utils.general_utils import multiproc
 

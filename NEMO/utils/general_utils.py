@@ -1,8 +1,9 @@
 from multiprocessing import Process, cpu_count
+import os
+
 import csv
 import h5py
 import numpy as np
-import os
 
 
 def multiproc(func, inputs, n_workers = 4):
