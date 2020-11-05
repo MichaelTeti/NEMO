@@ -4,9 +4,9 @@ extract_neurodata.py script and turn the traces into an image to make it easy
 for petavision to use.
 '''
 
+from argparse import ArgumentParser
 import os, sys
 
-from argparse import ArgumentParser
 import cv2
 import numpy as np
 
