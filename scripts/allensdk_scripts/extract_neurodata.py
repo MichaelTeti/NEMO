@@ -129,6 +129,8 @@ def save_traces_and_pupil_data(cell_data_list, save_dir, missing_pupil_coords_th
 
 
 def save_receptive_fields(cell_data_list, alpha, save_dir, sig_chi_only):
+    print('[INFO] SAVING RECEPTIVE FIELDS.')
+
     save_dir = os.path.join(save_dir, 'ReceptiveFieldImages')
     os.makedirs(save_dir, exist_ok = True)
 
