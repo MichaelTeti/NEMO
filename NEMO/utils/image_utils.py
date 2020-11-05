@@ -1,8 +1,12 @@
-from cv2 import imread, imwrite
-from cv2 import resize, fastNlMeansDenoising
-import numpy as np
-from random import randint
 import os
+from random import randint
+
+from cv2 import (
+    imread,
+    imwrite,
+    resize
+)
+import numpy as np
 
 
 def resize_and_keep_aspect(img, desired_height, desired_width):

@@ -1,6 +1,6 @@
+from argparse import ArgumentParser
 import os, sys
 
-from argparse import ArgumentParser
 from fancyimpute import SoftImpute, IterativeSVD, MatrixFactorization, BiScaler
 import matplotlib.pyplot as plt
 import numpy as np
