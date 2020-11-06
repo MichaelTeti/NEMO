@@ -158,23 +158,33 @@ def save_receptive_fields(cell_data_list, alpha, save_dir, sig_chi_only):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('manifest_path',
+    parser.add_argument(
+        'manifest_path',
         type = str,
-        help = 'Path to the manifest file.')
-    parser.add_argument('experiment_dir',
+        help = 'Path to the manifest file.'
+    )
+    parser.add_argument(
+        'experiment_dir',
         type = str,
-        help = 'Path to the folder called ophys_experiment_data.')
-    parser.add_argument('save_dir',
+        help = 'Path to the folder called ophys_experiment_data.'
+    )
+    parser.add_argument(
+        'save_dir',
         type = str,
-        help = 'Directory to put the extracted data.')
-    parser.add_argument('--stimuli',
+        help = 'Directory to put the extracted data.'
+    )
+    parser.add_argument(
+        '--stimuli',
         type = str,
         nargs = '+',
-        help = 'Stimuli to save templates and responses for.')
-    parser.add_argument('--n_workers',
+        help = 'Stimuli to save templates and responses for.'
+    )
+    parser.add_argument(
+        '--n_workers',
         type = int,
         default = 4,
-        help = 'Number of workers to use. Default = 4')
+        help = 'Number of workers to use. Default = 4'
+    )
     parser.add_argument(
         '--save_stimuli',
         action = 'store_true',
@@ -190,14 +200,10 @@ if __name__ == '__main__':
         action = 'store_true',
         help = 'If specified, will save RFs.'
     )
-
-    # trace and pupil coords args
     parser.add_argument('--missing_pupil_coords_thresh',
         type = float,
         help = 'Will not save data files if the fraction of missing pupil coords is \
             above this value. Should be in the range (0, 1).')
-
-    # receptive field args
     parser.add_argument('--rf_alpha',
         type = float,
         default = 0.05,
