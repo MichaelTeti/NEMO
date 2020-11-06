@@ -42,7 +42,8 @@ def save_stimuli(cell_data_list, save_dir, n_workers, stimuli):
         multiproc(save_vid_array_as_frames, [vids_and_fpaths], n_workers = n_workers)
 
 
-def save_traces_and_pupil_data(cell_data_list, save_dir, missing_pupil_coords_thresh, stimuli):
+def save_traces_and_pupil_data(cell_data_list, save_dir, missing_pupil_coords_thresh,
+                               stimuli, trial_averaged = False):
     print('[INFO] SAVING TRACES AND PUPIL COORDS NOW.')
 
     if missing_pupil_coords_thresh:
@@ -177,7 +178,7 @@ if __name__ == '__main__':
         '--stimuli',
         type = str,
         nargs = '+',
-        help = 'Stimuli to save templates and responses for.'
+        help = 'Stimuli to save templates and responses for if save_stimuli specified.'
     )
     parser.add_argument(
         '--n_workers',
@@ -194,6 +195,11 @@ if __name__ == '__main__':
         '--save_traces_and_pupil_coords',
         action = 'store_true',
         help = 'If specified, will save fluorescence traces and eye tracking data.'
+    )
+    parser.add_argument(
+        '--trial_averaged',
+        action = 'store_true',
+        help = 'If specified, will save trial-averaged traces, but will not save eye tracking data.'
     )
     parser.add_argument(
         '--save_rfs',
@@ -231,10 +237,30 @@ if __name__ == '__main__':
         data += [[dataset, cont, exp, cell_id, cell_ind] for cell_id, cell_ind in zip(cell_ids, cell_inds)]
 
     if args.save_stimuli:
-        save_stimuli(data, args.save_dir, args.n_workers, args.stimuli)
+        save_stimuli(
+            cell_data_list = data,
+            save_dir = args.save_dir,
+            n_workers = args.n_workers,
+            stimuli = args.stimuli
+        )
 
     if args.save_traces_and_pupil_coords:
-        save_traces_and_pupil_data(data, args.save_dir, args.missing_pupil_coords_thresh, args.stimuli)
+        save_traces_and_pupil_data(
+            cell_data_list = data,
+            save_dir = args.save_dir,
+            missing_pupil_coords_thresh = args.missing_pupil_coords_thresh,
+            stimuli = args.stimuli,
+            trial_averaged = args.trial_averaged
+        )
 
     if args.save_rfs:
-        multiproc(save_receptive_fields, [data, args.rf_alpha, args.save_dir, args.sig_chi_only], n_workers = args.n_workers)
+        multiproc(
+            save_receptive_fields,
+            [
+                cell_data_list = data,
+                alpha = args.rf_alpha,
+                save_dir = args.save_dir,
+                sig_chi_only = args.sig_chi_only
+            ],
+            n_workers = args.n_workers
+        )
