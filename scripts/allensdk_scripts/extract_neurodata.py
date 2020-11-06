@@ -42,8 +42,7 @@ def save_stimuli(cell_data_list, save_dir, n_workers, stimuli):
         multiproc(save_vid_array_as_frames, [vids_and_fpaths], n_workers = n_workers)
 
 
-def save_traces_and_pupil_data(cell_data_list, save_dir, missing_pupil_coords_thresh,
-                               stimuli, trial_averaged = False):
+def save_traces_and_pupil_data(cell_data_list, save_dir, missing_pupil_coords_thresh, stimuli):
     print('[INFO] SAVING TRACES AND PUPIL COORDS NOW.')
 
     if missing_pupil_coords_thresh:
@@ -197,11 +196,6 @@ if __name__ == '__main__':
         help = 'If specified, will save fluorescence traces and eye tracking data.'
     )
     parser.add_argument(
-        '--trial_averaged',
-        action = 'store_true',
-        help = 'If specified, will save trial-averaged traces, but will not save eye tracking data.'
-    )
-    parser.add_argument(
         '--save_rfs',
         action = 'store_true',
         help = 'If specified, will save RFs.'
@@ -249,8 +243,7 @@ if __name__ == '__main__':
             cell_data_list = data,
             save_dir = args.save_dir,
             missing_pupil_coords_thresh = args.missing_pupil_coords_thresh,
-            stimuli = args.stimuli,
-            trial_averaged = args.trial_averaged
+            stimuli = args.stimuli
         )
 
     if args.save_rfs:
