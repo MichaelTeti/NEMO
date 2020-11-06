@@ -50,9 +50,6 @@ def save_traces_and_pupil_data(cell_data_list, save_dir, missing_pupil_coords_th
         assert((missing_pupil_coords_thresh > 0 and missing_pupil_coords_thresh < 1)), \
             'missing_pupil_coords_thresh should be > 0 and < 1.'
 
-    # number of repeated trials is 10 in these experiments.
-    n_trials = 10
-
     for i_stimulus, stimulus in enumerate(stimuli):
         # save the traces and pupil coords in respective directories
         save_fpath_stimulus_traces = os.path.join(save_dir, 'Traces', '{}.txt'.format(stimulus))
@@ -72,6 +69,9 @@ def save_traces_and_pupil_data(cell_data_list, save_dir, missing_pupil_coords_th
 
                 # get the stimulus presentation table for that stimulus
                 stim_table = dataset.get_stimulus_table(stimulus_name = stimulus)
+
+                # get number of times the stimulus was repeated
+                n_trials = stim_table['repeat'].max() + 1
 
                 # get the corrected fluorescence traces
                 trace_ts, traces = dataset.get_corrected_fluorescence_traces(cell_specimen_ids = [cell_id])
@@ -257,10 +257,10 @@ if __name__ == '__main__':
         multiproc(
             save_receptive_fields,
             [
-                cell_data_list = data,
-                alpha = args.rf_alpha,
-                save_dir = args.save_dir,
-                sig_chi_only = args.sig_chi_only
+                data,
+                args.rf_alpha,
+                args.save_dir,
+                args.sig_chi_only
             ],
             n_workers = args.n_workers
         )
