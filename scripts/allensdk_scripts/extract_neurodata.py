@@ -177,6 +177,15 @@ if __name__ == '__main__':
         '--stimuli',
         type = str,
         nargs = '+',
+        choices = [
+            'natural_movie_one',
+            'natural_movie_two',
+            'natural_movie_three',
+            'drifting_gratings',
+            'locally_sparse_noise',
+            'spontaneous',
+            'natural_scenes'
+        ]
         help = 'Stimuli to save templates and responses for if save_stimuli specified.'
     )
     parser.add_argument(
@@ -224,6 +233,7 @@ if __name__ == '__main__':
     # get cells in the experiment, along with the container id and experiment id
     data = []
     for dataset in datasets:
+        print(dataset.list_stimuli())
         cont = dataset.get_metadata()['experiment_container_id']
         exp = dataset.get_metadata()['ophys_experiment_id']
         cell_ids = list(dataset.get_cell_specimen_ids())
