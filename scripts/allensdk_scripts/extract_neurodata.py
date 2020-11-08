@@ -61,18 +61,13 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
         assert((missing_pupil_coords_thresh > 0 and missing_pupil_coords_thresh < 1)), \
             'missing_pupil_coords_thresh should be > 0 and < 1.'
 
+    # create dirs to save traces and pupil coords
+    save_dir_traces = os.path.join(save_dir, 'Traces')
+    save_dir_pupil = os.path.join(save_dir, 'PupilLocs')
+    os.makedirs(save_dir_traces, exist_ok = True)
+    os.makedirs(save_dir_pupil, exist_ok = True)
+
     for i_stimulus, stimulus in enumerate(stimuli):
-        # save the traces and pupil coords in respective directories
-        save_fpath_stimulus_traces = os.path.join(save_dir, 'Traces', '{}.txt'.format(stimulus))
-        save_fpath_stimulus_pupil = os.path.join(save_dir, 'PupilLocs', '{}.txt'.format(stimulus))
-
-        # make sure those directories exist, create them if not
-        os.makedirs(os.path.split(save_fpath_stimulus_traces)[0], exist_ok = True)
-        os.makedirs(os.path.split(save_fpath_stimulus_pupil)[0], exist_ok = True)
-
-        # keep a counter for the cells for each stimuli
-        cell_count = 0
-
         for dataset, container, experiment, cell_id, cell_ind in cell_data_list:
             if stimulus in dataset.list_stimuli():
                 # get the stimulus presentation table for that stimulus
@@ -107,9 +102,7 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                     'experiment',
                     'cell_id',
                     'cell_ind',
-                    'trial',
-                    'stimulus',
-                    'session_type'
+                    'trial'
                 ]
                 header += [frame_name + '.png' for frame_name in get_img_frame_names(n_frames)]
 
@@ -135,8 +128,8 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                     pupil_locs_trial[:, 1] = (pupil_locs_trial[:, 1] + 304 // 2) / 304
 
                     # add cell metadata to things to write
-                    traces_cell = [container, experiment, cell_id, cell_ind, i_trial, stimulus, session_type]
-                    pupil_coords_cell = [container, experiment, cell_id, cell_ind, i_trial, stimulus, session_type]
+                    traces_cell = [container, experiment, cell_id, cell_ind, i_trial]
+                    pupil_coords_cell = [container, experiment, cell_id, cell_ind, i_trial]
 
                     # add the data from this trial to the data for that cell
                     traces_cell += [round(float(trace), 2) for trace in traces_trial]
@@ -150,21 +143,31 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                 df_traces = pd.DataFrame(traces_agg, columns = header)
                 df_pupil = pd.DataFrame(pupil_agg, columns = header)
 
+                # figure out where to save the responses
+                save_fpath_traces = os.path.join(
+                    save_dir_traces,
+                    '{}/{}'.format(stimulus, session_type, cell_id)
+                )
+                save_fpath_pupil = os.path.join(
+                    save_dir_pupil,
+                    '{}/{}'.format(stimulus, session_type, cell_id)
+                )
+                os.makedirs(save_fpath_traces, exist_ok = True)
+                os.makedirs(save_fpath_pupil, exist_ok = True)
+
                 # write out data
                 df_traces.to_csv(
-                    path_or_buf = save_fpath_stimulus_traces,
-                    mode = 'a',
-                    header = True if cell_count == 0 else False,
+                    path_or_buf = os.path.join(save_fpath_traces, 'cellID_{}.txt'.format(cell_id)),
+                    mode = 'w',
+                    header = True,
                     index = False
                 )
                 df_pupil.to_csv(
-                    path_or_buf = save_fpath_stimulus_pupil,
-                    mode = 'a',
-                    header = True if cell_count == 0 else False,
+                    path_or_buf = os.path.join(save_fpath_pupil, 'cellID_{}.txt'.format(cell_id)),
+                    mode = 'w',
+                    header = True,
                     index = False
                 )
-
-                cell_count += 1
 
 
 
