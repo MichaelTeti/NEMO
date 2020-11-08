@@ -15,7 +15,6 @@ def download_experiment_data(ids, boc):
         boc (BrainObservatoryCache object)
     Returns:
         None
-
     '''
 
     for id in ids:
@@ -88,5 +87,16 @@ if __name__ == '__main__':
 
     # download experiment data based on id
     exp_ids = [exp['id'] for exp in exps]
-    download_data_args = [exp_ids, boc]
-    multiproc(download_experiment_data, download_data_args, n_workers = args.n_workers)
+    multiproc(
+        func = download_experiment_data,
+        iterator_key = 'ids',
+        n_workers = args.n_workers,
+        ids = exp_ids,
+        boc = boc
+    )
+
+# python3 download_nwb_files.py \
+#     --manifest_save_dir ../../../BrainObservatoryDataTest \
+#     --n_workers 2 \
+#     --targeted_structures VISp \
+#     --cre_lines "Rorb-IRES2-Cre;Camk2a-tTA;Ai93" "Scnn1a-Tg3-Cre;Camk2a-tTA;Ai93" "Nr5a1-Cre;Camk2a-tTA;Ai93"
