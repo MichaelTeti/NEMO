@@ -52,12 +52,6 @@ parser.add_argument(
     nargs = '+',
     help = 'Which sessions to extract data from.'
 )
-parser.add_argument(
-    '--common_cells',
-    action = 'store_true',
-    help = 'If specified, will save trial-averaged responses for cells common to \
-        all stimuli given.'
-)
 
 args = parser.parse_args()
 
@@ -66,39 +60,46 @@ assert(os.path.isdir(args.trace_dir)), \
 assert(os.listdir(args.trace_dir) != []), \
     'trace_dir is empty.'
 
-# get the list of all the fpaths for the trace files for all stimuli given
-trace_fpaths = [fpath for stimulus in args.stimuli for fpath in get_fpaths_in_dir(args.trace_dir, key = stimulus)]
+# get the list of all the fpaths for the trace files for all stimuli and session_types given
+for root, _, files in os.walk(args.trace_dir):
+    if any([stimulus in root for stimulus in args.stimuli]):
+        if any([session_type in root for session_type in args.session_types]):
+            for file in files:
+                # read in the data
+                df = pd.read_csv(os.path.join(root, file))
 
-# read in each trace fpath
-datasets = [pd.read_csv(fpath) for fpath in trace_fpaths]
+                # get stimuli and session type
+                stimulus = df['stimulus'].tolist()[0]
+                session_type = df['session_type'].tolist()[0]
+                cell_id = df['cell_id'].tolist()[0]
 
-# filter out session_types
-datasets = [dataset[dataset['session_type'].isin(args.session_types)] for dataset in datasets]
+                # let's go wide to long so we can more easily get the average per frame
+                df = pd.melt(
+                    df,
+                    id_vars = df.columns[:7],
+                    var_name = 'img_fname',
+                    value_name = 'response'
+                )
 
-# get cell_ids for cells common to all stimuli given and filter out the data given these cell_ids
-if args.common_cells:
-    common_cell_ids = get_intersection_col_vals(datasets, col_name = 'cell_id')
-    datasets = [dataset[dataset['cell_id'].isin(common_cell_ids)] for dataset in datasets]
+                # compute averages over the 10 trials
+                df_avg = df.groupby('img_fname')['response'].mean().reset_index(name = 'mean_response')
+                df_avg['mean_response'] = df_avg['mean_response'].round(4)
 
-# let's go wide to long so we can more easily get the average per frame
-datasets = [
-    pd.melt(
-        dataset,
-        id_vars = dataset.columns[:7],
-        var_name = 'img_fname',
-        value_name = 'response'
-    )
-    for dataset in datasets
-]
+                # put back to wide format so format lines up with non-trial-averaged traces
+                df_avg = df_avg.transpose()
+                df_avg.columns = df_avg.iloc[0, :].tolist()
+                df_avg = df_avg.drop('img_fname').reset_index(drop = True)
 
-# compute trial averages and save
-for i_dataset, dataset in enumerate(datasets):
-    dataset_trial_avg = dataset.groupby(['cell_id', 'session_type', 'stimulus', 'img_fname'])['response'].mean()
-    dataset_trial_avg = dataset_trial_avg.reset_index(name = 'Mean Response')
+                # save trial-averaged responses
+                save_dir = os.path.join(args.save_dir, stimulus, session_type)
+                os.makedirs(save_dir, exist_ok = True)
+                df_avg.to_csv(
+                    os.path.join(save_dir, 'cellID_{}.txt'.format(cell_id)),
+                    index = False
+                )
 
-    dataset_trial_avg.to_csv(
-        os.path.join(args.save_dir, '{}_trial_averaged.txt'.format(args.stimuli[i_dataset])),
-        header = True,
-        mode = 'w',
-        index = False
-    )
+# python3 get_trial_averaged_responses.py \
+#     ../../../BrainObservatoryData/ExtractedData/Traces/ \
+#     ../../../BrainObservatoryData/ExtractedData/TrialAveragedTraces/ \
+#     --stimuli natural_movie_one natural_movie_three \
+#     --session_types three_session_A
