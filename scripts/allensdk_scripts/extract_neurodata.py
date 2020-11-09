@@ -80,7 +80,8 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                 n_trials = stim_table['repeat'].max() + 1
                 n_frames = stim_table.iloc[-1]['frame'] + 1
 
-                # get the corrected fluorescence traces for the current cell and scale to [0, 1]
+                # get the corrected fluorescence traces for the current cell
+                # and scale to [0, 1] over all stimuli
                 trace_ts, traces = dataset.get_corrected_fluorescence_traces(cell_specimen_ids = [cell_id])
                 traces = max_min_scale(traces, eps = 1e-12)
 
@@ -102,7 +103,9 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                     'experiment',
                     'cell_id',
                     'cell_ind',
-                    'trial'
+                    'trial',
+                    'stimulus',
+                    'session_type'
                 ]
                 header += [frame_name + '.png' for frame_name in get_img_frame_names(n_frames)]
 
@@ -128,8 +131,8 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                     pupil_locs_trial[:, 1] = (pupil_locs_trial[:, 1] + 304 // 2) / 304
 
                     # add cell metadata to things to write
-                    traces_cell = [container, experiment, cell_id, cell_ind, i_trial]
-                    pupil_coords_cell = [container, experiment, cell_id, cell_ind, i_trial]
+                    traces_cell = [container, experiment, cell_id, cell_ind, i_trial, stimulus, session_type]
+                    pupil_coords_cell = [container, experiment, cell_id, cell_ind, i_trial, stimulus, session_type]
 
                     # add the data from this trial to the data for that cell
                     traces_cell += [round(float(trace), 2) for trace in traces_trial]
