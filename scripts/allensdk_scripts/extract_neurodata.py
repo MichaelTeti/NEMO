@@ -64,8 +64,10 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
     # create dirs to save traces and pupil coords
     save_dir_traces = os.path.join(save_dir, 'Traces')
     save_dir_pupil = os.path.join(save_dir, 'PupilLocs')
+    save_dir_run = os.path.join(save_dir, 'RunningSpeed')
     os.makedirs(save_dir_traces, exist_ok = True)
     os.makedirs(save_dir_pupil, exist_ok = True)
+    os.makedirs(save_dir_run, exist_ok = True)
 
     for i_stimulus, stimulus in enumerate(stimuli):
         for dataset, container, experiment, cell_id, cell_ind in cell_data_list:
@@ -81,9 +83,10 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                 n_frames = stim_table.iloc[-1]['frame'] + 1
 
                 # get the corrected fluorescence traces for the current cell
-                # and scale to [0, 1] over all stimuli
+                # and scale them over all stimuli
                 trace_ts, traces = dataset.get_corrected_fluorescence_traces(cell_specimen_ids = [cell_id])
                 traces = max_min_scale(traces, eps = 1e-12)
+                traces -= np.mean(traces)
 
                 # get pupil coordinates, but put nan if they aren't available
                 try:
@@ -93,9 +96,13 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                     pupil_locs = np.zeros([trace_ts.size, 2])
                     pupil_locs[:, :] = np.nan
 
+                # get running speed
+                run_speed_ts, run_speed = dataset.get_running_speed()
+
                 # create lists to append data to
                 traces_agg = []
                 pupil_agg = []
+                run_agg = []
 
                 # create a header for this stimulus to make dataframe later
                 header = [
@@ -116,9 +123,10 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                     start_ind = stim_table_trial.iloc[0]['end']
                     end_ind = start_ind + n_frames
 
-                    # index the pupil locations and traces based on the trial
+                    # index the pupil locations, traces, and running speed based on the trial
                     pupil_locs_trial = pupil_locs[start_ind:end_ind, :]
                     traces_trial = traces[0, start_ind:end_ind]
+                    run_speed_trial = run_speed[start_ind:end_ind]
 
                     # filter out data with missing eye locations at a proportion greater than missing_pupil_coords_thresh
                     missing_prop_pupil = np.mean(np.isnan(pupil_locs_trial[:, 0]))
@@ -131,32 +139,45 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                     pupil_locs_trial[:, 1] = (pupil_locs_trial[:, 1] + 304 // 2) / 304
 
                     # add cell metadata to things to write
-                    traces_cell = [container, experiment, cell_id, cell_ind, i_trial, stimulus, session_type]
-                    pupil_coords_cell = [container, experiment, cell_id, cell_ind, i_trial, stimulus, session_type]
+                    cell_metadata = [container, experiment, cell_id, cell_ind, i_trial, stimulus, session_type]
+                    traces_cell = cell_metadata.copy()
+                    pupil_coords_cell = cell_metadata.copy()
+                    run_cell = cell_metadata.copy()
 
                     # add the data from this trial to the data for that cell
                     traces_cell += [round(float(trace), 2) for trace in traces_trial]
                     pupil_coords_cell += ['{}/{}'.format(round(float(x), 2), round(float(y), 2)) for x,y in pupil_locs_trial]
+                    run_cell += [run_speed for run_speed in run_speed_trial]
 
                     # add to the lists for this stimuli and experiment
                     traces_agg.append(traces_cell)
                     pupil_agg.append(pupil_coords_cell)
+                    run_agg.append(run_cell)
 
                 # create pandas dataframes
                 df_traces = pd.DataFrame(traces_agg, columns = header)
                 df_pupil = pd.DataFrame(pupil_agg, columns = header)
+                df_run = pd.DataFrame(run_agg, columns = header)
 
                 # figure out where to save the responses
                 save_fpath_traces = os.path.join(
                     save_dir_traces,
-                    '{}/{}'.format(stimulus, session_type, cell_id)
+                    '{}'.format(stimulus),
+                    '{}'.format(session_type)
                 )
                 save_fpath_pupil = os.path.join(
                     save_dir_pupil,
-                    '{}/{}'.format(stimulus, session_type, cell_id)
+                    '{}'.format(stimulus),
+                    '{}'.format(session_type)
+                )
+                save_fpath_run = os.path.join(
+                    save_dir_run,
+                    '{}'.format(stimulus),
+                    '{}'.format(session_type)
                 )
                 os.makedirs(save_fpath_traces, exist_ok = True)
                 os.makedirs(save_fpath_pupil, exist_ok = True)
+                os.makedirs(save_fpath_run, exist_ok = True)
 
                 # write out data
                 df_traces.to_csv(
@@ -167,6 +188,12 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                 )
                 df_pupil.to_csv(
                     path_or_buf = os.path.join(save_fpath_pupil, 'cellID_{}.txt'.format(cell_id)),
+                    mode = 'w',
+                    header = True,
+                    index = False
+                )
+                df_run.to_csv(
+                    path_or_buf = os.path.join(save_fpath_run, 'cellID_{}.txt'.format(cell_id)),
                     mode = 'w',
                     header = True,
                     index = False
