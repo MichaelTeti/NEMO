@@ -142,7 +142,7 @@ def read_frames(dir, return_type = 'array'):
         return frames
 
 
-def spatial_whiten(imgs, return_zca_mat = False, full_matrix = True):
+def spatial_whiten(imgs, return_zca_mat = False, full_matrix = False):
     '''
     Function to ZCA whiten images.
     Args:
@@ -186,3 +186,26 @@ def max_min_scale(array, eps = 1e-8):
                          {} instead.'.format(type(array)))
 
     return (array - np.amin(array)) / (np.amax(array) - np.amin(array) + eps)
+
+
+def make_lgn_freq_filter(x_dim, y_dim, f_0 = 300):
+    '''
+    Frequency spectrum filter used in
+    https://www.frontiersin.org/articles/10.3389/fncir.2019.00013/full
+
+    Args:
+        x_dim (int): Width of the images.
+        y_dim (int): Height of the images.
+        f_0 (int): Cutoff for cycles/s. Should be about 0.4 * min(x_dim, y_dim)
+            for biologically-realistic acuity.
+
+    Returns:
+        A filter for the fft transformed image.
+    '''
+    y_vals = np.arange(-y_dim // 2, y_dim // 2)
+    x_vals = np.arange(-x_dim // 2, x_dim // 2)
+    freqs_x, freqs_y = np.meshgrid(x_vals, y_vals)
+    freq_grid = np.sqrt(freqs_x ** 2 + freqs_y ** 2)
+    freq_filter = freq_grid * np.exp(-(freq_grid / f_0) ** 4)
+
+    return freq_filter
