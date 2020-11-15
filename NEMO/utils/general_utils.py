@@ -4,40 +4,45 @@ import os
 import csv
 import h5py
 import numpy as np
+import pandas as pd
 
 
-def multiproc(func, inputs, n_workers = 4):
+def multiproc(func, iterator_key, n_workers = 4, **kwargs):
     '''
     A general function to use multiprocessing to perform other functions that do not return anything.
     Args:
         func (function): A previously defined function.
-        inputs (list or tuple): list or tuple of arguments to the function in correct order.
-                The first item in the list should itself be a list containing the
-                items that will be split up among processes. Subsequent items in the
-                list should be either strings, ints, floats, etc. depending on the
-                type of the arguments expected in func.
+        iterator_key (str): A key in kwargs whose value is the list to divide up
+            among n_workers in separate calls to func.
         n_workers (int): The number of processes to use.
+        kwargs: keyword arguments to func.
     Returns:
         None
     '''
 
-    if n_workers > cpu_count():
-        raise ValueError('n_workers ({}) should be <= the value returned with cpu_count ({})'.format(n_workers, cpu_count()))
+    assert(n_workers <= cpu_count()), \
+        'n_workers ({}) should be <= the value returned with cpu_count ({})'.format(n_workers, cpu_count())
 
-    processes = []
-    n_inputs = len(inputs[0])
+    # find out how many inputs to each worker
+    procs = []
+    inputs = kwargs[iterator_key]
+    n_inputs = len(inputs)
     if n_inputs < n_workers: n_workers = n_inputs
-    inputs_per_worker = n_inputs // n_workers
-    inputs = list(inputs) if type(inputs) == tuple else inputs
+    inputs_per_worker = int(np.ceil(n_inputs / n_workers))
 
-    for i_input in range(0, n_inputs, inputs_per_worker):
+    # loop over inputs and divide up between the workers for each process
+    for worker_num, input_num in enumerate(range(0, n_inputs, inputs_per_worker)):
         func_inputs = inputs.copy()
-        func_inputs[0] = func_inputs[0][i_input:i_input + inputs_per_worker]
-        process = Process(target = func, args = tuple(func_inputs))
-        processes.append(process)
+        kwarg_inputs = kwargs.copy()
+        start_ind = input_num
+        end_ind = input_num + inputs_per_worker
+        func_inputs = func_inputs[start_ind:end_ind]
+        kwarg_inputs[iterator_key] = func_inputs
+        process = Process(target = func, kwargs = kwarg_inputs)
+        procs.append(process)
         process.start()
 
-    for process in processes:
+    for proc in procs:
         process.join()
 
 
@@ -228,3 +233,14 @@ def add_string_to_fpaths(fpaths, string):
     fpaths = [os.path.join(os.path.split(fpath)[0] + string, os.path.split(fpath)[1]) for fpath in fpaths]
 
     return fpaths
+
+
+def get_intersection_col_vals(datasets, col_name):
+    col_vals = [dataset[col_name] for dataset in datasets]
+    for dset_num in range(1, len(col_vals)):
+        if dset_num == 1:
+            common_col_vals = pd.merge(col_vals[0], col_vals[1], how = 'inner')
+        else:
+            common_col_vals = pd.merge(common_col_vals, col_vals[dset_num], how = 'inner')
+
+    return common_col_vals[col_name]

@@ -15,7 +15,6 @@ def download_experiment_data(ids, boc):
         boc (BrainObservatoryCache object)
     Returns:
         None
-
     '''
 
     for id in ids:
@@ -25,48 +24,91 @@ def download_experiment_data(ids, boc):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('--manifest_save_dir',
+    parser.add_argument(
+        '--manifest_save_dir',
         type = str,
-        help = 'Where to save the manifest file. Default is in the current directory.')
-    parser.add_argument('--n_workers',
+        help = 'Where to save the manifest file. Default is in the current directory.'
+    )
+    parser.add_argument(
+        '--n_workers',
         type = int,
-        help = 'Number of CPUs to use when downloading NWB files. Default is 1.')
-    parser.add_argument('--n_experiments',
+        help = 'Number of CPUs to use when downloading NWB files. Default is 1.'
+    )
+    parser.add_argument(
+        '--n_experiments',
         type = int,
-        help = 'Number of experiments to download. Default is all of them.')
+        help = 'Number of experiments to download. Default is all of them.'
+    )
 
     # filter args for experiments / containers
-    parser.add_argument('--targeted_structures',
+    parser.add_argument(
+        '--targeted_structures',
         type = str,
         nargs = '+',
-        help = 'Targeted structures. Default is all of them.')
-    parser.add_argument('--cre_lines',
+        help = 'Targeted structures. Default is all of them.'
+    )
+    parser.add_argument(
+        '--cre_lines',
         type = str,
         nargs = '+',
-        help = 'Desired Cre lines. Default is all of them.')
-    parser.add_argument('--imaging_depths',
+        choices = [
+            'Cux2-CreERT2',
+            'Emx1-IRES-Cre',
+            'Fezf2-CreER',
+            'Nr5a1-Cre',
+            'Ntsr1-Cre_GN220',
+            'Pvalb-IRES-Cre',
+            'Rbp4-Cre_KL100',
+            'Rorb-IRES2-Cre',
+            'Scnn1a-Tg3-Cre',
+            'Slc17a7-IRES2-Cre',
+            'Sst-IRES-Cre',
+            'Tlx3-Cre_PL56',
+            'Vip-IRES-Cre'
+        ],
+        help = 'Desired Cre lines. Default is all of them.'
+    )
+    parser.add_argument(
+        '--reporter_lines',
+        type = str,
+        nargs = '+',
+        choices = [
+            'Ai148(TIT2L-GC6f-ICL-tTA2)',
+            'Ai162(TIT2L-GC6s-ICL-tTA2)',
+            'Ai93(TITL-GCaMP6f)',
+            'Ai93(TITL-GCaMP6f)-hyg',
+            'Ai94(TITL-GCaMP6s)'
+        ],
+        help = 'Desired reporter lines. Default is all of them.'
+    )
+    parser.add_argument(
+        '--imaging_depths',
         type = int,
         nargs = '+',
-        help = 'Desired imaging depths. Default is all of them.')
-    parser.add_argument('--session_type',
+        help = 'Desired imaging depths. Default is all of them.'
+    )
+    parser.add_argument(
+        '--session_type',
         type = str,
         nargs = '+',
         help = 'Choose a specific session type to pull. Session types include \
-            session_three_A, session_three_B, session_three_C, session_three_C2.')
+            session_three_A, session_three_B, session_three_C, session_three_C2.'
+    )
     args = parser.parse_args()
 
 
     manifest_path = 'manifest.json' if not args.manifest_save_dir else os.path.join(args.manifest_save_dir, 'manifest.json')
     boc = BrainObservatoryCache(manifest_file = manifest_path)
 
-    # get experiment containers
-    conts = boc.get_experiment_containers(targeted_structures = args.targeted_structures,
-                                          imaging_depths = args.imaging_depths,
-                                          include_failed = False)
-
-    # filter based on Cre line
-    if args.cre_lines:
-        conts = [cont for cont in conts if any([cre_line in cont['specimen_name'] for cre_line in args.cre_lines])]
+    # get experiment containers, which have data for a specific
+    # target area, imaging depth, and cre line
+    conts = boc.get_experiment_containers(
+        targeted_structures = args.targeted_structures,
+        imaging_depths = args.imaging_depths,
+        include_failed = False,
+        cre_lines = args.cre_lines,
+        reporter_lines = args.reporter_lines
+    )
 
     # filter out ones with eplieptiform events
     conts = [cont for cont in conts if 'Epileptiform Events' not in cont['tags']]
@@ -88,5 +130,17 @@ if __name__ == '__main__':
 
     # download experiment data based on id
     exp_ids = [exp['id'] for exp in exps]
-    download_data_args = [exp_ids, boc]
-    multiproc(download_experiment_data, download_data_args, n_workers = args.n_workers)
+    multiproc(
+        func = download_experiment_data,
+        iterator_key = 'ids',
+        n_workers = args.n_workers,
+        ids = exp_ids,
+        boc = boc
+    )
+
+# python3 download_nwb_files.py \
+#     --manifest_save_dir ../../../BrainObservatoryData \
+#     --n_workers 4 \
+#     --cre_lines "Rorb-IRES2-Cre" "Scnn1a-Tg3-Cre" "Nr5a1-Cre" \
+#     --reporter_lines "Ai93(TITL-GCaMP6f)" \
+#     --targeted_structures "VISp"
