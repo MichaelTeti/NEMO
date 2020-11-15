@@ -29,7 +29,7 @@ parser.add_argument(
 parser.add_argument(
     '--n_videos',
     type = int,
-    help = 'Number of videos to stop at. Default is 10000.'
+    help = 'Number of videos to stop at.'
 )
 args = parser.parse_args()
 
