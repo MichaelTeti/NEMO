@@ -1,3 +1,8 @@
 *egg-info*
 *__pycache__*
+
+# data stuff
 data/
+*.png
+*.jpg
+*.JPEG
