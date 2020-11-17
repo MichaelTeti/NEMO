@@ -6,3 +6,5 @@ data/
 *.png
 *.jpg
 *.JPEG
+*.txt
+*.tar.gz
