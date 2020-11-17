@@ -1,4 +1,4 @@
-from argpare import ArgumentParser
+from argparse import ArgumentParser
 import os, sys
 
 from NEMO.utils.general_utils import write_csv
