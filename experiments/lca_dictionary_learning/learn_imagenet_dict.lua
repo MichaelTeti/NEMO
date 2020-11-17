@@ -21,20 +21,20 @@ local dictionarySize        = 110 * 48 * 16;
 local displayMultiple       = 1;
 local displayPeriod         = 3000;
 local growthFactor          = 0.005;
-local initFromCkpt          = true;
+local initFromCkpt          = false;
 local initFromCkptPath      = "runs/run16_LCA/Checkpoints/Checkpoint00105000/";
 local initFromFile          = false;
 local initFromFilePath      = "runs/run1_LCA_conv2nonconv_init/Checkpoints/Checkpoint00066000/";
 local initFromFilePrefix    = "S1";
-local learningRate          = 0.0025;
+local learningRate          = 0.01;
 local modelType             = "LCA";
-local momentumTau           = 75;
+local momentumTau           = 100;
 local numEpochs             = 10;
 local patchSizeX            = 64;
 local patchSizeY            = 32;
 local plasticity            = true;
 local sharedWeights         = true;
-local startFrame            = 469;
+local startFrame            = 0;
 local startTime             = 0;
 local stopTime              = math.ceil(numImages / nbatch) * displayPeriod *
                                   displayMultiple * numEpochs;
@@ -44,25 +44,25 @@ local temporalPatchSize     = 9;
 local threshType            = "soft";
 local timeConstantTau       = 3000;
 local useGPU                = true;
-local VThresh               = 0.22;
+local VThresh               = 0.075;
 
 
 --Probes and Checkpointing
-local adaptiveThreshProbe   = true;
-local checkpointPeriod      = displayPeriod * displayMultiple;
-local deleteOldCheckpoints  = true;
-local energyProbe           = true;
-local error2ModelWriteStep  = -1; --displayPeriod;
-local errorWriteStep        = -1; --displayPeriod;
-local firmThreshProbe       = true;
-local inputWriteStep        = -1; --displayPeriod;
-local l2Probe               = true;
-local model2ErrorWriteStep  = -1; --displayPeriod;
-local model2ReconWriteStep  = displayPeriod;
-local modelWriteStep        = displayPeriod;
-local numCheckpointsKept    = 1;
-local runNote               = nil;
-local runVersion            = 17;
+local writeAdaptiveThreshProbe   = true;
+local checkpointPeriod      	 = displayPeriod * displayMultiple;
+local deleteOldCheckpoints       = true;
+local writeEnergyProbe           = true;
+local error2ModelWriteStep  	 = -1; --displayPeriod;
+local errorWriteStep        	 = -1; --displayPeriod;
+local writeFirmThreshProbe       = true;
+local inputWriteStep        	 = -1; --displayPeriod;
+local writeL2Probe               = true;
+local model2ErrorWriteStep  	 = -1; --displayPeriod;
+local model2ReconWriteStep  	 = displayPeriod;
+local modelWriteStep        	 = displayPeriod;
+local numCheckpointsKept    	 = 1;
+local runNote               	 = "random_init";
+local runVersion            	 = 1;
 
 
 local outputPath            = "runs/run" .. runVersion .. "_" .. modelType;
@@ -136,7 +136,7 @@ pv.addGroup(pvParams,
     }
 )
 
-if adaptiveThreshProbe then 
+if writeAdaptiveThreshProbe then 
     pvParams["AdaptiveTimeScales"].textOutputFlag = true;
 end
 
@@ -146,7 +146,7 @@ for i_frame = 1, temporalPatchSize do
     local start_frame_index_array = {};
 
     for i_batch = 1,nbatch do
-        start_frame_index_array[i_batch] = startFrame + i_frame-1;
+        start_frame_index_array[i_batch] = startFrame;
     end
 
     pv.addGroup(pvParams,
@@ -279,7 +279,7 @@ pv.addGroup(pvParams,
     }
 )
 
-if firmThreshProbe then 
+if writeFirmThreshProbe then 
     pvParams[modelLayer .. "FirmThreshProbe"].textOutputFlag = true;
 end
 
@@ -305,7 +305,7 @@ for i_frame = 1, temporalPatchSize do
         }
     )
     
-    if l2Probe then
+    if writeL2Probe then
         pvParams[errorLayer .. "L2Probe"].textOutputFlag = true;    
     end
 
@@ -561,7 +561,7 @@ pv.addGroup(pvParams,
     }
 )
 
-if energyProbe then 
+if writeEnergyProbe then 
     pvParams["EnergyProbe"].textOutputFlag = true;
 end
 
