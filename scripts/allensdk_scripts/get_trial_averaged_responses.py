@@ -1,9 +1,3 @@
-'''
-Script to take in the .txt files with each cell's traces created by the
-extract_neurodata.py script and turn the traces into an image to make it easy
-for petavision to use.
-'''
-
 from argparse import ArgumentParser
 import os, sys
 
