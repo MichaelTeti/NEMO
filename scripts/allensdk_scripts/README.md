@@ -11,7 +11,7 @@ containers which do not contain certain desired criteria, such as imaging depth,
 For this experiment the following command and arguments were used:  
 ```
 python3 download_nwb_files.py \
-    --manifest_save_dir ../../../BrainObservatoryData \
+    --manifest_save_dir ../../data/BrainObservatoryData \
     --n_workers 4 \
     --cre_lines "Rorb-IRES2-Cre" "Scnn1a-Tg3-Cre" "Nr5a1-Cre" \
     --reporter_lines "Ai93(TITL-GCaMP6f)" \
