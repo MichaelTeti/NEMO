@@ -334,14 +334,3 @@ if __name__ == '__main__':
             save_dir = args.save_dir,
             sig_chi_only = args.sig_chi_only
         )
-
-
-# python3 extract_neurodata.py \
-#    ../../../BrainObservatoryData/manifest.json \
-#    ../../../BrainObservatoryData/ophys_experiment_data/ \
-#    ../../../BrainObservatoryData/ExtractedData \
-#    --stimuli natural_movie_one natural_movie_three \
-#    --n_workers 16 \
-#    --save_traces_and_pupil_coords \
-#    --save_stimuli \
-#    --save_rfs
