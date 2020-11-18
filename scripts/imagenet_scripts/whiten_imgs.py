@@ -14,7 +14,7 @@ from NEMO.utils.general_utils import (
 from NEMO.utils.image_utils import spatial_whiten, max_min_scale
 
 
-def whiten_imgs(old_and_new_fpaths, full_svd = False):
+def whiten_imgs(old_and_new_fpaths, full_svd = False, scale_method = 'video'):
     '''
     Read in images based on fpaths, resize, and save in a new fpath.
     Args:
@@ -39,10 +39,17 @@ def whiten_imgs(old_and_new_fpaths, full_svd = False):
 
         # do whitening
         img_mat_whitened = spatial_whiten(img_mat, full_matrix = full_svd)
-        img_mat_whitened = max_min_scale(img_mat_whitened) * 255
+
+        # scale frames based on max/min from entire video
+        if scale_method == 'video':
+            img_mat_whitened = max_min_scale(img_mat_whitened) * 255
 
         # save images
         for save_fpath_num, (new_fpath, flattened_img) in enumerate(zip(save_dir, img_mat_whitened)):
+            # scale frame based on max/min from that frame if specified
+            if scale_method == 'frame':
+                flattened_img = max_min_scale(flattened_img)
+
             img_rec = flattened_img.reshape([h, w])
             if save_fpath_num == 0: os.makedirs(os.path.split(new_fpath)[0], exist_ok = True)
             cv2.imwrite(new_fpath, img_rec)
@@ -65,6 +72,13 @@ if __name__ == '__main__':
         '--full_svd',
         action = 'store_true',
         help = 'If specified, use all SVD components.'
+    )
+    parser.add_argument(
+        '--scale_method',
+        choices = ['video', 'frame'],
+        default = 'frame',
+        type = str,
+        help = 'Whether to scale the frames by the min/max of the video or each individual frame.'
     )
     args = parser.parse_args()
 
