@@ -3,11 +3,7 @@
 
 # data stuff
 data/
-*.png
-*.jpg
-*.JPEG
 *.txt
-*.tar.gz
 
 # lca checkpoints
 runs/
