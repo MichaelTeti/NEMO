@@ -20,6 +20,8 @@ def whiten_imgs(old_and_new_fpaths, full_svd = False, scale_method = 'video'):
     Args:
         old_and_new_fpaths (list of lists/tuples): List of (read_fpath, save_fpath) for each image.
         full_svd (bool): If True, use all SVD components.
+        scale_method (str): Whether to scale each frame from max/min of the video or only that frame.
+
     Returns:
         None
     '''
@@ -48,7 +50,7 @@ def whiten_imgs(old_and_new_fpaths, full_svd = False, scale_method = 'video'):
         for save_fpath_num, (new_fpath, flattened_img) in enumerate(zip(save_dir, img_mat_whitened)):
             # scale frame based on max/min from that frame if specified
             if scale_method == 'frame':
-                flattened_img = max_min_scale(flattened_img)
+                flattened_img = max_min_scale(flattened_img) * 255
 
             img_rec = flattened_img.reshape([h, w])
             if save_fpath_num == 0: os.makedirs(os.path.split(new_fpath)[0], exist_ok = True)
@@ -76,7 +78,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--scale_method',
         choices = ['video', 'frame'],
-        default = 'frame',
+        default = 'video',
         type = str,
         help = 'Whether to scale the frames by the min/max of the video or each individual frame.'
     )
@@ -89,4 +91,8 @@ if __name__ == '__main__':
             save_fpaths.append([os.path.join(root + '_whitened', os.path.splitext(file)[0] + '.png') for file in files])
 
     fpaths_and_save_fpaths = list(zip(fpaths, save_fpaths))
-    whiten_imgs(old_and_new_fpaths = fpaths_and_save_fpaths, full_svd = args.full_svd)
+    whiten_imgs(
+        old_and_new_fpaths = fpaths_and_save_fpaths,
+        full_svd = args.full_svd,
+        scale_method = args.scale_method
+    )
