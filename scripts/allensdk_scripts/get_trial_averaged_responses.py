@@ -91,9 +91,3 @@ for root, _, files in os.walk(args.trace_dir):
                     os.path.join(save_dir, 'cellID_{}.txt'.format(cell_id)),
                     index = False
                 )
-
-# python3 get_trial_averaged_responses.py \
-#     ../../../BrainObservatoryData/ExtractedData/Traces/ \
-#     ../../../BrainObservatoryData/ExtractedData/TrialAveragedTraces/ \
-#     --stimuli natural_movie_one natural_movie_three \
-#     --session_types three_session_A
