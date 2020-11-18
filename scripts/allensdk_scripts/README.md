@@ -62,3 +62,8 @@ python3 get_trial_averaged_responses.py \
     --session_types three_session_A
 ```
 The first two arguments are required, and they refer to the directory where the non-trial-averaged traces were saved and the sub-directory where you want to save the trial-averaged traces, respectively. The ```--stimuli``` argument specifies which stimuli you want to get trial-averaged traces for (assuming that it exists in the Traces sub-directory where the non-trial-averaged traces are). Here, we are using the natural_movie_one and natural_movie_three stimuli. The ```--session_types``` argument specifies the specific session types to consider when computing trial averaged traces (a depiction of the session types and how they relate to an experiment can be found [here](https://allensdk.readthedocs.io/en/latest/brain_observatory.html)). In this experiment, we use only session A because both natural movie one and natural movie three were both presented in that session (natural movie one was presented in multiple sessions, but we chose to use only the traces obtained from natural movie one in the same session as natural movie three). 
+
+# Plotting the Data
+To plot the data, there are two scripts:
+* The [plot_trial_avgs_image.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/plot_trial_avgs_image.py) script is intended to be used to plot trial-averaged traces in a heatmap-style image for viewing.  
+* The [plot_non_trial_avgs_line.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/plot_non_trial_avgs_line.py) script can be used to plot individual line plots for each cell/stimulus combo to visualize the traces over all repeats of the stimulus.
