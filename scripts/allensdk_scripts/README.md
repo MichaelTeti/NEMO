@@ -50,4 +50,4 @@ python3 extract_neurodata.py \
 ```
 The first three lines correspond to the required arguments of the script. The first one is the path to the manifest 
 file. The second is the path to the ophys data that is downloaded and created with the 
-[download_nwb_files.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/download_nwb_files.py) script. The final argument is the folder where we will save all the extracted data. 
+[download_nwb_files.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/download_nwb_files.py) script. The final argument is the folder where we will save all the extracted data. The last three arguments specify what should be saved. For example, removing the ```--save_rfs``` argument would cause the script to not save the receptive fields. 
