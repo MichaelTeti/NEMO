@@ -25,3 +25,29 @@ isolate mostly excitatory cells in layer IV. The characteristics of the differen
 [here](http://observatory.brain-map.org/visualcoding/transgenic). Finally, we use the ```--targeted_structures``` argument
 here to indicate that we only want cells in the primary visual cortex, but the different structures available can be found 
 [here](http://observatory.brain-map.org/visualcoding).
+
+# Extract the Data
+Now that the experiment containers were downloaded, we want to extract the relevant data inside of them using the 
+[extract_neurodata.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/extract_neurodata.py) script. 
+This script will perform three main functions:
+* Extract and save the desired stimuli  
+* Extract and save each cell's fluorescence traces for each video frame of the stimulus, as well as the corresponding eye 
+tracking coordinates and running speed. 
+* Extract and save each cell's on and off receptive fields obtained using the locally sparse noise stimulus. 
+
+At this time, these functions are only performed w.r.t. the natural movie stimuli because that is what we use in these
+experiments. To run this script for our experiments, we use the command:  
+```
+python3 extract_neurodata.py \
+   ../../data/BrainObservatoryData/manifest.json \
+   ../../data/BrainObservatoryData/ophys_experiment_data/ \
+   ../../data/BrainObservatoryData/ExtractedData \
+   --stimuli natural_movie_one natural_movie_three \
+   --n_workers 16 \
+   --save_traces_and_pupil_coords \
+   --save_stimuli \
+   --save_rfs
+```
+The first three lines correspond to the required arguments of the script. The first one is the path to the manifest 
+file. The second is the path to the ophys data that is downloaded and created with the 
+[download_nwb_files.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/download_nwb_files.py) script. The final argument is the folder where we will save all the extracted data. 
