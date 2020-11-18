@@ -1,7 +1,9 @@
 The scripts here are designed to download ophys experiment data given desired criteria, 
 extract the data into a more friendly format, and plot the extracted data. Described below
 are the steps used to obtain allensdk data in these experiments, as well as the general usage
-of the different scripts.  
+of the different scripts. In each of the examples below, the arguments are the ones used in the 
+current experiment. For the full list of arguments for each script, you can use the command
+```python3 script.py --help```.
   
 # Download the Data  
 First, download the experiment containers based on your criteria with the 
