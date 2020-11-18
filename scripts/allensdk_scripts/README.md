@@ -58,8 +58,8 @@ file. The second is the path to the ophys data that is downloaded and created wi
 The extracted fluorescence traces saved from the script above will be saved in a format with all 10 repeat trials for the given stimulus. Often, trial-averaged traces over the repeats are computed. The [get_trial_averaged_responses.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/get_trial_averaged_responses.py) script will compute these trial-averaged traces such that there will be only one trace per stimulus frame that represents the average trace across all repeats of that stimulus frame. Here we use the following command to compute these trial-averaged responses given the path to the sub-directory containing the non-trial-averaged responses:
 ```
 python3 get_trial_averaged_responses.py \
-    ../../../BrainObservatoryData/ExtractedData/Traces/ \
-    ../../../BrainObservatoryData/ExtractedData/TrialAveragedTraces/ \
+    ../../data/BrainObservatoryData/ExtractedData/Traces/ \
+    ../../data/BrainObservatoryData/ExtractedData/TrialAveragedTraces/ \
     --stimuli natural_movie_one natural_movie_three \
     --session_types three_session_A
 ```
