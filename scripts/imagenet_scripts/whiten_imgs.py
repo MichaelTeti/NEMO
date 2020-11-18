@@ -72,7 +72,7 @@ if __name__ == '__main__':
     for root, _, files in os.walk(args.data_dir_parent):
         if args.key and args.key in root:
             fpaths.append([os.path.join(root, file) for file in files])
-            save_fpaths.append([os.path.join(root + '_whitened', file) for file in files])
+            save_fpaths.append([os.path.join(root + '_whitened', os.path.splitext(file)[0] + '.png') for file in files])
 
     fpaths_and_save_fpaths = list(zip(fpaths, save_fpaths))
     whiten_imgs(old_and_new_fpaths = fpaths_and_save_fpaths, full_svd = args.full_svd)
