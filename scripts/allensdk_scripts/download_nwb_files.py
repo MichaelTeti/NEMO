@@ -126,7 +126,7 @@ if __name__ == '__main__':
     if args.session_type:
         exps = [exp for exp in exps if exp['session_type'] in args.session_type]
 
-    print(['[INFO] FOUND {} EXPERIMENTS'.format(len(exps))])
+    print('[INFO] FOUND {} EXPERIMENTS'.format(len(exps)))
 
     # download experiment data based on id
     exp_ids = [exp['id'] for exp in exps]
