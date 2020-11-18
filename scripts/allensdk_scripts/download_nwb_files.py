@@ -137,10 +137,3 @@ if __name__ == '__main__':
         ids = exp_ids,
         boc = boc
     )
-
-# python3 download_nwb_files.py \
-#     --manifest_save_dir ../../../BrainObservatoryData \
-#     --n_workers 4 \
-#     --cre_lines "Rorb-IRES2-Cre" "Scnn1a-Tg3-Cre" "Nr5a1-Cre" \
-#     --reporter_lines "Ai93(TITL-GCaMP6f)" \
-#     --targeted_structures "VISp"
