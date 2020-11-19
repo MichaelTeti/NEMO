@@ -18,3 +18,6 @@ python3 resize_imgs.py \
   --aspect_ratio_tol 0.26
 ```
 where the first argument needs to point to the directory with the video frames that are going to be resized, the second and third arguments are the desired height and width, and the fourth argument is the number of workers to use to split up the resizing and saving. The last argument is used so that the script will ignore images with an aspect ratio more than ```aspect_ratio_tol``` different compared to the aspect ratio of the desired dimensions given.
+
+# Whiten the Images (Optional)
+Whitening is a common step used in image processing, but it is much less common for current SOTA learning algorithms (i.e. convolutional neural networks). Here, we use ZCA whitening on the resized images with the following command. 
