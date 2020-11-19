@@ -26,8 +26,8 @@ python3 smooth_imgs.py \
     ../../data/ILSVRC2015/Data/VID/train/ \
     --key _resized \
     --n_workers 12 \
-    --neighborhood 7 \
+    --neighborhood 5 \
     --sigma_color 75 \
-    --sigma_space 75
+    --sigma_space 50
 ```
 Here, the first argument is the path to the data directory like in the previous script. The second argument ```--key``` is also available in all of these scripts, and it allows the user to select only certain sub-directories to perform the operations on. For example, the video frames for a single video would be in ```../../data/ILSVRC2015/Data/VID/train/ILSVRC2015_VID_train_0000/ILSVRC2015_train_00111001/```, and the smoothing script will read these in and write all of the smoothed video frames in ```../../data/ILSVRC2015/Data/VID/train/ILSVRC2015_VID_train_0000/ILSVRC2015_train_00111001_smoothed/``` (all other scripts will do the same but with a different word describing their operation). The inclusion of the ```--key``` argument in the command above ensures that only the video frames that were resized are then smoothed. The last three arguments have to do with the opencv bilateralFilter function. The neighborhood function describes the diameter of the window around a given pixel to use when smoothing. The ```--sigma_color``` and ```--sigma_space``` arguments indicate the difference in color and space, respectively, two pixels in a neighborhood have to be to be combined in the smoothing operation for the given pixel that is being smoothed. Here, we use the default arguments provided in the opencv examples for the bilateralFilter function, which seemed to filter out some of the high frequency noise in these video frames while not smoothing too much.
