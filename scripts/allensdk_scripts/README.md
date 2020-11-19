@@ -72,7 +72,9 @@ To plot the data, there are two scripts:
 
 To use the first script, we use the command
 ```
-python3 plot_trial_avgs_image.py \ ../../data/BrainObservatoryData/ExtractedData/TrialAveragedTraces/natural_movie_three/three_session_A/ \ ../../data/BrainObservatoryData/ExtractedData/TrialAvgImages/natural-movie-three_three-session-A.png \
+python3 plot_trial_avgs_image.py \
+../../data/BrainObservatoryData/ExtractedData/TrialAveragedTraces/natural_movie_three/three_session_A/ \
+../../data/BrainObservatoryData/ExtractedData/TrialAvgImages/natural-movie-three_three-session-A.png \
 --plot_title "Natural Movie Three Normalized Fluorescence Traces"
 ```
 which will look in the directory given by the first argument for .txt files containing the trial-averaged traces, make a plot with optional plot title given by ```--plot_title```, and save the image with the filename given by the second argument. For example, plotting the trial-averaged traces for our V1 layer IV excitatory cells to the natural movie one stimulus produced the following plot.
