@@ -31,13 +31,3 @@ python3 blur_imgs.py \
     --sigma_space 75
 ```
 Here, the first argument is the path to the data directory like in the previous script. The second argument ```--key``` is also available in all of these scripts, and it allows the user to select only certain sub-directories to perform the operations on. For example, the video frames for a single video would be in ```../../data/ILSVRC2015/Data/VID/train/ILSVRC2015_VID_train_0000/ILSVRC2015_train_00111001/```, and the blurring script will read these in and write all of the blurred video frames in ```../../data/ILSVRC2015/Data/VID/train/ILSVRC2015_VID_train_0000/ILSVRC2015_train_00111001_blurred/``` (all other scripts will do the same but with a different word describing their operation). The inclusion of the ```--key``` argument in the command above ensures that only the video frames that were resized are then blurred. The last three arguments have to do with the opencv bilateralFilter function. The neighborhood function describes the diameter of the window around a given pixel to use when smoothing. The ```--sigma_color``` and ```--sigma_space``` arguments indicate the difference in color and spece, respectively, two pixels in a neighborhood have to be to be combined in the smoothing operation for the given pixel that is being smoothed. Here, we use the default arguments provided in the opencv examples for the bilateralFilter function, which seemed to filter out some of the high frequency noise in these video frames while not smoothing too much.
-
-# Whiten the Images (Optional)
-Whitening is a common step used in image processing, but it is much less common for current SOTA learning algorithms (i.e. convolutional neural networks). Here, we use ZCA whitening on the blurred images with the following command.
-```
-python3 whiten_imgs.py \
-    ../../data/ILSVRC2015/Data/VID/train/ \
-    --key _blurred \
-    --full_svd
-```
-Like most of the image processing scripts in this directory, the first argument is going to be the directory containing the video frames and/or other sub-directories that each contain the video frames from a video.  
