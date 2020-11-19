@@ -26,7 +26,7 @@ python3 smooth_imgs.py \
     ../../data/ILSVRC2015/Data/VID/train/ \
     --key _resized \
     --n_workers 12 \
-    --neighborhood 5 \
+    --neighborhood 7 \
     --sigma_color 75 \
     --sigma_space 75
 ```
