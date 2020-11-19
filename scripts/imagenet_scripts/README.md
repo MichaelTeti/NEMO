@@ -22,7 +22,7 @@ where the first argument needs to point to the directory with the video frames t
 # Smooth the Images
 Studies in humans indicates that there is a [rough cutoff for the high frequencies we can perceive due to processing in the retina](https://www.mitpressjournals.org/doi/pdfplus/10.1162/neco.1992.4.2.196?casa_token=95yx6REIObMAAAAA:dN1g1iQV-yId9OOrdNIDCMG8nE1hYBFHR-TFuWJLN4f0lqnvIedoyoIbwr-FAGpRdbWZ_LUUITE). We can loosely approximate this by applying a smoothing filter to the video frames. Here, we use the [OpenCV bilateral filter](https://docs.opencv.org/master/d4/d86/group__imgproc__filter.html#ga9d7064d478c95d60003cf839430737ed) because it will keep the edges relatively sharp, unlike many other smoothing filters, while removing some of the high frequency noise. We use the [smooth_imgs.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/imagenet_scripts/smooth_imgs.py) script to do this. 
 ```
-python3 blur_imgs.py \
+python3 smooth_imgs.py \
     ../../data/ILSVRC2015/Data/VID/train/ \
     --key _resized \
     --n_workers 12 \
