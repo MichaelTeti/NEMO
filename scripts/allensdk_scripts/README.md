@@ -89,3 +89,7 @@ python3 plot_non_trial_avgs_line.py \
 ```
 where the first argument is the directory to the non-averaged traces, the second argument is the directory to save the trial-averaged plots for each cell, and the third argument is the ylabel for the plot. The reason for the third argument is because the script may be reused to plot running speed for example, and it would allow you to change the ylabel to represent that. An example plot for a given cell on the natural movie one stimulus is shown below.
 ![](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/figures/cellID_539774173.png)
+
+To make sure our data extraction / processing has been done correctly, we can compare our plots vs those available on the Allen Institute's website. 
+![](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/figures/trace_vs_allen.png)
+On the left, our plot for a given cell during the natural movie one stimulus is plotted. On the right is a plot from the Allen Institute's website for the same cell and stimulus. The right figure has repeats in red and the average as the outer blue ring. Frame 0 is at the top, and clockwise movement means increasing the frame number. 
