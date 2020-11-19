@@ -26,7 +26,7 @@ python3 blur_imgs.py \
     ../../data/ILSVRC2015/Data/VID/train/ \
     --key _resized \
     --n_workers 12 \
-    --neighborhood 7 \
+    --neighborhood 5 \
     --sigma_color 75 \
     --sigma_space 75
 ```
