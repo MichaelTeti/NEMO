@@ -92,4 +92,4 @@ where the first argument is the directory to the non-averaged traces, the second
 
 To make sure our data extraction / processing has been done correctly, we can compare our plots vs those available on the Allen Institute's website. 
 ![](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/figures/trace_vs_allen.png)
-On the left, our plot for a given cell during the natural movie one stimulus is plotted. On the right is a plot from the Allen Institute's website for the same cell and stimulus. The right figure has repeats in red and the average as the outer blue ring. Frame 0 is at the top, and clockwise movement means increasing the frame number. 
+On the left, our plot for a given cell during the natural movie one stimulus is plotted. On the right is a plot from the Allen Institute's website for the same cell and stimulus. The right figure has repeats in red and the average as the outer blue ring. Frame 0 is at the top, and the frame numbers increase as you move clockwise around the circle. 
