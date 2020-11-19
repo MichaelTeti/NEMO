@@ -2,6 +2,9 @@ These scripts are used to download and process the ImageNet video frames for the
 
 # Download the Dataset
 To download the dataset, simply run the [download_imagenet_vid.sh](https://github.com/MichaelTeti/NEMO/blob/main/scripts/imagenet_scripts/download_imagenet_vid.sh) script. This script will make a data folder in the NEMO root directory and then download and extract the dataset in that directory. 
+```
+bash download_imagenet_vid.sh
+```
 
 # Resize the Images
 After downloading the images, we first resize them to the appropriate size (64 x 128). To do this, we use the [resize_imgs.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/imagenet_scripts/resize_imgs.py) script. The command is as follows:
