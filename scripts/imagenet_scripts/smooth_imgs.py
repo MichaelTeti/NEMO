@@ -13,9 +13,9 @@ from NEMO.utils.general_utils import (
 from NEMO.utils.image_utils import resize_and_keep_aspect
 
 
-def blur_imgs(old_and_new_fpaths, neighborhood = 9, sigma_color = 75, sigma_space = 75):
+def smooth_imgs(old_and_new_fpaths, neighborhood = 9, sigma_color = 75, sigma_space = 75):
     '''
-    Read in images based on fpaths, resize, and save in a new fpath.
+    Read in images based on fpaths, smooth, and save in a new fpath.
 
     Args:
         old_and_new_fpaths (list of lists/tuples): List of (read_fpath, save_fpath) for each image.
@@ -31,7 +31,7 @@ def blur_imgs(old_and_new_fpaths, neighborhood = 9, sigma_color = 75, sigma_spac
         # read in the image
         img = cv2.imread(fpath)
 
-        # blur the image
+        # smooth the image
         img = cv2.bilateralFilter(
             img,
             d = neighborhood,
@@ -84,12 +84,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     fpaths = get_fpaths_in_dir(args.data_dir_parent, key = args.key)
-    save_fpaths = add_string_to_fpaths(fpaths, '_blurred')
+    save_fpaths = add_string_to_fpaths(fpaths, '_smoothed')
     save_fpaths = change_file_exts(save_fpaths, '.png')
     for fpath in save_fpaths: os.makedirs(os.path.split(fpath)[0], exist_ok = True)
     fpaths_and_save_fpaths = list(zip(fpaths, save_fpaths))
     multiproc(
-        func = blur_imgs,
+        func = smooth_imgs,
         iterator_key = 'old_and_new_fpaths',
         n_workers = args.n_workers,
         old_and_new_fpaths = fpaths_and_save_fpaths,
