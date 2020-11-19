@@ -79,3 +79,13 @@ python3 plot_trial_avgs_image.py \
 ```
 which will look in the directory given by the first argument for .txt files containing the trial-averaged traces, make a plot with optional plot title given by ```--plot_title```, and save the image with the filename given by the second argument. For example, plotting the trial-averaged traces for our V1 layer IV excitatory cells to the natural movie one stimulus produced the following plot.
 ![](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/figures/natural-movie-one_three-session-A.png)
+
+To plot non-trial-averaged fluorescence traces, we use the following command 
+```
+python3 plot_non_trial_avgs_line.py \
+../../data/BrainObservatoryData/ExtractedData/Traces/natural_movie_one/three_session_A \
+../../data/BrainObservatoryData/ExtractedData/NonTrialAvgTracePlots/natural_movie_one/three_session_A/ \
+--ylabel "Normalized Fluorescence Traces (95% CI shaded)"
+```
+where the first argument is the directory to the non-averaged traces, the second argument is the directory to save the trial-averaged plots for each cell, and the third argument is the ylabel for the plot. The reason for the third argument is because the script may be reused to plot running speed for example, and it would allow you to change the ylabel to represent that. An example plot for a given cell on the natural movie one stimulus is shown below.
+![](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/figures/cellID_539774173.png)
