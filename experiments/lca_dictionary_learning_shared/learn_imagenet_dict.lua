@@ -10,36 +10,36 @@ local inputPathPrefix       = "filenames_frame";
 local inputPathExt          = ".txt";
 local inputWidth            = 64;
 local nbatch                = 256;
-local numImages             = 789590;
+local numImages             = 762246;
 
 
 -- Model Vars
 local AMax                  = infinity;
 local AMin                  = 0;
 local basePhase             = 2;
-local dictionarySize        = 110 * 48 * 16;
+local dictionarySize        = 110;
 local displayMultiple       = 1;
 local displayPeriod         = 3000;
-local growthFactor          = 0.005;
+local growthFactor          = 0.025;
 local initFromCkpt          = false;
 local initFromCkptPath      = "runs/run16_LCA/Checkpoints/Checkpoint00105000/";
 local initFromFile          = false;
 local initFromFilePath      = "runs/run1_LCA_conv2nonconv_init/Checkpoints/Checkpoint00066000/";
 local initFromFilePrefix    = "S1";
-local learningRate          = 0.01;
+local learningRate          = 0.1;
 local modelType             = "LCA";
 local momentumTau           = 100;
 local numEpochs             = 10;
-local patchSizeX            = 64;
-local patchSizeY            = 32;
+local patchSizeX            = 17;
+local patchSizeY            = 17;
 local plasticity            = true;
 local sharedWeights         = true;
 local startFrame            = 0;
 local startTime             = 0;
 local stopTime              = math.ceil(numImages / nbatch) * displayPeriod *
                                   displayMultiple * numEpochs;
-local strideX               = 64;
-local strideY               = 32;
+local strideX               = 1;
+local strideY               = 1;
 local temporalPatchSize     = 9;
 local threshType            = "soft";
 local timeConstantTau       = 3000;
