@@ -15,11 +15,13 @@ from NEMO.utils.general_utils import (
 def downsample_imgs(old_and_new_fpaths, downsample_h, downsample_w):
     '''
     Reads in images from fpaths, subsamples, and resaves them.
+    
     Args:
         img_fpaths (list of lists/tuples): List of sublists/tuples, where each
             sublist is [read_path, save_path] for each image.
         downsample_h (int): The factor to downsample the image height by.
         downsample_w (int): The factor to downsample the image width by.
+        
     Returns:
         None
     '''
@@ -31,6 +33,7 @@ def downsample_imgs(old_and_new_fpaths, downsample_h, downsample_w):
     for fpath, save_fpath in old_and_new_fpaths:
         # read in the video frames and downsample
         img = imread(fpath)[::downsample_h, ::downsample_w]
+        
         # save the downsampled frame
         imwrite(save_fpath, img)
 
