@@ -16,9 +16,11 @@ from NEMO.utils.image_utils import max_min_scale, make_lgn_freq_filter
 def pre_whiten_imgs(old_and_new_fpaths, f_0 = None):
     '''
     Read in images based on fpaths, whiten, and save in a new fpath.
+    
     Args:
         old_and_new_fpaths (list of lists/tuples): List of (read_fpath, save_fpath) for each image.
         f_0 (int): Cycles/s desired.
+        
     Returns:
         None
     '''
