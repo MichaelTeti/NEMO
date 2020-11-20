@@ -28,6 +28,7 @@ def multiproc(func, iterator_key, n_workers = 4, **kwargs):
     inputs = kwargs[iterator_key]
     n_inputs = len(inputs)
     if n_inputs < n_workers: n_workers = n_inputs
+    if n_inputs == 0: return
     inputs_per_worker = int(np.ceil(n_inputs / n_workers))
 
     # loop over inputs and divide up between the workers for each process
