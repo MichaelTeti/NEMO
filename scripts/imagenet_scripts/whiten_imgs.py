@@ -17,6 +17,7 @@ from NEMO.utils.image_utils import spatial_whiten, max_min_scale
 def whiten_imgs(old_and_new_fpaths, full_svd = False, scale_method = 'video'):
     '''
     Read in images based on fpaths, resize, and save in a new fpath.
+    
     Args:
         old_and_new_fpaths (list of lists/tuples): List of (read_fpath, save_fpath) for each image.
         full_svd (bool): If True, use all SVD components.
