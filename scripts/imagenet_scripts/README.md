@@ -8,7 +8,7 @@ bash download_imagenet_vid.sh
 ```
 
 # Resize the Images
-After downloading the images, we first resize them to the appropriate size (64 x 128). To do this, we use the [resize_imgs.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/imagenet_scripts/resize_imgs.py) script. The command is as follows:
+After downloading the images, we first resize them to the appropriate size (32 x 64). To do this, we use the [resize_imgs.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/imagenet_scripts/resize_imgs.py) script. The command is as follows:
 ```
 python3 resize_imgs.py \
     ../../data/ILSVRC2015/Data/VID/train/ \
