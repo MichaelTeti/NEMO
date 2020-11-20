@@ -4,74 +4,74 @@ local pv = require "PVModule";
 
 
 -- Input Image Vars
-local inputFeatures         = 1;
-local inputHeight           = 32;
-local inputPathPrefix       = "filenames_frame";
-local inputPathExt          = ".txt";
-local inputWidth            = 64;
-local nbatch                = 256;
-local numImages             = 762246;
+local inputFeatures             = 1;
+local inputHeight               = 32;
+local inputPathPrefix           = "filenames_frame";
+local inputPathExt              = ".txt";
+local inputWidth                = 64;
+local nbatch                    = 256;
+local numImages                 = 762246;
 
 
 -- Model Vars
-local AMax                  = infinity;
-local AMin                  = 0;
-local basePhase             = 2;
-local dictionarySize        = 110;
-local displayMultiple       = 1;
-local displayPeriod         = 3000;
-local growthFactor          = 0.025;
-local initFromCkpt          = false;
-local initFromCkptPath      = "runs/run16_LCA/Checkpoints/Checkpoint00105000/";
-local initFromFile          = false;
-local initFromFilePath      = "runs/run1_LCA_conv2nonconv_init/Checkpoints/Checkpoint00066000/";
-local initFromFilePrefix    = "S1";
-local learningRate          = 0.1;
-local modelType             = "LCA";
-local momentumTau           = 100;
-local numEpochs             = 10;
-local patchSizeX            = 17;
-local patchSizeY            = 17;
-local plasticity            = true;
-local sharedWeights         = true;
-local startFrame            = 0;
-local startTime             = 0;
-local stopTime              = math.ceil(numImages / nbatch) * displayPeriod *
-                                  displayMultiple * numEpochs;
-local strideX               = 1;
-local strideY               = 1;
-local temporalPatchSize     = 9;
-local threshType            = "soft";
-local timeConstantTau       = 3000;
-local useGPU                = true;
-local VThresh               = 0.075;
+local AMax                      = infinity;
+local AMin                      = 0;
+local basePhase                 = 2;
+local dictionarySize            = 110;
+local displayMultiple           = 1;
+local displayPeriod             = 3000;
+local growthFactor              = 0.025;
+local initFromCkpt              = false;
+local initFromCkptPath          = "runs/run16_LCA/Checkpoints/Checkpoint00105000/";
+local initFromFile              = false;
+local initFromFilePath          = "runs/run1_LCA_conv2nonconv_init/Checkpoints/Checkpoint00066000/";
+local initFromFilePrefix        = "S1";
+local learningRate              = 0.1;
+local modelType                 = "LCA";
+local momentumTau               = 100;
+local numEpochs                 = 10;
+local patchSizeX                = 17;
+local patchSizeY                = 17;
+local plasticity                = true;
+local sharedWeights             = true;
+local startFrame                = 0;
+local startTime                 = 0;
+local stopTime                  = math.ceil(numImages / nbatch) * displayPeriod *
+                                    displayMultiple * numEpochs;
+local strideX                   = 1;
+local strideY                   = 1;
+local temporalPatchSize         = 9;
+local threshType                = "soft";
+local timeConstantTau           = 3000;
+local useGPU                    = true;
+local VThresh                   = 0.075;
 
 
 --Probes and Checkpointing
-local writeAdaptiveThreshProbe   = true;
-local checkpointPeriod      	 = displayPeriod * displayMultiple;
-local deleteOldCheckpoints       = true;
-local writeEnergyProbe           = true;
-local error2ModelWriteStep  	 = -1; --displayPeriod;
-local errorWriteStep        	 = -1; --displayPeriod;
-local writeFirmThreshProbe       = true;
-local inputWriteStep        	 = -1; --displayPeriod;
-local writeL2Probe               = true;
-local model2ErrorWriteStep  	 = -1; --displayPeriod;
-local model2ReconWriteStep  	 = displayPeriod;
-local modelWriteStep        	 = displayPeriod;
-local numCheckpointsKept    	 = 1;
-local runNote               	 = "random_init";
-local runVersion            	 = 1;
+local writeAdaptiveThreshProbe  = true;
+local checkpointPeriod      	  = displayPeriod * displayMultiple;
+local deleteOldCheckpoints      = true;
+local writeEnergyProbe          = true;
+local error2ModelWriteStep  	  = -1; --displayPeriod;
+local errorWriteStep        	  = -1; --displayPeriod;
+local writeFirmThreshProbe      = true;
+local inputWriteStep        	  = -1; --displayPeriod;
+local writeL2Probe              = true;
+local model2ErrorWriteStep  	  = -1; --displayPeriod;
+local model2ReconWriteStep  	  = displayPeriod;
+local modelWriteStep        	  = displayPeriod;
+local numCheckpointsKept    	  = 1;
+local runNote               	  = "random_init";
+local runVersion            	  = 1;
 
-
+-- where checkpoints for this run will be written
 local outputPath            = "runs/run" .. runVersion .. "_" .. modelType;
 
 if runNote then
     outputPath = outputPath .. "_" .. runNote;
 end
 
-
+-- set VWidth based on desired threshold type
 if threshType == "soft" then
     VWidth = infinity;
 elseif threshType == "firm" then
