@@ -18,6 +18,5 @@ structure looking for images, and the second one is the directory where the .txt
 will be saved. The third argument is optional and indicates the filter used when determining which sub-directories 
 located in ```../../data/ILSVRC2015/Data/VID/train/``` and containing video frames should be included in the .txt files. 
 The last argument determines the number of consecutive frames that will be used as a single input, which also determines 
-how many .txt files are written out. It is possible to just write all the frames in order on a single .txt file, but there
-may be some drastic changes from one video to the next within a single input in that case. Here, we make sure that every
-single input contains only video frames from one video. 
+how many .txt files are written out. It is possible to just write all the frames in order on a single .txt file, 
+and read in 9 consecutive frames in at a time from it, but there may be some drastic changes from one video to the next within a single input in that case. Here, we make sure that every single input contains only video frames from one video. 
