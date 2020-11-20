@@ -16,10 +16,12 @@ from NEMO.utils.image_utils import center_crop
 def crop_imgs(old_and_new_fpaths, crop_height, crop_width):
     '''
     Read in images, crop them, and resave them.
+    
     Args:
         old_and_new_fpaths (list of lists/tuples): List of (read_fpath, save_fpath) for each image.
         crop_height (int): Height of the cropped image.
         crop_width (int): Width of the cropped image.
+        
     Returns:
         None
     '''
@@ -31,6 +33,7 @@ def crop_imgs(old_and_new_fpaths, crop_height, crop_width):
     for fpath, save_fpath in old_and_new_fpaths:
         # read in the image
         img = imread(fpath)
+        
         # check if the image is smaller than the specified crop dims
         if img.shape[0] < crop_height or img.shape[1] < crop_width:
             if os.path.isdir(os.path.split(save_fpath)[0]): os.rmdir(os.path.split(save_fpath)[0])
