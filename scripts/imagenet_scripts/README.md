@@ -12,8 +12,8 @@ After downloading the images, we first resize them to the appropriate size (64 x
 ```
 python3 resize_imgs.py \
     ../../data/ILSVRC2015/Data/VID/train/ \
+    32 \
     64 \
-    128 \
     --n_workers 12 \
     --aspect_ratio_tol 0.26
 ```
