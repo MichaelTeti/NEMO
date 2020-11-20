@@ -49,23 +49,23 @@ local VThresh                   = 0.075;
 
 --Probes and Checkpointing
 local writeAdaptiveThreshProbe  = true;
-local checkpointPeriod      	  = displayPeriod * displayMultiple;
+local checkpointPeriod          = displayPeriod * displayMultiple;
 local deleteOldCheckpoints      = true;
 local writeEnergyProbe          = true;
-local error2ModelWriteStep  	  = -1; --displayPeriod;
-local errorWriteStep        	  = -1; --displayPeriod;
+local error2ModelWriteStep      = -1; --displayPeriod;
+local errorWriteStep            = -1; --displayPeriod;
 local writeFirmThreshProbe      = true;
-local inputWriteStep        	  = -1; --displayPeriod;
+local inputWriteStep            = -1; --displayPeriod;
 local writeL2Probe              = true;
-local model2ErrorWriteStep  	  = -1; --displayPeriod;
-local model2ReconWriteStep  	  = displayPeriod;
-local modelWriteStep        	  = displayPeriod;
-local numCheckpointsKept    	  = 1;
-local runNote               	  = "random_init";
-local runVersion            	  = 1;
+local model2ErrorWriteStep      = -1; --displayPeriod;
+local model2ReconWriteStep      = displayPeriod;
+local modelWriteStep            = displayPeriod;
+local numCheckpointsKept        = 1;
+local runNote                   = "random_init";
+local runVersion                = 1;
 
 -- where checkpoints for this run will be written
-local outputPath            = "runs/run" .. runVersion .. "_" .. modelType;
+local outputPath                = "runs/run" .. runVersion .. "_" .. modelType;
 
 if runNote then
     outputPath = outputPath .. "_" .. runNote;
