@@ -9,7 +9,7 @@ script. The command we use here is as follows.
 ```
 python3 make_image_fpath_list.py \
     ../../data/ILSVRC2015/Data/VID/train/ \
-    ../../experiments/lca_dictionary_learning/ \
+    ../../experiments/lca_dictionary_learning_shared/ \
     --key _resized \
     --n_frames_in_time 9
 ```
