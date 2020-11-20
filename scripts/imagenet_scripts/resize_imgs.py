@@ -16,28 +16,35 @@ from NEMO.utils.image_utils import resize_and_keep_aspect
 def resize_imgs(old_and_new_fpaths, desired_height, desired_width, aspect_ratio_tol):
     '''
     Read in images based on fpaths, resize, and save in a new fpath.
+    
     Args:
         old_and_new_fpaths (list of lists/tuples): List of (read_fpath, save_fpath) for each image.
         desired_height (int): Height to resize each image.
         desired_width (int): Width to resize each image.
         aspect_ratio_tol (float): Discard images if absolute value between
             original aspect ratio and resized aspect ratio >= aspect_ratio_tol.
+            
     Returns:
         None
     '''
+    
     for fpath, new_fpath in old_and_new_fpaths:
         # read in the image
         img = imread(fpath)
+        
         # calculate aspect ratio
         original_aspect = img.shape[1] / img.shape[0]
+        
         # if aspect is not within aspect_ratio_tol of desired aspect, remove new dir then continue
         desired_aspect = desired_width / desired_height
+        
         if abs(desired_aspect - original_aspect) > aspect_ratio_tol:
             if os.path.isdir(os.path.split(new_fpath)[0]): os.rmdir(os.path.split(new_fpath)[0])
             continue
 
         # resize the images
         img = resize_and_keep_aspect(img, desired_height, desired_width)
+        
         # save the resized image
         imwrite(new_fpath, img)
 
