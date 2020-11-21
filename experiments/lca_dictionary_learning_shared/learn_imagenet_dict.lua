@@ -21,8 +21,8 @@ local dictionarySize            = 110;
 local displayMultiple           = 1;
 local displayPeriod             = 3000;
 local growthFactor              = 0.025;
-local initFromCkpt              = false;
-local initFromCkptPath          = "runs/run16_LCA/Checkpoints/Checkpoint00105000/";
+local initFromCkpt              = true;
+local initFromCkptPath          = "runs/run1_LCA_random_init/Checkpoints/Checkpoint00141000/";
 local initFromFile              = false;
 local initFromFilePath          = "runs/run1_LCA_conv2nonconv_init/Checkpoints/Checkpoint00066000/";
 local initFromFilePrefix        = "S1";
@@ -34,7 +34,7 @@ local patchSizeX                = 17;
 local patchSizeY                = 17;
 local plasticity                = true;
 local sharedWeights             = true;
-local startFrame                = 0;
+local startFrame                = 47;
 local startTime                 = 0;
 local stopTime                  = math.ceil(numImages / nbatch) * displayPeriod *
                                     displayMultiple * numEpochs;
@@ -44,7 +44,7 @@ local temporalPatchSize         = 9;
 local threshType                = "soft";
 local timeConstantTau           = 3000;
 local useGPU                    = true;
-local VThresh                   = 0.075;
+local VThresh                   = 0.09;
 
 
 --Probes and Checkpointing
@@ -61,8 +61,8 @@ local model2ErrorWriteStep      = -1; --displayPeriod;
 local model2ReconWriteStep      = displayPeriod;
 local modelWriteStep            = displayPeriod;
 local numCheckpointsKept        = 1;
-local runNote                   = "random_init";
-local runVersion                = 1;
+local runNote                   = nil;
+local runVersion                = 2;
 
 -- where checkpoints for this run will be written
 local outputPath                = "runs/run" .. runVersion .. "_" .. modelType;
