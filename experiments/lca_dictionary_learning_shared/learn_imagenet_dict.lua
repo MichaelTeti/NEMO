@@ -379,7 +379,7 @@ for i_frame = 1, temporalPatchSize do
                 writeCompressedCheckpoints       = false;
                 selfFlag                         = false;
                 gpuGroupIdx                      = -1;
-                originalConnName                 = modelLayer0 .. "To" .. inputLayer .. "Recon" .. "Error";
+                originalConnName                 = modelLayer0 .. "To" .. errorLayer;
             }
         )
 
@@ -398,7 +398,7 @@ for i_frame = 1, temporalPatchSize do
                 pvpatchAccumulateType           = "convolve";
                 writeCompressedCheckpoints      = false;
                 selfFlag                        = false;
-                originalConnName                = modelLayer0 .. "To" .. inputLayer .. "Recon" .. "Error";
+                originalConnName                = modelLayer0 .. "To" .. errorLayer;
             }
         )
 
