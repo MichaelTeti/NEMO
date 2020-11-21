@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 #SBATCH --job-name=LCA_train
-#SBATCH -N 4
+#SBATCH -N 1
 #SBATCH --constraint=gpu_count:4
 #SBATCH -p power9 
 #SBATCH --qos=long 
@@ -33,7 +33,17 @@ lua learn_imagenet_dict.lua > learn_imagenet_dict.param
 
 
 # -N * number of nodes = np; batchwidth = np >= n_batch / # GPUs
-mpirun -np 16 -N 4 --bind-to none --oversubscribe $executable -t -batchwidth 16 -rows 1 -columns 1 -p learn_imagenet_dict.param
+mpirun \
+    -np 64 \
+    -N 64 \
+    --bind-to none \
+    --oversubscribe \
+    $executable \
+        -t \
+        -batchwidth 64 \
+        -rows 1 \
+	-columns 1 \
+	-p learn_imagenet_dict.param
 
 
 ## to run this script dependent on a previous run with <jobid> (from squeue) finishing:
