@@ -3,6 +3,10 @@ package.path = "/home/mteti/OpenPV/parameterWrapper/?.lua";
 local pv = require "PVModule";
 
 
+-------------------------------------------------------------------------------
+--------------------------- Model Parameters and Setup ------------------------
+-------------------------------------------------------------------------------
+
 -- Input Image Vars
 local inputFeatures             = 1;
 local inputHeight               = 32;
@@ -16,23 +20,26 @@ local numImages                 = 762246;
 -- Model Vars
 local AMax                      = infinity;
 local AMin                      = 0;
-local basePhase                 = 2;
-local dictionarySize            = 256;
+local dictionarySize            = 110;
 local displayMultiple           = 1;
 local displayPeriod             = 3000;
+local errorLayerPhase           = 2;
 local growthFactor              = 0.025;
 local initFromCkpt              = false;
-local initFromCkptPath          = "runs/run1_LCA_random_init/Checkpoints/Checkpoint00141000/";
+local initFromCkptPath          = nil;
 local initFromFile              = false;
-local initFromFilePath          = "runs/run1_LCA_conv2nonconv_init/Checkpoints/Checkpoint00066000/";
+local initFromFilePath          = nil;
 local initFromFilePrefix        = "S1";
-local learningRate              = 0.1;
+local inputLayerPhase           = 1;
+local learningRate              = 0.05;
 local modelType                 = "LCA";
+local modelLayerPhase           = 3;
 local momentumTau               = 100;
 local numEpochs                 = 10;
 local patchSizeX                = 17;
 local patchSizeY                = 17;
 local plasticity                = true;
+local reconLayerPhase           = 4;
 local sharedWeights             = true;
 local startFrame                = 0;
 local startTime                 = 0;
@@ -61,12 +68,13 @@ local model2ErrorWriteStep      = -1; --displayPeriod;
 local model2ReconWriteStep      = displayPeriod;
 local modelWriteStep            = displayPeriod;
 local numCheckpointsKept        = 1;
-local runNote                   = "normalize_test";
+local runNote                   = nil;
 local runVersion                = 1;
 
 -- where checkpoints for this run will be written
 local outputPath                = "runs/run" .. runVersion .. "_" .. modelType;
 
+-- option to add a note to the run's checkpoint dir
 if runNote then
     outputPath = outputPath .. "_" .. runNote;
 end
@@ -78,12 +86,28 @@ elseif threshType == "firm" then
     VWidth = VThresh;
 end
 
-
+-- add forward slash to path if not given
 if initFromFile and string.sub(initFromFilePath, -1) ~= "/" then
     initFromFilePath = initFromFilePath .. "/";
 end
 
 
+-- create some names for the model and the input layer
+if modelType == "LCA" then
+    modelPrefix = "S";
+elseif modelType == "STRF" then
+    modelPrefix = "H";
+end
+
+local modelIndex = "1";
+local modelLayer = modelPrefix .. modelIndex;
+local inputPrefix = "Frame";
+local inputLayer0 = inputPrefix .. "0";
+
+
+-------------------------------------------------------------------------------
+-------------------------- Initialize Hyper-Column ----------------------------
+-------------------------------------------------------------------------------
 
 local pvParams = {
     column = {
@@ -109,7 +133,7 @@ local pvParams = {
         numCheckpointsKept                  = numCheckpointsKept;
         suppressNonplasticCheckpoints       = false;
         writeTimescales                     = true;
-        errorOnNotANumber                   = false;
+        errorOnNotANumber                   = true;
     }
 }
 
@@ -117,7 +141,11 @@ if initFromCkpt then
    pvParams.column.initializeFromCheckpointDir = initFromCkptPath;
 end
 
+-------------------------------------------------------------------------------
+---------------------------------- Probes -------------------------------------
+-------------------------------------------------------------------------------
 
+-- adaptive timescales probe
 pv.addGroup(pvParams,
     "AdaptiveTimeScales", {
         groupType                           = "LogTimeScaleProbe";
@@ -125,7 +153,7 @@ pv.addGroup(pvParams,
         message                             = NULL;
         textOutputFlag                      = false;
         probeOutputFile                     = "AdaptiveTimeScales.txt";
-        triggerLayerName                    = "Frame" .. 0;
+        triggerLayerName                    = inputLayer0;
         triggerOffset                       = 0;
         baseMax                             = 1.1;
         baseMin                             = 1.0;
@@ -136,26 +164,108 @@ pv.addGroup(pvParams,
     }
 )
 
-if writeAdaptiveThreshProbe then 
+if writeAdaptiveThreshProbe then
     pvParams["AdaptiveTimeScales"].textOutputFlag = true;
 end
 
+-- energy probe
+pv.addGroup(pvParams,
+    "EnergyProbe", {
+        groupType                       = "ColumnEnergyProbe";
+        message                         = nil;
+        textOutputFlag                  = false;
+        probeOutputFile                 = "EnergyProbe.txt";
+        triggerLayerName                = nil;
+        energyProbe                     = nil;
+    }
+)
+
+if writeEnergyProbe then
+    pvParams["EnergyProbe"].textOutputFlag = true;
+end
+
+-- firm threshold probe
+pv.addGroup(pvParams,
+    modelLayer .. "FirmThreshProbe", {
+        groupType                       = "FirmThresholdCostFnLCAProbe";
+        targetLayer                     = modelLayer;
+        message                         = NULL;
+        textOutputFlag                  = false;
+        probeOutputFile                 = modelLayer .. "FirmThreshProbe.txt";
+        triggerLayerName                = NULL;
+        energyProbe                     = "EnergyProbe";
+        maskLayer                       = NULL;
+    }
+)
+
+if writeFirmThreshProbe then
+    pvParams[modelLayer .. "FirmThreshProbe"].textOutputFlag = true;
+end
+
+-------------------------------------------------------------------------------
+------------------------ Create Layers and Connections ------------------------
+-------------------------------------------------------------------------------
+
+-------------------------------- Model Layer ----------------------------------
+pv.addGroup(pvParams,
+    modelLayer, {
+        groupType                           = "HyPerLCALayer";
+        nxScale                             = 1 / strideX;
+        nyScale                             = 1 / strideY;
+        nf                                  = dictionarySize;
+        phase                               = modelLayerPhase;
+        mirrorBCflag                        = false;
+        valueBC                             = 0;
+        initializeFromCheckpointFlag        = false;
+        InitVType                           = "ConstantV";
+        valueV                              = 0.0 * VThresh;
+        triggerLayerName                    = NULL;
+        writeStep                           = modelWriteStep;
+        initialWriteTime                    = modelWriteStep;
+        sparseLayer                         = true;
+        writeSparseValues                   = true;
+        updateGpu                           = useGPU;
+        dataType                            = nil;
+        VThresh                             = VThresh;
+        AMin                                = AMin;
+        AMax                                = AMax;
+        AShift                              = 0;
+        VWidth                              = VWidth;
+        clearGSynInterval                   = 0;
+        timeConstantTau                     = timeConstantTau;
+        selfInteract                        = true;
+        adaptiveTimeScaleProbe              = nil;
+    }
+)
+
+pvParams[modelLayer].adaptiveTimeScaleProbe  = "AdaptiveTimeScales";
+
+if initFromCkpt then
+    pvParams[modelLayer].initializeFromCheckpointFlag = true;
+end
 
 
+-------------------------- Recon, Error, and Input Layers ---------------------
 for i_frame = 1, temporalPatchSize do
-    local start_frame_index_array = {};
 
+    -- Create layer names ... already defined modelLayer above
+    inputLayer = inputPrefix .. i_frame - 1;
+    reconLayer = inputLayer .. "Recon";
+    errorLayer = reconLayer .. "Error";
+
+    ----------------------------- Input Layer ---------------------------------
+    local start_frame_index_array = {};
     for i_batch = 1,nbatch do
         start_frame_index_array[i_batch] = startFrame;
     end
 
     pv.addGroup(pvParams,
-        "Frame" .. i_frame-1, {
-            groupType                       = "ImageLayer";
+        inputLayer, {
+          groupType                       = "ImageLayer";
     	    nxScale                         = 1;
     	    nyScale                         = 1;
     	    nf                              = inputFeatures;
-    	    phase                           = 1;
+    	    phase                           = inputLayerPhase;
     	    mirrorBCflag                    = true;
     	    writeStep                       = inputWriteStep;
     	    initialWriteTime                = inputWriteStep;
@@ -185,112 +295,29 @@ for i_frame = 1, temporalPatchSize do
         }
     )
 
-end -- i_frame
-
-
-if modelType == "LCA" then
-    modelPrefix = "S";
-elseif modelType == "STRF" then
-    modelPrefix = "H";
-end
-
-local modelIndex = "1";
-local modelLayer0 = modelPrefix .. modelIndex;
-local modelLayer = modelLayer0;
-local inputLayer0 = "Frame0";
-
-
-if modelType == "LCA" then
+    ---------------------------- Error Layer ----------------------------------
     pv.addGroup(pvParams,
-        modelLayer, {
-            groupType                           = "HyPerLCALayer";
-            nxScale                             = 1 / strideX;
-            nyScale                             = 1 / strideY;
-            nf                                  = dictionarySize;
-            phase                               = basePhase+1;
-            mirrorBCflag                        = false;
-            valueBC                             = 0;
-            initializeFromCheckpointFlag        = false;
-            InitVType                           = "ConstantV";
-            valueV                              = 0.0*VThresh;
-            triggerLayerName                    = NULL;
-            writeStep                           = modelWriteStep;
-            initialWriteTime                    = modelWriteStep;
-            sparseLayer                         = true;
-            writeSparseValues                   = true;
-            updateGpu                           = useGPU;
-            dataType                            = nil;
-            VThresh                             = VThresh;
-            AMin                                = AMin;
-            AMax                                = AMax;
-            AShift                              = 0;
-            VWidth                              = VWidth;
-            clearGSynInterval                   = 0;
-            timeConstantTau                     = timeConstantTau;
-            selfInteract                        = true;
-            adaptiveTimeScaleProbe              = nil;
-        }
-    )
-
-elseif modelType == "STRF" then
-    pv.addGroup(pvParams,
-        modelLayer, {
+        errorLayer, {
             groupType                        = "HyPerLayer";
             nxScale                          = 1;
             nyScale                          = 1;
-            nf                               = dictionarySize;
-            phase                            = basePhase;
+            nf                               = inputFeatures;
+            phase                            = errorLayerPhase;
             mirrorBCflag                     = false;
             valueBC                          = 0;
-            initializeFromCheckpointFlag     = false;
+            -- initializeFromCheckpointFlag  = false;
             InitVType                        = "ZeroV";
-            triggerLayerName                 = "Frame0";
-            triggerOffset                    = 1;
-            triggerBehavior                  = "updateOnlyOnTrigger";
-            writeStep                        = modelWriteStep;
-            initialWriteTime                 = modelWriteStep;
+            triggerLayerName                 = NULL;
+            writeStep                        = errorWriteStep;
+            initialWriteTime                 = errorWriteStep;
             sparseLayer                      = false;
             updateGpu                        = false;
             dataType                         = nil;
         }
     )
 
-end  -- if modelType == "LCA"
-
-
-pvParams[modelLayer].adaptiveTimeScaleProbe  = "AdaptiveTimeScales";
-
-
-if initFromCkpt then
-    pvParams[modelLayer].initializeFromCheckpointFlag = true;
-end
-
-
-pv.addGroup(pvParams,
-    modelLayer .. "FirmThreshProbe", {
-        groupType                       = "FirmThresholdCostFnLCAProbe";
-        targetLayer                     = modelLayer;
-        message                         = NULL;
-        textOutputFlag                  = false;
-        probeOutputFile                 = modelLayer .. "FirmThreshProbe.txt";
-        triggerLayerName                = NULL;
-        energyProbe                     = "EnergyProbe";
-        maskLayer                       = NULL;
-    }
-)
-
-if writeFirmThreshProbe then 
-    pvParams[modelLayer .. "FirmThreshProbe"].textOutputFlag = true;
-end
-
-
-for i_frame = 1, temporalPatchSize do
-
-    inputLayer                              = "Frame" .. i_frame-1;
-    errorLayer                              = inputLayer .. "ReconError";
-    reconLayer                              = inputLayer .. "Recon";
-
-
+    ---------------------- L2Probe for the Error Layer ------------------------
+    -- easier to just put this here instead of with the other probes
     pv.addGroup(pvParams,
         errorLayer .. "L2Probe", {
             groupType                   = "L2NormProbe";
@@ -304,267 +331,160 @@ for i_frame = 1, temporalPatchSize do
             exponent                    = 2;
         }
     )
-    
+
     if writeL2Probe then
-        pvParams[errorLayer .. "L2Probe"].textOutputFlag = true;    
+        pvParams[errorLayer .. "L2Probe"].textOutputFlag = true;
     end
 
-    ------------------------------- LCA MODEL ---------------------------------
-    if modelType == "LCA" then
-        --Error layer
-        pv.addGroup(pvParams,
-            errorLayer, {
-                groupType                        = "HyPerLayer";
-                nxScale                          = 1;
-                nyScale                          = 1;
-                nf                               = inputFeatures;
-                phase                            = basePhase;
-                mirrorBCflag                     = false;
-                valueBC                          = 0;
-                -- initializeFromCheckpointFlag     = false;
-                InitVType                        = "ZeroV";
-                triggerLayerName                 = NULL;
-                writeStep                        = errorWriteStep;
-                initialWriteTime                 = errorWriteStep;
-                sparseLayer                      = false;
-                updateGpu                        = false;
-                dataType                         = nil;
-            }
-        )
+    -------------------------- Recon layer ------------------------------------
+    pv.addGroup(pvParams,
+        reconLayer, pvParams[errorLayer], {
+            phase = reconLayerPhase;
+        }
+    )
 
+    ------ Input Layer to Error Layer Excitatory Identity Connection ----------
+    pv.addGroup(pvParams,
+        inputLayer .. "To" .. errorLayer, {
+            groupType                        = "IdentConn";
+            preLayerName                     = inputLayer;
+            postLayerName                    = errorLayer;
+            channelCode                      = 0;
+            scale                            = weightInit;
+            delay                            = {0.000000};
+        }
+    )
 
-        --Recon layer
-        pv.addGroup(pvParams,
-            reconLayer, pvParams[errorLayer], {
-                phase = basePhase + 2;
-            }
-        )
+    -------- Recon Layer to Error Layer Inhibitory Identity Connection --------
+    pv.addGroup(pvParams,
+        reconLayer .. "To" .. errorLayer, {
+            groupType                        = "IdentConn";
+            preLayerName                     = reconLayer;
+            postLayerName                    = errorLayer;
+            channelCode                      = 1;
+            delay                            = {0.000000};
+        }
+    )
 
+    ------- Error Layer to Model Layer Excitatory Transpose Connection --------
+    pv.addGroup(pvParams,
+        errorLayer .. "To" .. modelLayer, {
+            groupType                        = "TransposeConn";
+            preLayerName                     = errorLayer;
+            postLayerName                    = modelLayer;
+            channelCode                      = 0;
+            delay                            = {0.000000};
+            convertRateToSpikeCount          = false;
+            receiveGpu                       = useGPU;
+            updateGSynFromPostPerspective    = true;
+            pvpatchAccumulateType            = "convolve";
+            writeStep                        = error2ModelWriteStep;
+            writeCompressedCheckpoints       = false;
+            selfFlag                         = false;
+            gpuGroupIdx                      = -1;
+            originalConnName                 = modelLayer .. "To" .. errorLayer;
+        }
+    )
 
-        pv.addGroup(pvParams,
-            inputLayer .. "To" .. errorLayer, {
-                groupType                        = "IdentConn";
-                preLayerName                     = inputLayer;
-                postLayerName                    = errorLayer;
-                channelCode                      = 0;
-                scale                            = weightInit;
-                delay                            = {0.000000};
-            }
-        )
+    ------------ Model Layer to Recon Layer Excitatory Connection -------------
+    pv.addGroup(pvParams,
+        modelLayer .. "To" .. reconLayer, {
+            groupType                       = "CloneConn";
+            preLayerName                    = modelLayer;
+            postLayerName                   = reconLayer;
+            channelCode                     = 0;
+            writeStep                       = model2ReconWriteStep;
+            delay                           = {0.000000};
+            convertRateToSpikeCount         = false;
+            receiveGpu                      = false;
+            updateGSynFromPostPerspective   = false;
+            pvpatchAccumulateType           = "convolve";
+            writeCompressedCheckpoints      = false;
+            selfFlag                        = false;
+            originalConnName                = modelLayer .. "To" .. errorLayer;
+        }
+    )
 
+    ----------- Model Layer to Error Layer Passive Update Connection ----------
+    pv.addGroup(pvParams,
+        modelLayer .. "To" .. errorLayer, {
+            groupType                       = "MomentumConn";
+            preLayerName                    = modelLayer;
+            postLayerName                   = errorLayer;
+            channelCode                     = -1;
+            delay                           = {0.000000};
+            numAxonalArbors                 = 1;
+            convertRateToSpikeCount         = false;
+            receiveGpu                      = false;
+            sharedWeights                   = sharedWeights;
+            initializeFromCheckpointFlag    = false;
+            triggerLayerName                = inputLayer0;
+            triggerOffset                   = 1;
+            updateGSynFromPostPerspective   = false;
+            pvpatchAccumulateType           = "convolve";
+            writeStep                       = model2ErrorWriteStep;
+            initialWriteTime                = model2ErrorWriteStep;
+            writeCompressedCheckpoints      = false;
+            selfFlag                        = false;
+            shrinkPatches                   = false;
+            normalizeMethod                 = "normalizeL2";
+            strength                        = 1;
+            normalizeArborsIndividually     = false;
+            normalizeOnInitialize           = true;
+            normalizeOnWeightUpdate         = true;
+            rMinX                           = 0;
+            rMinY                           = 0;
+            nonnegativeConstraintFlag       = false;
+            normalize_cutoff                = 0;
+            normalizeFromPostPerspective    = false;
+            minL2NormTolerated              = 0;
+            keepKernelsSynchronized         = true;
+            useMask                         = false;
+            normalizeDw                     = true;
+            timeConstantTau                 = momentumTau;
+            momentumMethod                  = "viscosity";
+            momentumDecay                   = 0;
+            nxp                             = patchSizeX;
+            nyp                             = patchSizeY;
+            plasticityFlag                  = plasticity;
+            weightInitType                  = "UniformRandomWeight";
+            initWeightsFile                 = nil;
+            wMinInit                        = -1.0;
+            wMaxInit                        = 1.0;
+            sparseFraction                  = 0.9;
+            dWMax                           = learningRate;
+        }
+    )
 
-        pv.addGroup(pvParams,
-            reconLayer .. "To" .. errorLayer, {
-                groupType                        = "IdentConn";
-                preLayerName                     = reconLayer;
-                postLayerName                    = errorLayer;
-                channelCode                      = 1;
-                delay                            = {0.000000};
-            }
-        )
+    ----- Stuff for Loading Weights from Ckpt / File and/or Normalizing -------
+    if initFromCkpt then
+        pvParams[modelLayer .. "To" .. errorLayer].initializeFromCheckpointFlag = true;
+    end
 
-
-        pv.addGroup(pvParams,
-            errorLayer .. "To" .. modelLayer, {
-                groupType                        = "TransposeConn";
-                preLayerName                     = errorLayer;
-                postLayerName                    = modelLayer;
-                channelCode                      = 0;
-                delay                            = {0.000000};
-                convertRateToSpikeCount          = false;
-                receiveGpu                       = useGPU;
-                updateGSynFromPostPerspective    = true;
-                pvpatchAccumulateType            = "convolve";
-                writeStep                        = error2ModelWriteStep;
-                writeCompressedCheckpoints       = false;
-                selfFlag                         = false;
-                gpuGroupIdx                      = -1;
-                originalConnName                 = modelLayer0 .. "To" .. errorLayer;
-            }
-        )
-
-
-        pv.addGroup(pvParams,
-            modelLayer .. "To" .. reconLayer, {
-                groupType                       = "CloneConn";
-                preLayerName                    = modelLayer;
-                postLayerName                   = reconLayer;
-                channelCode                     = 0;
-                writeStep                       = model2ReconWriteStep;
-                delay                           = {0.000000};
-                convertRateToSpikeCount         = false;
-                receiveGpu                      = false;
-                updateGSynFromPostPerspective   = false;
-                pvpatchAccumulateType           = "convolve";
-                writeCompressedCheckpoints      = false;
-                selfFlag                        = false;
-                originalConnName                = modelLayer0 .. "To" .. errorLayer;
-            }
-        )
-
-       --plastic connections
-
-        pv.addGroup(pvParams,
-            modelLayer .. "To" .. errorLayer, {
-                groupType                       = "MomentumConn";
-                preLayerName                    = modelLayer;
-                postLayerName                   = errorLayer;
-                channelCode                     = -1;
-                delay                           = {0.000000};
-                numAxonalArbors                 = 1;
-                convertRateToSpikeCount         = false;
-                receiveGpu                      = false;
-                sharedWeights                   = sharedWeights;
-                initializeFromCheckpointFlag    = false;
-                triggerLayerName                = "Frame" .. 0;
-                triggerOffset                   = 1;
-                updateGSynFromPostPerspective   = false;
-                pvpatchAccumulateType           = "convolve";
-                writeStep                       = model2ErrorWriteStep;
-                initialWriteTime                = model2ErrorWriteStep;
-                writeCompressedCheckpoints      = false;
-                selfFlag                        = false;
-                shrinkPatches                   = false;
-                normalizeMethod                 = "normalizeL2";
-                strength                        = 1;
-                normalizeArborsIndividually     = false;
-                normalizeOnInitialize           = true;
-                normalizeOnWeightUpdate         = true;
-                rMinX                           = 0;
-                rMinY                           = 0;
-                nonnegativeConstraintFlag       = false;
-                normalize_cutoff                = 0;
-                normalizeFromPostPerspective    = false;
-                minL2NormTolerated              = 0;
-                keepKernelsSynchronized         = true;
-                useMask                         = false;
-                normalizeDw                     = true;
-                timeConstantTau                 = momentumTau;
-                momentumMethod                  = "viscosity";
-                momentumDecay                   = 0;
-                nxp                             = patchSizeX;
-                nyp                             = patchSizeY;
-                plasticityFlag                  = plasticity;
-                weightInitType                  = "UniformRandomWeight";
-                initWeightsFile                 = nil;
-                wMinInit                        = -1.0;
-                wMaxInit                        = 1.0;
-                sparseFraction                  = 0.9;
-                dWMax                           = learningRate;
-            }
-        )
-
-
-        if initFromCkpt then
-            pvParams[modelLayer .. "To" .. errorLayer].initializeFromCheckpointFlag = true;
+    if initFromFile then
+        if initFromFilePrefix then
+            filePath = initFromFilePath .. initFromFilePrefix .. "To" .. inputLayer .. "ReconError_W.pvp";
+        else
+            filePath = initFromFilePath .. modelLayer .. "To" .. inputLayer .. "ReconError_W.pvp";
         end
 
+        pvParams[modelLayer .. "To" .. errorLayer].weightInitType = "FileWeight";
+        pvParams[modelLayer .. "To" .. errorLayer].initWeightsFile = filePath;
 
-        if initFromFile then
-            if initFromFilePrefix then
-                filePath = initFromFilePath .. initFromFilePrefix .. "To" .. inputLayer .. "ReconError_W.pvp";
-            else
-                filePath = initFromFilePath .. modelLayer .. "To" .. inputLayer .. "ReconError_W.pvp";
-            end
+    end
 
-            pvParams[modelLayer .. "To" .. errorLayer].weightInitType  = "FileWeight";
-            pvParams[modelLayer .. "To" .. errorLayer].initWeightsFile = filePath;
+    if i_frame > 1 then
+        pvParams[modelLayer .. "To" .. errorLayer].normalizeMethod = "normalizeGroup";
+        pvParams[modelLayer .. "To" .. errorLayer].normalizeGroupName = modelLayer .. "To" .. inputLayer0 .. "Recon" .. "Error";
+
+        if not initFromCkpt and not initFromFile then
+            pvParams[modelLayer .. "To" .. errorLayer].wMinInit = 0;
+            pvParams[modelLayer .. "To" .. errorLayer].wMaxInit = 0;
         end
-
-
-        if i_frame > 1 then
-            pvParams[modelLayer .. "To" .. errorLayer].normalizeMethod    = "normalizeGroup";
-            pvParams[modelLayer .. "To" .. errorLayer].normalizeGroupName = modelLayer0 .. "To" .. inputLayer0 .. "Recon" .. "Error";
-
-            if not initFromCkpt and not initFromFile then
-                pvParams[modelLayer .. "To" .. errorLayer].wMinInit     = 0;
-                pvParams[modelLayer .. "To" .. errorLayer].wMaxInit     = 0;
-            end
-        end
-
-
-    ------------------------------ STRF MODEL ---------------------------------
-    elseif modelType == "STRF" then
-        pv.addGroup(pvParams,
-            modelLayer .. "To" .. inputLayer, {
-                groupType                        = "HyPerConn";
-                preLayerName                     = modelLayer;
-                postLayerName                    = inputLayer;
-                channelCode                      = -1;
-                delay                            = {0.000000};
-                convertRateToSpikeCount          = false;
-                receiveGpu                       = false;
-                updateGSynFromPostPerspective    = false;
-                pvpatchAccumulateType            = "convolve";
-                writeStep                        = -1;
-                writeCompressedCheckpoints       = false;
-                selfFlag                         = false;
-                gpuGroupIdx                      = -1;
-                weightInitType                   = "UniformRandomWeight";
-                initWeightsFile                  = nil;
-                nxp                              = patchSizeX;
-                nyp                              = patchSizeY;
-                normalizeMethod                  = "none";
-                plasticityFlag                   = plasticity;
-                sharedWeights                    = sharedWeights;
-            }
-        )
-
-        pv.addGroup(pvParams,
-            inputLayer .. "To" .. modelLayer, {
-                groupType                        = "TransposeConn";
-                preLayerName                     = inputLayer;
-                postLayerName                    = modelLayer;
-                channelCode                      = 0;
-                delay                            = {0.000000};
-                convertRateToSpikeCount          = false;
-                receiveGpu                       = useGPU;
-                updateGSynFromPostPerspective    = true;
-                pvpatchAccumulateType            = "convolve";
-                writeStep                        = -1;
-                writeCompressedCheckpoints       = false;
-                selfFlag                         = false;
-                gpuGroupIdx                      = -1;
-                normalizeMethod                  = "none";
-                plasticityFlag                   = plasticity;
-                originalConnName                 = modelLayer .. "To" .. inputLayer;
-            }
-        )
-
-
-        if initFromCkpt then
-            pvParams[modelLayer .. "To" .. inputLayer].initializeFromCheckpointFlag = true;
-        elseif initFromFile then
-            if initFromFilePrefix then
-                filePath = initFromFilePath .. initFromFilePrefix .. "To" .. inputLayer .. "ReconError_W.pvp";
-            else
-                filePath = initFromFilePath .. modelLayer .. "To" .. inputLayer .. "ReconError_W.pvp";
-            end
-
-            pvParams[modelLayer .. "To" .. inputLayer].weightInitType  = "FileWeight";
-            pvParams[modelLayer .. "To" .. inputLayer].initWeightsFile = filePath;
-        end
-
-    end  -- if modelType == "LCA"
+    end
 
 end -- i_frame
 
 
-pv.addGroup(pvParams,
-    "EnergyProbe", {
-        groupType                       = "ColumnEnergyProbe";
-        message                         = nil;
-        textOutputFlag                  = false;
-        probeOutputFile                 = "EnergyProbe.txt";
-        triggerLayerName                = nil;
-        energyProbe                     = nil;
-    }
-)
-
-if writeEnergyProbe then 
-    pvParams["EnergyProbe"].textOutputFlag = true;
-end
-
-
-
+-- print out to the .param file
 pv.printConsole(pvParams)
