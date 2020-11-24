@@ -20,7 +20,7 @@ local numImages                 = 762246;
 -- Model Vars
 local AMax                      = infinity;
 local AMin                      = 0;
-local dictionarySize            = 110;
+local dictionarySize            = 256;
 local displayMultiple           = 1;
 local displayPeriod             = 3000;
 local errorLayerPhase           = 2;
@@ -31,7 +31,7 @@ local initFromFile              = false;
 local initFromFilePath          = nil;
 local initFromFilePrefix        = "S1";
 local inputLayerPhase           = 1;
-local learningRate              = 0.05;
+local learningRate              = 0.1;
 local modelType                 = "LCA";
 local modelLayerPhase           = 3;
 local momentumTau               = 100;
