@@ -1,5 +1,5 @@
 function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '',
-    sorted = false, act_path = '')
+    clip_frame_0 = false, sorted = false, act_path = '')
     % Script to display PetaVision features and save them as an image or .gif.
 
     addpath(openpv_path)
@@ -60,12 +60,18 @@ function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '
     
     end  % for fpath_num ...
 
-    % scale the values to [0, 1]
-    max_val = max(max(max(max(grid))));
-    min_val = min(min(min(min(grid))));
 
-    grid(grid > max_val) = max_val;
-    grid(grid < min_val) = min_val;
+    % clip frame 0 features if desired and scale feature values
+    if clip_frame_0
+        max_val = max(max(max(max(grid(2:end, :, :, :)))));
+        min_val = min(min(min(min(grid(2:end, :, :, :)))));
+        grid(grid > max_val) = max_val;
+        grid(grid < min_val) = min_val;
+    else
+        max_val = max(max(max(max(grid))));
+        min_val = min(min(min(min(grid))));
+    end    
+
     grid = (grid - min_val) / (max_val - min_val);
 
     % write the .gif out
