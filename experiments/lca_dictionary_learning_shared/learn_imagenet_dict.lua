@@ -456,7 +456,6 @@ for i_frame = 1, temporalPatchSize do
         }
     )
 
-    ----- Stuff for Loading Weights from Ckpt / File and/or Normalizing -------
     if initFromCkpt then
         pvParams[modelLayer .. "To" .. errorLayer].initializeFromCheckpointFlag = true;
     end
@@ -482,6 +481,7 @@ for i_frame = 1, temporalPatchSize do
             pvParams[modelLayer .. "To" .. errorLayer].wMaxInit = 0;
         end
     end
+
 
 end -- i_frame
 
