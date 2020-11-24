@@ -54,9 +54,9 @@ function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '
                     % get the patch from the weight tensor and add to the grid
                     patch = w(:, :, :, (i-1)*grid_dim+j);
                     grid(fpath_num, (i-1)*nyp+1:(i-1)*nyp+nyp, (j-1)*nxp+1:(j-1)*nxp+nxp, :) = patch;
-                end  % if (i-1)
-            end  % for j = 1:grid_dim
-        end  % for i = 1:grid_dim
+                end  
+            end  
+        end  
     
     end  % for fpath_num ...
 
@@ -92,6 +92,6 @@ function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '
                 'DelayTime',
                 0.1
             );
-        end  % if fpath_num == 1
+        end  
         
-    end  % for fpath_num ...
+    end  % for fpath_num = 1:n_fpaths
