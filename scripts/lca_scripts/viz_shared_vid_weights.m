@@ -48,6 +48,7 @@ function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '
             grid = zeros(n_fpaths, grid_h, grid_w, nfp);
         end
 
+        % below we add each patch to the grid
         for i = 1:grid_dim
             for j = 1:grid_dim
                 if (i-1)*grid_dim+j <= nf
