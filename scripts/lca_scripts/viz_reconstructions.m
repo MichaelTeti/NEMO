@@ -1,6 +1,17 @@
 function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key, input_layer_prefix)
     %{
-         Reads in inputs and reconstructions from a checkpoint and writes them out.
+        Reads in inputs and reconstructions from a checkpoint and writes them out.
+         
+        Args:
+            openpv_path: The path to OpenPV/mlab/util.
+            checkpoint_dir: The path to the checkpoint directory where the input and 
+                recon .pvp files are. 
+            save_dir: The directory where the inputs and recons will be saved in separate
+                subdirectories.
+            rec_key: The key used to find the recon .pvp files (e.g. Frame*Recon_A.pvp).
+            input_layer_prefix: The name of the input layer minus the frame number. For 
+                example, a model trained on 9 video frame inputs will have 9 input layers
+                called Frame0...Frame8. This argument would then be "Frame". 
     %}
 
     addpath(openpv_path);
