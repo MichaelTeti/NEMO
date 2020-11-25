@@ -1,3 +1,8 @@
+'''
+Script to make the .txt files that PetaVision will use to read in the input
+images in order. 
+'''
+
 from argparse import ArgumentParser
 import os, sys
 
