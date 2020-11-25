@@ -35,6 +35,9 @@ function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '
         w = readpvpfile(fpath);
         w = w{1, 1}.values{1, 1};
 
+        % switch height and width dim for image format
+        w = permute(w, [2, 1, 3, 4]);
+
         % if sorting is desired, sort features by mean activation descending
         if sorted
             w = w(:, :, :, act_inds_sorted)
@@ -42,7 +45,7 @@ function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '
 
         % initialize a grid to place the features in if first file read in
         if fpath_num == 1
-            nxp = size(w, 1); nyp = size(w, 2); nfp = size(w, 3); nf = size(w, 4);
+            nyp = size(w, 1); nxp = size(w, 2); nfp = size(w, 3); nf = size(w, 4);
             grid_dim = ceil(sqrt(nf));
             grid_h = grid_dim * nyp; grid_w = grid_dim * nxp;
             grid = zeros(n_fpaths, grid_h, grid_w, nfp);
