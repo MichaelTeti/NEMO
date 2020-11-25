@@ -1,6 +1,21 @@
 function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '',
     clip_frame_0 = false, sorted = false, act_path = '')
-    % Script to display PetaVision features and save them as an image or .gif.
+    %{ 
+        Script to display PetaVision features and save them as an image or .gif.
+    
+        Args:
+            openpv_path: Path to OpenPV/mlab/util.
+            checkpoint_path: The path to the checkpoint with the features to visualize.
+            save_path: The file path to the saved .gif (e.g. "features.gif").
+            key: A key to differentiate the weight files you want to visualize.
+            clip_frame_0: If true, will clip frame zero's values to the min/max of the 
+                subsequent frames. This is mainly used in the early parts of training 
+                because every frame after zero is initialized with zeros. 
+            sorted: If true, will sort the features in the grid (descending) by mean 
+                activation.
+            act_path: Path to the model's feature maps in the checkpoint that will
+                be used to sort the features in descending order if sorted is true.
+    %}
 
     addpath(openpv_path)
 
