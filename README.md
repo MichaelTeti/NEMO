@@ -24,4 +24,4 @@ python3 setup.py develop
 
 # Downloading and Processing the Data
 1. Download and pre-process the ImageNet video dataset (directions [here](https://github.com/MichaelTeti/NEMO/tree/main/scripts/image_scripts))
-2. Download and extract the neurodata (directions [here](https://github.com/MichaelTeti/NEMO/tree/main/scripts/allensdk_scripts))
+2. Download and extract the neurodata and stimuli (directions [here](https://github.com/MichaelTeti/NEMO/tree/main/scripts/allensdk_scripts))
