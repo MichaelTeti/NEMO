@@ -51,7 +51,7 @@ local temporalPatchSize         = 9;
 local threshType                = "soft";
 local timeConstantTau           = 3000;
 local useGPU                    = true;
-local VThresh                   = 0.075;
+local VThresh                   = 0.1;
 
 
 --Probes and Checkpointing
