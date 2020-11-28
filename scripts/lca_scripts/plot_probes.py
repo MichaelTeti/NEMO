@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-import csv
 from glob import glob
 import os
 
