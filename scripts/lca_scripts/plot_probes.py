@@ -1,3 +1,9 @@
+'''
+Script to read in the four main probe output files written by PetaVision. 
+Each one has a different function because each probe's output text file 
+is formatted differently.
+'''
+
 from argparse import ArgumentParser
 from glob import glob
 import os
