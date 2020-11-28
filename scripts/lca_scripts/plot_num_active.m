@@ -1,7 +1,17 @@
-function plot_num_active(fpath)
+function plot_num_active(openpv_fpath, fpath)
+    %{
+        Reads in the .pvp file output by the model layer and computes 
+        the number of neurons active over the display periods.
+        
+        Args:
+            openpv_fpath: Path to the OpenPV/mlab/util directory.
+            fpath: The path to the <model_layer_name>.pvp file.
+    %}
     
-    addpath('/home/mteti/OpenPV/mlab/util');
+    
+    addpath(openpv_fpath);
 
+    % check if the file exists
     if ~exist(fpath, 'file')
         error('fpath does not exist')
     end 
