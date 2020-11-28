@@ -8,7 +8,7 @@ function [mean_acts, sorted_acts, sorted_inds] = get_mean_acts(openpv_fpath, act
         Args:
             openpv_fpath: The path to the OpenPV/mlab/util directory.
             act_fpath: The path to the <model_layer_name>_A.pvp file with each neuron's activation.
-            save_dir: Where to save the figures if display is true.
+            save_dir: Where to save the figures if display is true and shared is false.
             sparsity: If true, then will calculate mean sparsity for each neuron as well.
             shared: If true, will operate based on shared weights in the model.
             display: If true, then will display plots of the activations and sparsity.
