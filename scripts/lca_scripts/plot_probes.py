@@ -1,14 +1,13 @@
-import codecs
-import csv
-import numpy as np
-import matplotlib.pyplot as plt
-from glob import glob
 from argparse import ArgumentParser
+import csv
+from glob import glob
 import os
 
-import sys
-sys.path.append('../../')
-from utils.general_utils import read_csv
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from NEMO.utils.general_utils import read_csv
 
 
 
