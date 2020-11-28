@@ -35,8 +35,10 @@ function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '
         key = '*_W.pvp';
     end
 
+    % if you want the features sorted by mean activation, we need to
+    % read in the activity file and get the sorted indices based on activation
     if sorted
-        [~, ~, act_inds_sorted] = get_mean_acts(act_path)
+        [~, ~, act_inds_sorted] = get_mean_acts(openpv_path, act_path)
     end
 
     % find the file paths in the checkpoint dir by the key
