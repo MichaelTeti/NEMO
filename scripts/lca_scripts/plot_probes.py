@@ -4,7 +4,6 @@ from glob import glob
 import os
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 from NEMO.utils.general_utils import read_csv
