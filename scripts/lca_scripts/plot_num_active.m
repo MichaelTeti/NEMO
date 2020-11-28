@@ -1,4 +1,4 @@
-function plot_num_active(openpv_fpath, fpath, save_dir = '')
+function plot_num_active(openpv_fpath, fpath)
     %{
         Reads in the .pvp file output by the model layer and computes 
         the number of neurons active over the display periods.
@@ -6,24 +6,10 @@ function plot_num_active(openpv_fpath, fpath, save_dir = '')
         Args:
             openpv_fpath: Path to the OpenPV/mlab/util directory.
             fpath: The path to the <model_layer_name>.pvp file.
-            save_dir: Where to save the plot. If not given, will save 
-                in current directory.
     %}
     
     % add this to use the openpv matlab utilities for reading .pvp files
     addpath(openpv_fpath);
-    
-    % if save_dir doesn't exist, then make it 
-    if ~exist(save_dir, 'dir')
-        mkdir(dir = save_dir);
-    end
-
-    % if save_dir doesn't end in forward-slash, add it 
-    if ~strcmp(save_dir, '')
-        if save_dir(end) ~= "/";
-            save_dir = strcat(save_dir, "/");
-        end
-    end
 
     % check if the file exists
     if ~exist(fpath, 'file')
@@ -71,5 +57,4 @@ function plot_num_active(openpv_fpath, fpath, save_dir = '')
     errorbar(times, means, ses);
     xlabel('Display Period Number');
     ylabel('Mean Number Active / Batch +/- SE');
-    save_fpath = strcat(save_dir, num_active.png);
-    print -dpng -color save_fpath
+    print -dpng -color num_active.png
