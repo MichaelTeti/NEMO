@@ -71,4 +71,5 @@ function plot_num_active(openpv_fpath, fpath, save_dir = '')
     errorbar(times, means, ses);
     xlabel('Display Period Number');
     ylabel('Mean Number Active / Batch +/- SE');
-    print -dpng strcat(save_dir, num_active.png)
+    save_fpath = strcat(save_dir, num_active.png);
+    print(gcf, save_fpath, '-dpng');
