@@ -8,7 +8,7 @@ function plot_num_active(openpv_fpath, fpath)
             fpath: The path to the <model_layer_name>.pvp file.
     %}
     
-    
+    % add this to use the openpv matlab utilities for reading .pvp files
     addpath(openpv_fpath);
 
     % check if the file exists
