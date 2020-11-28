@@ -1,6 +1,20 @@
-function [mean_acts, sorted_acts, sorted_inds] = get_mean_acts(act_fpath, save_dir = '',
+function [mean_acts, sorted_acts, sorted_inds] = get_mean_acts(openpv_fpath, act_fpath, save_dir = '',
                                                  sparsity = true, shared = true, display = true)
-    addpath('/OpenPV/mlab/util');
+    
+    %{
+        Reads in the .pvp file with the activations in the checkpoint dir and computes
+        the mean activation over the batch and over space of each neuron.
+        
+        Args:
+            openpv_fpath: The path to the OpenPV/mlab/util directory.
+            act_fpath: The path to the <model_layer_name>_A.pvp file with each neuron's activation.
+            save_dir: Where to save the figures if display is true.
+            sparsity: If true, then will calculate mean sparsity for each neuron as well.
+            display: If true, then will display plots of the activations and sparsity.
+    %}
+    
+    % add this to use OpenPV's matlab utilities for reading/writing .pvp files
+    addpath(openpv_fpath);
 
     if ~exist(save_dir, 'dir')
         mkdir(dir = save_dir);
