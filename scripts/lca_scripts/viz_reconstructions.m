@@ -59,19 +59,19 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
     % get the input layer name 
     input_layer_name = char(strsplit(rec_key, "*")(1, 1));
 
-    for i_input = 1:n_inputs
-        rec_fpath = strcat(rec_dir, strcat(int2str(i_input), '.gif'));
-        input_fpath = strcat(input_dir, strcat(int2str(i_input), '.gif'));
-        diff_fpath = strcat(diff_dir, strcat(int2str(i_input), '.gif'));
+    for batch_num = 1:n_inputs
+        rec_fpath = strcat(rec_dir, strcat(int2str(batch_num), '.gif'));
+        input_fpath = strcat(input_dir, strcat(int2str(batch_num), '.gif'));
+        diff_fpath = strcat(diff_dir, strcat(int2str(batch_num), '.gif'));
     
-        for i_fpath = 1:n_fpaths
+        for frame_num = 1:n_fpaths
             % read in the inputs and recon for this batch sample and video frame
-            rec_fpath = strcat(checkpoint_dir, rec_fpaths(i_fpath, 1).name);
-            input_fpath = strcat(checkpoint_dir, strcat(input_layer_name, int2str(i_fpath - 1), '_A.pvp'));
+            rec_fpath = strcat(checkpoint_dir, rec_fpaths(frame_num, 1).name);
+            input_fpath = strcat(checkpoint_dir, strcat(input_layer_name, int2str(frame_num - 1), '_A.pvp'));
             rec = readpvpfile(rec_fpath);
             inputs = readpvpfile(input_fpath);
-            rec = rec{i_input, 1}.values;
-            inputs = inputs{i_input, 1}.values;
+            rec = rec{batch_num, 1}.values;
+            inputs = inputs{batch_num, 1}.values;
 
             % go from x, y to y, x to save as images
             rec = transpose(rec);
@@ -82,7 +82,7 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
             
             % make a placeholder to aggregate frames from each batch sample
             % so we can scale them by statistics of all frames for that sample
-            if i_fpath == 1
+            if frame_num == 1
                 height = size(rec, 1);
                 width = size(rec, 2);
                 recs_agg = zeros(n_fpaths, height, width);
@@ -91,11 +91,11 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
             end
             
             % add to the placeholders
-            recs_agg(i_fpath, :, :) = rec;
-            inputs_agg(i_fpath, :, :) = inputs;
-            diffs_agg(i_fpath, :, :) = diff;
+            recs_agg(frame_num, :, :) = rec;
+            inputs_agg(frame_num, :, :) = inputs;
+            diffs_agg(frame_num, :, :) = diff;
             
-        end  % for i_fpath = 1:n_fpaths
+        end  % for frame_num = 1:n_fpaths
             
         % scale each sample
         recs_agg = (recs_agg - min(min(min(recs_agg)))) / (max(max(max(recs_agg))) - min(min(min(recs_agg))));
@@ -103,10 +103,10 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
         diffs_agg = (diffs_agg - min(min(min(diffs_agg)))) / (max(max(max(diffs_agg))) - min(min(min(diffs_agg))));
 
         % save each sample
-        for i_fpath = 1:n_fpaths
-            if i_fpath == 1
+        for frame_num = 1:n_fpaths
+            if frame_num == 1
                 imwrite(
-                    squeeze(inputs_agg(i_fpath, :, :)), 
+                    squeeze(inputs_agg(frame_num, :, :)), 
                     input_fpath, 
                     'gif', 
                     'writemode', 
@@ -117,7 +117,7 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
                     0.5
                 );
                 imwrite(
-                    squeeze(recs_agg(i_fpath, :, :)), 
+                    squeeze(recs_agg(frame_num, :, :)), 
                     rec_fpath, 
                     'gif', 
                     'writemode', 
@@ -128,7 +128,7 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
                     0.5
                 );
                 imwrite(
-                    squeeze(diffs_agg(i_fpath, :, :)), 
+                    squeeze(diffs_agg(frame_num, :, :)), 
                     diff_fpath, 
                     'gif', 
                     'writemode', 
@@ -141,7 +141,7 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
 
             else
                 imwrite(
-                    squeeze(inputs_agg(i_fpath, :, :)), 
+                    squeeze(inputs_agg(frame_num, :, :)), 
                     input_fpath, 
                     'gif', 
                     'writemode', 
@@ -150,7 +150,7 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
                     0.1
                 );
                 imwrite(
-                    squeeze(recs_agg(i_fpath, :, :)), 
+                    squeeze(recs_agg(frame_num, :, :)), 
                     rec_fpath, 
                     'gif', 
                     'writemode', 
@@ -159,7 +159,7 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
                     0.1
                 );
                 imwrite(
-                    squeeze(diffs_agg(i_fpath, :, :)), 
+                    squeeze(diffs_agg(frame_num, :, :)), 
                     diff_fpath, 
                     'gif', 
                     'writemode', 
@@ -169,6 +169,6 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
                 );
             end
 
-        end
+        end  % for frame_num = 1:n_fpaths
 
-    end  % for i_input = 1:n_inputs
+    end  % for batch_num = 1:n_inputs
