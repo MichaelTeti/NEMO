@@ -34,9 +34,10 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
         mkdir(save_dir);
     end
 
-    % make different dirs to save inputs and recons
+    % make different dirs to save inputs and recons and diffs
     rec_dir = strcat(save_dir, 'Recons/');
     input_dir = strcat(save_dir, 'Inputs/');
+    diff_dir = strcat(save_dir, 'Diffs/');
 
     if ~exist(rec_dir, 'dir')
         mkdir(rec_dir);
@@ -44,6 +45,10 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
 
     if ~exist(input_dir, 'dir')
         mkdir(input_dir);
+    end
+    
+    if ~exist(diff_dir, 'dir')
+        mkdir(diff_dir);
     end
 
     % find the fpaths with recons and inputs in checkpoint dir
@@ -55,34 +60,115 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
     input_layer_name = char(strsplit(rec_key, "*")(1, 1));
 
     for i_input = 1:n_inputs
+        rec_fpath = strcat(rec_dir, strcat(int2str(i_input), '.gif'));
+        input_fpath = strcat(input_dir, strcat(int2str(i_input), '.gif'));
+        diff_fpath = strcat(diff_dir, strcat(int2str(i_input), '.gif'));
+    
         for i_fpath = 1:n_fpaths
+            % read in the inputs and recon for this batch sample and video frame
             rec_fpath = strcat(checkpoint_dir, rec_fpaths(i_fpath, 1).name);
             input_fpath = strcat(checkpoint_dir, strcat(input_layer_name, int2str(i_fpath - 1), '_A.pvp'));
-
             rec = readpvpfile(rec_fpath);
-            input = readpvpfile(input_fpath);
-
+            inputs = readpvpfile(input_fpath);
             rec = rec{i_input, 1}.values;
-            input = input{i_input, 1}.values;
+            inputs = inputs{i_input, 1}.values;
 
+            % go from x, y to y, x to save as images
             rec = transpose(rec);
-            input = transpose(input);
+            inputs = transpose(inputs);
             
-            rec = (rec - min(min(min(rec)))) / (max(max(max(rec))) - min(min(min(rec))));
-            input = (input - min(min(min(input)))) / (max(max(max(input))) - min(min(min(input))));
-
-            rec_fpath = strcat(rec_dir, strcat(int2str(i_input), '.gif'));
-            input_fpath = strcat(input_dir, strcat(int2str(i_input), '.gif'));
-
+            % get the difference
+            diff = inputs - rec;
+            
+            % make a placeholder to aggregate frames from each batch sample
+            % so we can scale them by statistics of all frames for that sample
             if i_fpath == 1
-                imwrite(input, input_fpath, 'gif', 'writemode', 'overwrite', 'Loopcount', inf, 'DelayTime', 0.5);
-                imwrite(rec, rec_fpath, 'gif', 'writemode', 'overwrite', 'Loopcount', inf, 'DelayTime', 0.5);
+                height = size(rec, 1);
+                width = size(rec, 2);
+                recs_agg = zeros(n_fpaths, height, width);
+                inputs_agg = zeros(n_fpaths, height, width);
+                diffs_agg = zeros(n_fpaths, height, width);
+            end
+            
+            % add to the placeholders
+            recs_agg(i_fpath, :, :) = rec;
+            inputs_agg(i_fpath, :, :) = inputs;
+            diffs_agg(i_fpath, :, :) = diff;
+            
+        end  % for i_fpath = 1:n_fpaths
+            
+        % scale each sample
+        recs_agg = (recs_agg - min(min(min(recs_agg)))) / (max(max(max(recs_agg))) - min(min(min(recs_agg))));
+        inputs_agg = (inputs_agg - min(min(min(inputs_agg)))) / (max(max(max(inputs_agg))) - min(min(min(inputs_agg))));
+        diffs_agg = (diffs_agg - min(min(min(diffs_agg)))) / (max(max(max(diffs_agg))) - min(min(min(diffs_agg))));
+
+        % save each sample
+        for i_fpath = 1:n_fpaths
+            if i_fpath == 1
+                imwrite(
+                    squeeze(inputs_agg(i_fpath, :, :)), 
+                    input_fpath, 
+                    'gif', 
+                    'writemode', 
+                    'overwrite', 
+                    'Loopcount', 
+                    inf, 
+                    'DelayTime', 
+                    0.5
+                );
+                imwrite(
+                    squeeze(recs_agg(i_fpath, :, :)), 
+                    rec_fpath, 
+                    'gif', 
+                    'writemode', 
+                    'overwrite', 
+                    'Loopcount', 
+                    inf, 
+                    'DelayTime', 
+                    0.5
+                );
+                imwrite(
+                    squeeze(diffs_agg(i_fpath, :, :)), 
+                    diff_fpath, 
+                    'gif', 
+                    'writemode', 
+                    'overwrite', 
+                    'Loopcount', 
+                    inf, 
+                    'DelayTime', 
+                    0.5
+                );
 
             else
-                imwrite(input, input_fpath, 'gif', 'writemode', 'append', 'DelayTime', 0.1);
-                imwrite(rec, rec_fpath, 'gif', 'writemode', 'append', 'DelayTime', 0.1);
+                imwrite(
+                    squeeze(inputs_agg(i_fpath, :, :)), 
+                    input_fpath, 
+                    'gif', 
+                    'writemode', 
+                    'append', 
+                    'DelayTime', 
+                    0.1
+                );
+                imwrite(
+                    squeeze(recs_agg(i_fpath, :, :)), 
+                    rec_fpath, 
+                    'gif', 
+                    'writemode', 
+                    'append', 
+                    'DelayTime', 
+                    0.1
+                );
+                imwrite(
+                    squeeze(diffs_agg(i_fpath, :, :)), 
+                    diff_fpath, 
+                    'gif', 
+                    'writemode', 
+                    'append', 
+                    'DelayTime', 
+                    0.1
+                );
             end
 
         end
 
-    end
+    end  % for i_input = 1:n_inputs
