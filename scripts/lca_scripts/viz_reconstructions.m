@@ -34,10 +34,9 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
         mkdir(save_dir);
     end
 
-    % make different dirs to save inputs and recons and diffs
+    % make different dirs to save inputs and recons
     rec_dir = strcat(save_dir, 'Recons/');
     input_dir = strcat(save_dir, 'Inputs/');
-    diff_dir = strcat(save_dir, 'Diffs/');
 
     if ~exist(rec_dir, 'dir')
         mkdir(rec_dir);
@@ -45,10 +44,6 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
 
     if ~exist(input_dir, 'dir')
         mkdir(input_dir);
-    end
-    
-    if ~exist(diff_dir, 'dir')
-        mkdir(diff_dir);
     end
 
     % find the fpaths with recons and inputs in checkpoint dir
@@ -59,39 +54,32 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
     % get the input layer name 
     input_layer_name = char(strsplit(rec_key, "*")(1, 1));
 
-    for i_input = 1:n_inputs  % loop over batch
-        for i_fpath = 1:n_fpaths  % loop over frames in time for a single batch sample
+    for i_input = 1:n_inputs
+        for i_fpath = 1:n_fpaths
             rec_fpath = strcat(checkpoint_dir, rec_fpaths(i_fpath, 1).name);
             input_fpath = strcat(checkpoint_dir, strcat(input_layer_name, int2str(i_fpath - 1), '_A.pvp'));
 
-            % read in the recons and the inputs
             rec = readpvpfile(rec_fpath);
-            inputs = readpvpfile(input_fpath);
+            input = readpvpfile(input_fpath);
+
             rec = rec{i_input, 1}.values;
-            inputs = inputs{i_input, 1}.values;
+            input = input{i_input, 1}.values;
+
+            rec = transpose(rec);
+            input = transpose(input);
             
-            % need to go from x, y to y, x to save images
-            if size(size(rec), 2) == 2  % grayscale
-                rec = transpose(rec);
-                inputs = transpose(inputs);
-            elseif size(size(rec), 2) == 3  % color
-                rec = permute(rec, [2, 1, 3]);
-                inputs = permute(inputs, [2, 1, 3]);
-            end
-            
-            % scale 
             rec = (rec - min(min(min(rec)))) / (max(max(max(rec))) - min(min(min(rec))));
-            inputs = (inputs - min(min(min(inputs)))) / (max(max(max(inputs))) - min(min(min(inputs))));
+            input = (input - min(min(min(input)))) / (max(max(max(input))) - min(min(min(input))));
 
             rec_fpath = strcat(rec_dir, strcat(int2str(i_input), '.gif'));
             input_fpath = strcat(input_dir, strcat(int2str(i_input), '.gif'));
 
             if i_fpath == 1
-                imwrite(inputs, input_fpath, 'gif', 'writemode', 'overwrite', 'Loopcount', inf, 'DelayTime', 0.5);
+                imwrite(input, input_fpath, 'gif', 'writemode', 'overwrite', 'Loopcount', inf, 'DelayTime', 0.5);
                 imwrite(rec, rec_fpath, 'gif', 'writemode', 'overwrite', 'Loopcount', inf, 'DelayTime', 0.5);
 
             else
-                imwrite(inputs, input_fpath, 'gif', 'writemode', 'append', 'DelayTime', 0.1);
+                imwrite(input, input_fpath, 'gif', 'writemode', 'append', 'DelayTime', 0.1);
                 imwrite(rec, rec_fpath, 'gif', 'writemode', 'append', 'DelayTime', 0.1);
             end
 
