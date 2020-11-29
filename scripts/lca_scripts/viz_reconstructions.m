@@ -68,13 +68,13 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
             rec = readpvpfile(rec_fpath);
             inputs = readpvpfile(input_fpath);
             rec = rec{i_input, 1}.values;
-            inputs = input{i_input, 1}.values;
+            inputs = inputs{i_input, 1}.values;
 
             size(rec)
             size(inputs)
             
             rec = transpose(rec);
-            inputs = transpose(input);
+            inputs = transpose(inputs);
             
             % scale 
             rec = (rec - min(min(min(rec)))) / (max(max(max(rec))) - min(min(min(rec))));
