@@ -69,12 +69,15 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
             inputs = readpvpfile(input_fpath);
             rec = rec{i_input, 1}.values;
             inputs = inputs{i_input, 1}.values;
-
-            size(rec)
-            size(inputs)
             
-            rec = transpose(rec);
-            inputs = transpose(inputs);
+            % need to go from x, y to y, x to save images
+            if size(size(rec), 2) == 2  % grayscale
+                rec = transpose(rec);
+                inputs = transpose(inputs);
+            elseif size(size(rec), 2) == 3  % color
+                rec = permute(rec, [2, 1, 3]);
+                inputs = permute(inputs, [2, 1, 3]);
+            end
             
             % scale 
             rec = (rec - min(min(min(rec)))) / (max(max(max(rec))) - min(min(min(rec))));
