@@ -1,4 +1,4 @@
-function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
+function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key, input_key)
     %{
         Reads in inputs and reconstructions from a checkpoint and writes them out.
          
@@ -9,6 +9,7 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
             save_dir: The directory where the inputs and recons will be saved in separate
                 subdirectories.
             rec_key: The key used to find the recon .pvp files (e.g. Frame*Recon_A.pvp). 
+            input_key: The key used to find the input .pvp files (e.g. Frame*_A.pvp).
     %}
 
     addpath(openpv_path);
@@ -53,11 +54,9 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
 
     % find the fpaths with recons and inputs in checkpoint dir
     rec_fpaths = dir(strcat(checkpoint_dir, rec_key));
+    input_fpaths = dir(strcat(checkpoint_dir, input_key));
     n_inputs = size(readpvpfile(strcat(checkpoint_dir, rec_fpaths(1, 1).name)), 1);
     n_fpaths = numel(rec_fpaths);
-
-    % get the input layer name 
-    input_layer_name = char(strsplit(rec_key, "*")(1, 1));
 
     for batch_num = 1:n_inputs
         rec_fpath_save = strcat(rec_dir, strcat(int2str(batch_num), '.gif'));
@@ -67,7 +66,7 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key)
         for frame_num = 1:n_fpaths
             % read in the inputs and recon for this batch sample and video frame
             rec_fpath = strcat(checkpoint_dir, rec_fpaths(frame_num, 1).name);
-            input_fpath = strcat(checkpoint_dir, strcat(input_layer_name, int2str(frame_num - 1), '_A.pvp'));
+            input_fpath = strcat(checkpoint_dir, input_fpaths(frame_num, 1).name);
             rec = readpvpfile(rec_fpath);
             inputs = readpvpfile(input_fpath);
             rec = rec{batch_num, 1}.values;
