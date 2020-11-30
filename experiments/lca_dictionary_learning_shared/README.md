@@ -1,6 +1,7 @@
 Here, we use LCA to learn a dictionary of features with convolutional sparse coding. 
 
 # Training 
+## Creating Input Fpath Lists
 First, it is necessary to create .txt files with the file paths of the video frames the LCA model will be 
 trained on in order. To do this, we use the 
 [make_image_fpath_list.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/lca_scripts/make_image_fpath_list.py) 
