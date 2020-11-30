@@ -69,7 +69,7 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key, inp
         for frame_num = 1:n_fpaths
             % read in the inputs and recon for this batch sample and video frame
             rec_fpath = strcat(checkpoint_dir, rec_fpaths(frame_num, 1).name);
-            input_fpath = strcat(checkpoint_dir, input_layer_name, num2str(frame_num), input_layer_ending);
+            input_fpath = strcat(checkpoint_dir, input_layer_name, num2str(frame_num - 1), input_layer_ending);
             rec = readpvpfile(rec_fpath);
             inputs = readpvpfile(input_fpath);
             rec = rec{batch_num, 1}.values;
