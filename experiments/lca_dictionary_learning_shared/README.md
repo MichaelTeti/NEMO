@@ -4,7 +4,7 @@ Here, we use LCA to learn a dictionary of features with convolutional sparse cod
 First, it is necessary to create .txt files with the file paths of the video frames the LCA model will be 
 trained on in order. To do this, we use the 
 [make_image_fpath_list.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/lca_scripts/make_image_fpath_list.py) 
-script. First, move to the [lca_scripts](https://github.com/MichaelTeti/NEMO/tree/main/scripts/lca_scripts) directory (```cd ../../scripts/lca_scripts/```, then use the following command:
+script. First, move to the [lca_scripts](https://github.com/MichaelTeti/NEMO/tree/main/scripts/lca_scripts) directory (```cd ../../scripts/lca_scripts/```), then use the following command:
 ```
 python3 make_image_fpath_list.py \
     ../../data/ILSVRC2015/Data/VID/train/ \
