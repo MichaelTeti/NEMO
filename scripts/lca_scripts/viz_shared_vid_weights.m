@@ -21,8 +21,7 @@ function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '
 
     % check if the checkpoint path given exists
     if ~exist(checkpoint_path, 'dir')
-       printf('Directory given to VizSharedWeights does not exist.')
-       return
+       error('Directory given to VizSharedWeights does not exist.');
     end
 
     % add forward-slash to ckpt dir if not there
@@ -38,6 +37,12 @@ function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '
     % if you want the features sorted by mean activation, we need to
     % read in the activity file and get the sorted indices based on activation
     if sorted
+
+        % check if the activity file exists
+        if ~exist(act_path)
+            error('act_path does not exist.');
+        end
+
         [~, ~, act_inds_sorted] = get_mean_acts(openpv_path, act_path)
     end
 
