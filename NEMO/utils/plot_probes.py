@@ -32,6 +32,8 @@ def errorbar_plot(data, errorbars, fpath, xlabel = None, ylabel = None):
 
 
 def plot_l2(ckpt_dir, save_dir, key, display_period = 3000, n_display_periods = None):
+    os.makedirs(save_dir, exist_ok = True)
+
     fpaths = glob(os.path.join(ckpt_dir, key))
     l2_min = []
     
@@ -65,6 +67,8 @@ def plot_l2(ckpt_dir, save_dir, key, display_period = 3000, n_display_periods = 
     
     
 def plot_energy(ckpt_dir, save_dir, key, display_period = 3000, n_display_periods = None):
+    os.makedirs(save_dir, exist_ok = True)
+    
     energy_fpaths = glob(os.path.join(ckpt_dir, key))
     energy_min = []
 
@@ -99,6 +103,8 @@ def plot_energy(ckpt_dir, save_dir, key, display_period = 3000, n_display_period
         
         
 def plot_firm_thresh(ckpt_dir, save_dir, key, display_period = 3000, n_display_periods = None):
+    os.makedirs(save_dir, exist_ok = True)
+
     fpaths = glob(os.path.join(ckpt_dir, key))
     firm_thresh_min = []
     
@@ -132,6 +138,8 @@ def plot_firm_thresh(ckpt_dir, save_dir, key, display_period = 3000, n_display_p
 
 
 def plot_adaptive_timescales(ckpt_dir, save_dir, key, display_period = 3000, n_display_periods = None):
+    os.makedirs(save_dir, exist_ok = True)
+
     timescales_paths = glob(os.path.join(ckpt_dir, key))
 
     for fpath in timescales_paths:
