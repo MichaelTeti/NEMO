@@ -58,7 +58,7 @@ function viz_shared_vid_weights(checkpoint_path, save_path, key = '',
         w = permute(w, [2, 1, 3, 4]);
 
         % if sorting is desired, sort features by mean activation descending
-        if sorted
+        if sorted_feats
             w = w(:, :, :, act_inds_sorted)
         end
 
