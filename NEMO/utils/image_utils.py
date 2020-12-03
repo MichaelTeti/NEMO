@@ -1,11 +1,7 @@
 import os
 from random import randint
 
-from cv2 import (
-    imread,
-    imwrite,
-    resize
-)
+import cv2
 import numpy as np
 
 
@@ -49,7 +45,7 @@ def resize_and_keep_aspect(img, desired_height, desired_width):
         else:
             img = img[:, crop_width // 2:w - crop_width // 2]
 
-    img_resized = resize(img, (desired_width, desired_height))
+    img_resized = cv2.resize(img, (desired_width, desired_height))
     return img_resized
 
 
@@ -114,15 +110,16 @@ def save_vid_array_as_frames(vid_arrays_and_save_dirs):
         fnames = [fname + '.png' for fname in get_img_frame_names(n_frames)]
         fpaths = [os.path.join(save_dir, fname) for fname in fnames]
         for i_frame, (frame, fpath) in enumerate(zip(vid_array, fpaths)):
-            imwrite(fpath, np.uint8(frame))
+            cv2.imwrite(fpath, np.uint8(frame))
 
 
-def read_frames(dir, return_type = 'array'):
+def read_frames(dir, return_type = 'array', gray = False):
     '''
     Traverse a directory structure, reading in all images along the way and returning as list or np.ndarray.
     Args:
         dir (str): Directory to start at.
         return_type ('array' or 'list'): Data structure to return the video frames as.
+        gray (bool): If true, return grayscale frames.
     Returns:
         Video frames.
     '''
@@ -131,8 +128,12 @@ def read_frames(dir, return_type = 'array'):
     for root, dirs, files in os.walk(dir):
         files.sort()
         for file in files:
-            if file.split('.')[1] in ['jpeg', 'jpg', 'JPG', 'JPEG', 'PNG', 'png']:
-                frames.append(imread(os.path.join(root, file)))
+            if os.path.splitext(file)[1] in ['.jpeg', '.jpg', '.JPG', '.JPEG', '.PNG', '.png']:
+                frame = cv2.imread(os.path.join(root, file))
+                if gray:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+                frames.append(frame)
             else:
                 raise NotImplementedError('read_frames only implemented for JPEG or PNG images.')
 
