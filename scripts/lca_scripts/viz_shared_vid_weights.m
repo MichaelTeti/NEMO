@@ -1,10 +1,9 @@
-function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '',
+function viz_shared_vid_weights(checkpoint_path, save_path, key = '',
     clip_frame_0 = false, sorted = false, act_path = '')
     %{ 
         Script to display PetaVision features and save them as an image or .gif.
     
         Args:
-            openpv_path: Path to OpenPV/mlab/util.
             checkpoint_path: The path to the checkpoint with the features to visualize.
             save_path: The file path to the saved .gif (e.g. "features.gif").
             key: A key to differentiate the weight files you want to visualize.
@@ -16,8 +15,6 @@ function viz_shared_vid_weights(openpv_path, checkpoint_path, save_path, key = '
             act_path: Path to the model's feature maps in the checkpoint that will
                 be used to sort the features in descending order if sorted is true.
     %}
-
-    addpath(openpv_path)
 
     % check if the checkpoint path given exists
     if ~exist(checkpoint_path, 'dir')
