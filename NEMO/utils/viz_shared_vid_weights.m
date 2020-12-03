@@ -40,7 +40,7 @@ function viz_shared_vid_weights(checkpoint_path, save_path, key = '',
             error('act_path does not exist.');
         end
 
-        [~, ~, act_inds_sorted] = get_mean_acts(act_path)
+        [~, ~, act_inds_sorted] = get_mean_acts(act_path);
     end
 
     % find the file paths in the checkpoint dir by the key
@@ -59,7 +59,7 @@ function viz_shared_vid_weights(checkpoint_path, save_path, key = '',
 
         % if sorting is desired, sort features by mean activation descending
         if sorted_feats
-            w = w(:, :, :, act_inds_sorted)
+            w = w(:, :, :, act_inds_sorted);
         end
 
         % initialize a grid to place the features in if first file read in
