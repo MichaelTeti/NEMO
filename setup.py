@@ -22,6 +22,7 @@ setup(
         'urllib3',
         'chardet',
         'idna',
-        'jinja2<2.12.0'
+        'jinja2<2.12.0',
+        'oct2py'
     ]
 )
