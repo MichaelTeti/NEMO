@@ -1,9 +1,8 @@
-function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key, input_key)
+function viz_reconstructions(checkpoint_dir, save_dir, rec_key, input_key)
     %{
         Reads in inputs and reconstructions from a checkpoint and writes them out.
          
         Args:
-            openpv_path: The path to OpenPV/mlab/util.
             checkpoint_dir: The path to the checkpoint directory where the input and 
                 recon .pvp files are. 
             save_dir: The directory where the inputs and recons will be saved in separate
@@ -11,8 +10,6 @@ function viz_reconstructions(openpv_path, checkpoint_dir, save_dir, rec_key, inp
             rec_key: The key used to find the recon .pvp files (e.g. Frame*Recon_A.pvp). 
             input_key: The key used to find the input .pvp files (e.g. Frame*_A.pvp).
     %}
-
-    addpath(openpv_path);
 
     % check if the checkpoint dir given exists
     if ~exist(checkpoint_dir, 'dir')
