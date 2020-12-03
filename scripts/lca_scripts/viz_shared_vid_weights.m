@@ -1,5 +1,5 @@
 function viz_shared_vid_weights(checkpoint_path, save_path, key = '',
-    clip_frame_0 = false, sorted = false, act_path = '')
+    clip_frame_0 = false, sorted_feats = false, act_path = '')
     %{ 
         Script to display PetaVision features and save them as an image or .gif.
     
@@ -10,7 +10,7 @@ function viz_shared_vid_weights(checkpoint_path, save_path, key = '',
             clip_frame_0: If true, will clip frame zero's values to the min/max of the 
                 subsequent frames. This is mainly used in the early parts of training 
                 because every frame after zero is initialized with zeros. 
-            sorted: If true, will sort the features in the grid (descending) by mean 
+            sorted_feats: If true, will sort the features in the grid (descending) by mean 
                 activation.
             act_path: Path to the model's feature maps in the checkpoint that will
                 be used to sort the features in descending order if sorted is true.
@@ -33,14 +33,14 @@ function viz_shared_vid_weights(checkpoint_path, save_path, key = '',
 
     % if you want the features sorted by mean activation, we need to
     % read in the activity file and get the sorted indices based on activation
-    if sorted
+    if sorted_feats
 
         % check if the activity file exists
         if ~exist(act_path)
             error('act_path does not exist.');
         end
 
-        [~, ~, act_inds_sorted] = get_mean_acts(openpv_path, act_path)
+        [~, ~, act_inds_sorted] = get_mean_acts(act_path)
     end
 
     % find the file paths in the checkpoint dir by the key
