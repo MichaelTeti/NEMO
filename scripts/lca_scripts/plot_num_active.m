@@ -1,15 +1,11 @@
-function plot_num_active(openpv_fpath, fpath)
+function plot_num_active(fpath)
     %{
         Reads in the .pvp file output by the model layer and computes 
         the number of neurons active over the display periods.
         
         Args:
-            openpv_fpath: Path to the OpenPV/mlab/util directory.
             fpath: The path to the <model_layer_name>.pvp file.
     %}
-    
-    % add this to use the openpv matlab utilities for reading .pvp files
-    addpath(openpv_fpath);
 
     % check if the file exists
     if ~exist(fpath, 'file')
