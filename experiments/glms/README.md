@@ -57,9 +57,9 @@ python3 elastic_net.py \
     --write_rf_images \
     --n_jobs 50 \
     --max_iter 6000 \
-    --n_alphas 100 \
+    --n_alphas 35 \
     --write_mse_plots \
-    --min_l1_ratio 1e-4 \
-    --max_l1_ratio 1.0 \
+    --min_l1_ratio 0.2 \
+    --max_l1_ratio 0.8 \
     --n_l1_ratios 4
 ```
