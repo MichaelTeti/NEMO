@@ -124,6 +124,7 @@ l1_ratios = np.linspace(args.min_l1_ratio, args.max_l1_ratio, args.n_l1_ratios)
 print('[INFO] L1 RATIOS: {}'.format(l1_ratios))
 
 for fpath in ProgressBar()(trace_fpaths):
+    # pull cell ID from filename for later saving of results
     cell_id = os.path.splitext(os.path.split(fpath)[1])[0]
 
     # read in the traces 
