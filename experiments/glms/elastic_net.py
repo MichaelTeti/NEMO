@@ -10,7 +10,7 @@ from progressbar import ProgressBar
 from sklearn.linear_model import ElasticNetCV as ElasticNet
 
 from NEMO.utils.image_utils import read_frames, max_min_scale
-from NEMO.utils.model_utils import create_temporal_design_mat
+from NEMO.utils.model_utils import create_temporal_design_mat, save_args
 
 
 parser = ArgumentParser()
@@ -26,9 +26,9 @@ parser.add_argument(
     help = 'Path to the stimulus templates corresponding to the trace_dir.'
 )
 parser.add_argument(
-    'h5_save_fpath',
+    'save_dir',
     type = str,
-    help = 'Filepath ending in .h5 to save the receptive fields in.'
+    help = 'Directory to save results in.' 
 )
 parser.add_argument(
     '--write_rf_images',
@@ -36,11 +36,10 @@ parser.add_argument(
     help = 'If specified, write the receptive fields out as images/.gifs.'
 )
 parser.add_argument(
-    '--rf_image_save_dir',
-    type = str,
-    help = 'The directory where the receptive fields will be saved as images/.gifs.'
+    '--write_mse_plots',
+    action = 'store_true',
+    help = 'If specified, write the mse grid path as a plot.'
 )
-
 model_args = parser.add_argument_group(
     'model parameters',
     description = 'Parameter settings for the model and cross-validation.'
@@ -87,29 +86,23 @@ model_args.add_argument(
     default = 6,
     help = 'The number of l1_ratios to try in the range [min_l1_ratio, max_l1_ratio].'
 )
-model_args.add_argument(
-    '--write_mse_plots',
-    action = 'store_true',
-    help = 'Plot cv mse vs alpha (aka lambda).'
-)
-model_args.add_argument(
-    '--mse_plot_save_dir',
-    type = str,
-    help = 'Where to save cv mse plots.'
-)
 
 args = parser.parse_args()
 
-# check if save dirs are given and make sure they exist / create them if they don't
+# make sure the save_dir exists or create it
+os.makedirs(args.save_dir, exist_ok = True)
+
+# save the args in the save_dir
+save_args(args, args.save_dir)
+
+# check if save dirs they exist / create them if they don't
 if args.write_rf_images:
-    assert(args.rf_image_save_dir is not None), \
-        'rf_image_save_dir needs to be specified if write_rf_images is specified.'
-    os.makedirs(args.rf_image_save_dir, exist_ok = True)
+    rf_img_dir = os.path.join(args.save_dir, 'ReceptiveFieldImages')
+    os.makedirs(rf_img_dir, exist_ok = True)
 
 if args.write_mse_plots:
-    assert(args.mse_plot_save_dir is not None), \
-        'mse_plot_save_dir must be specified if write_mse_plots is specified.'
-    os.makedirs(args.mse_plot_save_dir, exist_ok = True)
+    mse_plot_dir = os.path.join(args.save_dir, 'MSEPathPlots')
+    os.makedirs(mse_plot_dir, exist_ok = True)
 
 
 # get a list of all cell traces in trace_dir
@@ -117,8 +110,6 @@ trace_fpaths = [os.path.join(args.trace_dir, f) for f in os.listdir(args.trace_d
 
 assert(all([os.path.splitext(fpath)[1] == '.txt' for fpath in trace_fpaths])), \
     'All files in trace_dir must be .txt files made by the get_trial_averaged_responses.py script.'
-assert(os.path.splitext(args.h5_save_fpath)[1] == '.h5'), \
-    'h5_save_fpath must have an extension of .h5'
 
 # get array of stimulus frames
 stimulus = read_frames(args.stimulus_dir, gray = True)
@@ -127,6 +118,10 @@ stimulus = stimulus.reshape([n_samples, -1])
 
 # create the temporal design mat
 design_mat = create_temporal_design_mat(stimulus, n_frames_in_time = args.n_frames_in_time)
+
+# create list of l1_ratios to try
+l1_ratios = np.linspace(args.min_l1_ratio, args.max_l1_ratio, args.n_l1_ratios)
+print('[INFO] L1 RATIOS: {}'.format(l1_ratios))
 
 for fpath in ProgressBar()(trace_fpaths):
     cell_id = os.path.splitext(os.path.split(fpath)[1])[0]
@@ -146,8 +141,6 @@ for fpath in ProgressBar()(trace_fpaths):
     design_mat = (design_mat - mean_vec) / std_vec
 
     # initialize model
-    l1_ratios = np.linspace(args.min_l1_ratio, args.max_l1_ratio, args.n_l1_ratios)
-    print('[INFO] L1 RATIOS: {}'.format(l1_ratios))
     elastic_net = ElasticNet(
         l1_ratio = l1_ratios,
         n_alphas = args.n_alphas,
@@ -161,7 +154,7 @@ for fpath in ProgressBar()(trace_fpaths):
 
     # fit model and get params
     elastic_net.fit(design_mat, traces)
-    strf = max_min_scale(elastic_net.coef_) * 255
+    strf = elastic_net.coef_
 
     # get the mse across folds, alphas, and lambdas
     if args.write_mse_plots:
@@ -181,20 +174,20 @@ for fpath in ProgressBar()(trace_fpaths):
         plt.xscale('log')
         plt.legend(title = 'alpha')
         plt.savefig(
-            os.path.join(args.mse_plot_save_dir, cell_id + '.png'),
+            os.path.join(mse_plot_dir, cell_id + '.png'),
             bbox_inches = 'tight'
         )
         plt.close() 
     
-    # save the rf
-    with h5py.File(args.h5_save_fpath, 'a') as f:
+    # save the rf in an .h5 file where all will be saved
+    with h5py.File(os.path.join(args.save_dir, 'rfs.h5'), 'a') as f:
         if cell_id not in list(f.keys()):
             f.create_dataset(cell_id, data = strf)    
 
     # write out the image if specified
     if args.write_rf_images:
-        strf = np.uint8(strf)
+        strf = np.uint8(max_min_scale(strf) * 255)
         imageio.mimwrite(
-            os.path.join(args.rf_image_save_dir, cell_id + '.gif'),
+            os.path.join(rf_img_dir, cell_id + '.gif'),
             [strf[i*(h*w):(i+1)*(h*w)].reshape([h, w]) for i in range(args.n_frames_in_time)]
         )
