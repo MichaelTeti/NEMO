@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import json
 import os, sys
 
 import h5py
@@ -10,6 +11,11 @@ from torch.utils.data import Dataset
 
 from NEMO.utils.general_utils import read_csv
 
+
+def save_args(args, save_dir):
+    arg_dict = vars(args)
+    with open(os.path.join(save_dir, 'args.txt'), 'w') as fp:
+        json.dump(arg_dict, fp, sort_keys = True, indent = 4)
 
 
 def create_temporal_design_mat(vid_frames_flattened, n_frames_in_time = 9):
