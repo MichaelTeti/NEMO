@@ -5,10 +5,42 @@ import h5py
 from imageio import imread
 import numpy as np
 import torch
-from torchvision import transforms, utils
+#from torchvision import transforms, utils
 from torch.utils.data import Dataset
 
 from NEMO.utils.general_utils import read_csv
+
+
+
+def create_temporal_design_mat(vid_frames_flattened, n_frames_in_time = 9):
+    n_frames, n_dims = vid_frames_flattened.shape
+    cat_list = [vid_frames_flattened[i:n_frames - (n_frames_in_time - i - 1)] for i in range(n_frames_in_time)] 
+    design_mat = np.concatenate(cat_list, axis = 1)
+
+    assert(design_mat.shape[1] == n_dims * n_frames_in_time), \
+        'number of features in design mat does not match with original dimensions.' 
+
+    return design_mat
+        
+
+
+def shuffle_data(self, preds, responses):
+    '''
+    Shuffles the rows of the design matrix and the responses. 
+
+    Args:
+        preds (np.ndarray): The N x M dimensional design matrix with N samples and M predictors.
+        responses (np.ndarray): The N-dimensional response vector corresponding to preds. 
+
+    Returns:
+        preds_shuffled (np.ndarray): The N x M dimensional design matrix with permuted rows. 
+        responses_shuffled (np.ndarray): The N-dimensional response vector with permuted values matching 
+            preds_shuffled. 
+    '''
+
+    data = np.concatenate((preds, responses[:, None]), 1)
+    np.random.shuffle(data)
+    return data[:, :-1], data[:, -1]
 
 
 class NeuralResponseDataset(Dataset):
