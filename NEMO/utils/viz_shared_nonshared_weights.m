@@ -1,4 +1,4 @@
-function viz_shared_nonshared_weights(checkpoint_path, save_dir, nx, ny, key = '', sorted = false, act_path = '')
+function viz_shared_nonshared_weights(checkpoint_path, save_dir, nx, ny, key = '')
     % make sure key has asterisks (*) where appropriate if needed
 
     addpath('/home/mteti/OpenPV/mlab/util');
@@ -26,10 +26,6 @@ function viz_shared_nonshared_weights(checkpoint_path, save_dir, nx, ny, key = '
         key = strcat(key, '_W.pvp');
     end
 
-    if sorted
-        [~, ~, act_inds_sorted] = get_mean_acts(act_path)
-    end
-
     fpaths = dir(strcat(checkpoint_path, key));
     n_fpaths = numel(fpaths);
 
@@ -37,10 +33,6 @@ function viz_shared_nonshared_weights(checkpoint_path, save_dir, nx, ny, key = '
         fpath = strcat(checkpoint_path, fpaths(i_fpath, 1).name);
         w = readpvpfile(fpath);
         w = w{1, 1}.values{1, 1};
-
-        if sorted
-            w = w(:, :, :, act_inds_sorted)
-        end
 
         nxp = size(w, 1); nyp = size(w, 2); nfp = size(w, 3); nf = size(w, 4) / nx / ny;
         grid_x = nx * nxp; grid_y = ny * nyp;
