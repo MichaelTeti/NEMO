@@ -6,8 +6,7 @@ predicted responses and the second term is the reguralization term, weighted by 
 term consists of both a ridge (L2) and lasso (L1) penalty on the coefficients, where alpha (called l1_ratio in sklearn's implementation) determines the tradeoff
 between the two. If alpha was 0 you would have ridge regression, and if it was 1, you would have lasso regression. Since elasticnet has the L1 penalty (assuming 
 alpha was not 0) a procedure called coordinate descent is used to minimize the objective, as opposed to gradient descent which could be used in ridge regression. 
-One of the main differences between coordinate descent and gradient descent is that the parameters are updated one at a time while all others are held constant
-in the latter (to see an implementation of the update rule, check out [this notebook](https://github.com/MichaelTeti/CAP5625/blob/main/CAP5625_Assignment2_ElasticNet_CoordinateDescent.ipynb)).  
+One of the main differences between coordinate descent and gradient descent is that the parameters are updated one at a time while all others are held constant (to see an implementation of elastic net from scratch, check out [this notebook](https://github.com/MichaelTeti/CAP5625/blob/main/CAP5625_Assignment2_ElasticNet_CoordinateDescent.ipynb)).  
 The elastic_net.py script has the following arguments:
 ```
 usage: elastic_net.py [-h] [--write_rf_images] [--write_mse_plots]
