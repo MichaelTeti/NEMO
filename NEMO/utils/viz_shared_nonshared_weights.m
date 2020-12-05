@@ -44,13 +44,13 @@ function viz_shared_nonshared_weights(checkpoint_path, save_dir, nx, ny, key = '
                 for j = 1:nx
                     patch = w(:, :, :, f, i, j);
 
-                    if ndims(patch) == 2
-                        patch = patch - min(min(patch));
-                        patch = patch / (max(max(patch)) + 1e-6);
-                    elseif ndims(patch) == 3 & size(patch, 3) == 3
-                        patch = patch - min(min(min(patch)));
-                        patch = patch / (max(max(max(patch))) + 1e-6);
-                    end
+%                    if ndims(patch) == 2
+%                        patch = patch - min(min(patch));
+%                        patch = patch / (max(max(patch)) + 1e-6);
+%                    elseif ndims(patch) == 3 & size(patch, 3) == 3
+%                        patch = patch - min(min(min(patch)));
+%                        patch = patch / (max(max(max(patch))) + 1e-6);
+%                    end
 
                     grid((i-1) * nyp + 1: i * nyp, (j-1) * nxp + 1 : j * nxp, :) = patch;
                     
@@ -58,7 +58,7 @@ function viz_shared_nonshared_weights(checkpoint_path, save_dir, nx, ny, key = '
             end  % for i = 1:grid_dim
             
             % linearly scale the values to the range [0, 1]
-            % grid = (grid - min(min(min(grid)))) / (max(max(max(grid))) - min(min(min(grid))));
+            grid = (grid - min(min(min(grid)))) / (max(max(max(grid))) - min(min(min(grid))));
             
             % write out the grid for that feature
             if n_fpaths == 1
