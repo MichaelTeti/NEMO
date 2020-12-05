@@ -1,8 +1,6 @@
 function viz_shared_nonshared_weights(checkpoint_path, save_dir, nx, ny, key = '')
     % make sure key has asterisks (*) where appropriate if needed
 
-    addpath('/home/mteti/OpenPV/mlab/util');
-
     if ~exist(checkpoint_path, 'dir')
        printf('Directory given to VizSharedWeights does not exist.')
        return
