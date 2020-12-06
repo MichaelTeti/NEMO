@@ -18,14 +18,10 @@ def save_args(args, save_dir):
         json.dump(arg_dict, fp, sort_keys = True, indent = 4)
 
 
-def create_temporal_design_mat(vid_frames_flattened, n_frames_in_time = 9):
-    n_frames, n_dims = vid_frames_flattened.shape
-    cat_list = [vid_frames_flattened[i:n_frames - (n_frames_in_time - i - 1)] for i in range(n_frames_in_time)] 
-    design_mat = np.concatenate(cat_list, axis = 1)
-
-    assert(design_mat.shape[1] == n_dims * n_frames_in_time), \
-        'number of features in design mat does not match with original dimensions.' 
-
+def create_temporal_design_mat(vid_frame_array, n_frames_in_time = 9):
+    n_frames, h, w = vid_frame_array.shape
+    cat_list = [vid_frame_array[i:n_frames - (n_frames_in_time - i - 1)][..., None] for i in range(n_frames_in_time)] 
+    design_mat = np.concatenate(cat_list, axis = 3)
     return design_mat
         
 
