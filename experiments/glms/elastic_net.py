@@ -113,11 +113,12 @@ assert(all([os.path.splitext(fpath)[1] == '.txt' for fpath in trace_fpaths])), \
 
 # get array of stimulus frames
 stimulus = read_frames(args.stimulus_dir, gray = True)
-n_samples, h, w = stimulus.shape
-stimulus = stimulus.reshape([n_samples, -1])
+_, h, w = stimulus.shape
 
 # create the temporal design mat
 design_mat = create_temporal_design_mat(stimulus, n_frames_in_time = args.n_frames_in_time)
+n_samples = design_mat.shape[0]
+design_mat = design_mat.reshape([n_samples, -1])
 
 # create list of l1_ratios to try
 l1_ratios = np.linspace(args.min_l1_ratio, args.max_l1_ratio, args.n_l1_ratios)
@@ -157,6 +158,9 @@ for fpath in ProgressBar()(trace_fpaths):
     elastic_net.fit(design_mat, traces)
     strf = elastic_net.coef_
 
+    # reshape the strs back to height x width
+    strf = strf.reshape([h, w, args.n_frames_in_time])
+
     # get the mse across folds, alphas, and lambdas
     if args.write_mse_plots:
         mse_path = elastic_net.mse_path_
@@ -181,7 +185,7 @@ for fpath in ProgressBar()(trace_fpaths):
         plt.close() 
     
     # save the rf in an .h5 file where all will be saved
-    with h5py.File(os.path.join(args.save_dir, 'rfs.h5'), 'a') as f:
+    with h5py.File(os.path.join(args.save_dir, 'strfs.h5'), 'a') as f:
         if cell_id not in list(f.keys()):
             f.create_dataset(cell_id, data = strf)    
 
@@ -190,5 +194,5 @@ for fpath in ProgressBar()(trace_fpaths):
         strf = np.uint8(max_min_scale(strf) * 255)
         imageio.mimwrite(
             os.path.join(rf_img_dir, cell_id + '.gif'),
-            [strf[i*(h*w):(i+1)*(h*w)].reshape([h, w]) for i in range(args.n_frames_in_time)]
+            [strf[..., i] for i in range(args.n_frames_in_time)]
         )
