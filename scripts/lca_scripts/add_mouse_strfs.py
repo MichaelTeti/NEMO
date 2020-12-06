@@ -51,7 +51,7 @@ with h5py.File(args.mouse_rf_fpath, 'r') as h5file:
         
         if cell_num == 0:
             h, w, n_frames = strf.shape
-            mouse_strfs = np.zeros([w, h, n_frames, n_cells])
+            mouse_strfs = np.zeros([w, h, n_frames, n_cells], dtype = np.float64)
             
         mouse_strfs[..., cell_num] = strf.transpose([1, 0, 2])
 
