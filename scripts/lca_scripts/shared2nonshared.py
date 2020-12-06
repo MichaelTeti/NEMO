@@ -2,7 +2,9 @@ from argparse import ArgumentParser
 from glob import glob
 import os
 
+import numpy as np
 from oct2py import octave
+from progressbar import ProgressBar
 
 parser = ArgumentParser()
 parser.add_argument(
@@ -11,14 +13,14 @@ parser.add_argument(
     help = 'The path to the LCA checkpoint directory where the weights are.'
 )
 parser.add_argument(
-    'input_h',
+    'desired_patch_h',
     type = int,
-    help = 'The height of the input images/frames.'
+    help = 'The desired height of the patches.'
 )
 parser.add_argument(
-    'input_w',
+    'desired_patch_w',
     type = int,
-    help = 'The width of the input images/frames.'
+    help = 'The desired width of the patches.'
 )
 parser.add_argument(
     '--weight_file_key',
@@ -32,6 +34,17 @@ parser.add_argument(
     default = 'NonsharedWeights',
     help = 'The directory to save the outputs of this script in.'
 )
+parser.add_argument(
+    '--n_features_keep',
+    type = int,
+    help = 'How many features to keep.'
+)
+parser.add_argument(
+    '--act_fpath',
+    type = str,
+    help = 'Path to the <model_layer>_A.pvp file in the ckpt_dir (only needed) if \
+        n_features_keep is specified.'
+)
 args = parser.parse_args()
 
 # make save_dir if doesn't exist
@@ -44,7 +57,55 @@ octave.addpath('/home/mteti/OpenPV/mlab/util')
 weight_fpaths = glob(os.path.join(args.lca_ckpt_dir, args.weight_file_key))
 weight_fpaths.sort()
 
-for frame_num, fpath in enumerate(weight_fpaths):
-    pvp_data = octave.readpvpfile(fpath)
-    weights = pvp_data[0]['values'][0]
+# get top features if specified
+if args.n_features_keep:
+    act_data = octave.readpvpfile(args.act_fpath)
+    n_batch = len(act_data)
+    acts = np.concatenate([act_data[b]['values'][None, ...] for b in range(n_batch)], 0)
+    assert args.n_features_keep <= acts.shape[-1]
+    mean_acts = np.mean(acts, (0, 1, 2))
+    inds = list(range(mean_acts.size))
+    sorted_inds = [ind for _, ind in sorted(zip(mean_acts, inds), reverse = True)]
+    sorted_inds_keep = sorted_inds[:args.n_features_keep]
+
+for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
+    # read in the data from the weight file
+    feat_data = octave.readpvpfile(fpath)
+    weights = feat_data[0]['values'][0]
+    
+    # pull out top features if specified
+    if args.n_features_keep: 
+        weights = weights[..., sorted_inds_keep]
+    
     w_x, w_y, w_in, w_out = weights.shape
+    assert args.desired_patch_w >= w_x
+    assert args.desired_patch_h >= w_y
+    
+    # compute the new number of features you will have
+    nx = args.desired_patch_w - (w_x - 1)
+    ny = args.desired_patch_h - (w_y - 1)
+    w_out_new = nx * ny * w_out
+    nonshared = np.zeros(
+        [
+            args.desired_patch_w, 
+            args.desired_patch_h, 
+            w_in, 
+            w_out_new
+        ], 
+        dtype = np.float64
+    )
+    
+    count = 0
+    for k in range(w_out):
+        for i in range(nx):
+            for j in range(ny):
+                nonshared[i:i + w_x, j:j + w_y, :, count] = weights[:, :, :, k]
+                count += 1
+                
+    # write the new features
+    write_fpath = os.path.join(args.save_dir, os.path.split(fpath)[1])
+    feat_data[0]['values'][0] = nonshared
+    octave.push(['write_fpath', 'feat_data'], [write_fpath, feat_data])
+    octave.eval('writepvpsharedweightfile(write_fpath, feat_data)')
+    
+print('[INFO] THE NEW NUMBER OF FEATURES IS {}.'.format(w_out_new))
