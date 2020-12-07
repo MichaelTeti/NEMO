@@ -26,8 +26,9 @@ parser.add_argument(
         added in.'
 )
 parser.add_argument(
-    'openpv_path',
+    '--openpv_path',
     type = str,
+    default = '/home/mteti/OpenPV/mlab/util',
     help = 'The path to the OpenPV/mlab/util directory.'
 )
 args = parser.parse_args()
@@ -57,6 +58,8 @@ with h5py.File(args.mouse_rf_fpath, 'r') as h5file:
             mouse_strfs = np.zeros([w, h, n_frames, n_cells], dtype = np.float64)
             
         mouse_strfs[..., cell_num] = strf.transpose([1, 0, 2])
+
+print('[INFO] FOUND {} MOUSE STRFS.'.format(len(cell_ids)))
 
 
 # loop through each individual .pvp file
