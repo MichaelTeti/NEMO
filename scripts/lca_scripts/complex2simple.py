@@ -13,14 +13,14 @@ parser.add_argument(
     help = 'The path to the LCA checkpoint directory where the weights are.'
 )
 parser.add_argument(
-    'desired_patch_h',
+    'input_h',
     type = int,
-    help = 'The desired height of the patches.'
+    help = 'Height of the input video frames / images.'
 )
 parser.add_argument(
-    'desired_patch_w',
+    'input_w',
     type = int,
-    help = 'The desired width of the patches.'
+    help = 'Width of the input video frames / images.'
 )
 parser.add_argument(
     '--weight_file_key',
@@ -84,17 +84,17 @@ for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
         weights = weights[..., sorted_inds_keep]
     
     w_x, w_y, w_in, w_out = weights.shape
-    assert args.desired_patch_w >= w_x
-    assert args.desired_patch_h >= w_y
+    assert args.input_w >= w_x
+    assert args.input_h >= w_y
     
     # compute the new number of features you will have
-    nx = args.desired_patch_w - (w_x - 1)
-    ny = args.desired_patch_h - (w_y - 1)
+    nx = args.input_w - (w_x - 1)
+    ny = args.input_h - (w_y - 1)
     w_out_new = nx * ny * w_out
     nonshared = np.zeros(
         [
-            args.desired_patch_w, 
-            args.desired_patch_h, 
+            args.input_w, 
+            args.input_h, 
             w_in, 
             w_out_new
         ], 
