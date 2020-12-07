@@ -42,8 +42,8 @@ parser.add_argument(
 parser.add_argument(
     '--act_fpath',
     type = str,
-    help = 'Path to the <model_layer>_A.pvp file in the ckpt_dir (only needed) if \
-        n_features_keep is specified.'
+    help = 'Path to the <model_layer>_A.pvp file in the ckpt_dir (only needed if \
+        n_features_keep is specified).'
 )
 parser.add_argument(
     '--openpv_path',
