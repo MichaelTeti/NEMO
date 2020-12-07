@@ -70,18 +70,16 @@ for frame_num, feat_fpath in enumerate(feat_fpaths):
     # add weights from current frame
     weights_all_frames[frame_num] = weights
     
-    
 # scale all features to [0, 255]
 weights_all_frames = max_min_scale(weights_all_frames) * 255
 
 # add features to a 2D (or 3D for color) grid and write out 
 for feat_num in range(n_feats):
-    weights_feat = weights_all_frames[:, :, :, :, feat_num, :, :]
     feat_grid = np.zeros([n_frames, args.n_features_y * w_y, args.n_features_x * w_x, w_in])
     
     for i in range(args.n_features_y):
         for j in range(args.n_features_x):
-            feat_grid[:, i*w_y:(i+1)*w_y, j*w_x:(j+1)*w_x, :] = weights_feat[..., i, j]
+            feat_grid[:, i*w_y:(i+1)*w_y, j*w_x:(j+1)*w_x, :] = weights_all_frames[..., feat_num, i, j]
     
     # put a black border in between patches
     feat_grid[:, ::w_y, :, :] = np.amin(feat_grid)
