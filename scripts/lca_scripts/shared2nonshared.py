@@ -114,4 +114,4 @@ for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
     octave.push(['write_fpath', 'feat_data'], [write_fpath, feat_data])
     octave.eval('writepvpsharedweightfile(write_fpath, feat_data)')
     
-print('[INFO] THE NEW NUMBER OF FEATURES IS {}.'.format(w_out_new))
+print('[INFO] NONSHARED GRID SIZE IS {}x{}x{}.'.format(ny, nx, w_out_new))
