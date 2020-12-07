@@ -88,8 +88,8 @@ for feat_num in range(n_feats):
     feat_grid[:, :, ::w_x, :] = np.amin(feat_grid)
     
     # get rid of single channel if grayscale and write
-    feat_grid = np.squeeze(feat_grid)
+    feat_grid = np.uint8(np.squeeze(feat_grid))
     imageio.mimwrite(
         os.path.join(args.save_dir, 'feature{}.gif'.format(feat_num)),
-        [np.uint8(feat_grid[frame_num]) for frame_num in range(n_frames)]
+        [feat_grid[frame_num] for frame_num in range(n_frames)]
     )
