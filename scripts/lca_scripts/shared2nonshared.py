@@ -103,8 +103,8 @@ for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
     
     count = 0
     for k in range(w_out):
-        for i in range(nx + 1):
-            for j in range(ny + 1):
+        for i in range(nx):
+            for j in range(ny):
                 nonshared[i:i + w_x, j:j + w_y, :, count] = weights[:, :, :, k]
                 count += 1
                 
