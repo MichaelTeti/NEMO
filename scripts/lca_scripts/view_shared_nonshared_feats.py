@@ -20,14 +20,14 @@ parser.add_argument(
     help = 'Path to the directory where images will be written out.'
 )
 parser.add_argument(
-    'n_features_x',
-    type = int,
-    help = 'Width of the grid.'
-)
-parser.add_argument(
     'n_features_y',
     type = int,
     help = 'Height of the grid.'
+)
+parser.add_argument(
+    'n_features_x',
+    type = int,
+    help = 'Width of the grid.'
 )
 parser.add_argument(
     '--weight_file_key',
