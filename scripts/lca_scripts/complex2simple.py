@@ -83,9 +83,12 @@ for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
     if args.n_features_keep: 
         weights = weights[..., sorted_inds_keep]
     
+    # get the shape of the weights and make sure they satisfy certain conditions
     w_x, w_y, w_in, w_out = weights.shape
     assert args.input_w >= w_x
     assert args.input_h >= w_y
+    assert w_x % 2 != 0
+    assert w_y % 2 != 0
     
     # compute the new number of features you will have
     nx = args.input_w - (w_x - 1)
