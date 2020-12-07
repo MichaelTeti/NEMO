@@ -5,6 +5,7 @@ import os
 import h5py
 import numpy as np
 from oct2py import octave
+import pandas as pd
 
 parser = ArgumentParser()
 parser.add_argument(
@@ -45,9 +46,11 @@ lca_fpaths.sort()
 with h5py.File(args.mouse_rf_fpath, 'r') as h5file:
     cell_ids = list(h5file.keys())
     n_cells = len(cell_ids)
-    
+    cell_inds = []
+
     for cell_num, cell_id in enumerate(cell_ids):
         strf = h5file[cell_id][()]
+        cell_inds.append(cell_num)
         
         if cell_num == 0:
             h, w, n_frames = strf.shape
@@ -55,12 +58,14 @@ with h5py.File(args.mouse_rf_fpath, 'r') as h5file:
             
         mouse_strfs[..., cell_num] = strf.transpose([1, 0, 2])
 
+
 # loop through each individual .pvp file
 for frame_num, lca_fpath in enumerate(lca_fpaths):
     # read in the pvp files and get the lca features
     pvp_data = octave.readpvpfile(lca_fpath)
     weights = pvp_data[0]['values'][0]
-    
+    w_out_original = weights.shape[-1]    
+
     # take out the current frame from the strf and add to the weights
     mouse_strfs_frame = mouse_strfs[:, :, frame_num, :]
     mouse_strfs_frame = mouse_strfs_frame[:, :, None, :] 
@@ -75,3 +80,9 @@ for frame_num, lca_fpath in enumerate(lca_fpaths):
     octave.eval('writepvpsharedweightfile(write_fpath, pvp_data)')
     
 print('[INFO] THE NEW NUMBER OF FEATURES IS {}.'.format(weights.shape[-1]))    
+
+# write out the indices for each cell in the dictionary
+cell_ids = [cell_id.split('_')[1] for cell_id in cell_ids]
+cell_inds = [cell_ind + w_out_original for cell_ind in cell_inds]
+df = pd.DataFrame(zip(cell_ids, cell_inds), columns = ['CellID', 'FeatureIndex'])
+df.to_csv(os.path.join(args.save_dir, 'cell_inds.txt'), index = False)
