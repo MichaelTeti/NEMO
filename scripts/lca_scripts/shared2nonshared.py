@@ -45,13 +45,19 @@ parser.add_argument(
     help = 'Path to the <model_layer>_A.pvp file in the ckpt_dir (only needed) if \
         n_features_keep is specified.'
 )
+parser.add_argument(
+    '--openpv_path',
+    type = str,
+    default = '/home/mteti/OpenPV/mlab/util',
+    help = 'Path to the OpenPv/mlab/util directory.'
+)
 args = parser.parse_args()
 
 # make save_dir if doesn't exist
 os.makedirs(args.save_dir, exist_ok = True)
 
 # add OpenPV matlab utility directory to octave path
-octave.addpath('/home/mteti/OpenPV/mlab/util')
+octave.addpath(args.openpv_path)
 
 # get a list of the filepaths
 weight_fpaths = glob(os.path.join(args.lca_ckpt_dir, args.weight_file_key))
