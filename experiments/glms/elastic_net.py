@@ -138,6 +138,7 @@ def test_elastic_net(design_mat, trace_dir, save_dir, n_frames_in_time = 9):
     
             # cut the traces to make up for edge effects when compiling input video frame sequences
             traces = traces.iloc[:, n_frames_in_time - 1:].to_numpy()[0]
+            assert traces.size == design_mat.shape[0]
 
             # center traces and add to results as the first column
             traces -= np.mean(traces)
