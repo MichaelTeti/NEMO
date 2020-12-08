@@ -23,6 +23,18 @@ parser.add_argument(
     help = 'Width of the input video frames / images.'
 )
 parser.add_argument(
+    '--stride_x',
+    type = int,
+    default = 1,
+    help = 'Stride of the original patches inside the input in the x dim.'
+)
+parser.add_argument(
+    '--stride_y',
+    type = int,
+    default = 1,
+    help = 'Stride of the original patches inside the input in the y dim.'
+)
+parser.add_argument(
     '--weight_file_key',
     type = str,
     default = 'S1ToFrame*ReconError_W.pvp',
@@ -91,15 +103,16 @@ for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
     assert w_y % 2 != 0
     
     # compute the new number of features you will have and make placeholder to store them
-    nx = args.input_w - (w_x - 1)
-    ny = args.input_h - (w_y - 1)
+    nx = (args.input_w - (w_x - 1)) // args.stride_x
+    ny = (args.input_h - (w_y - 1)) // args.stride_y
     w_out_new = nx * ny * w_out
     nonshared = np.zeros([args.input_w, args.input_h, w_in, w_out_new], dtype = np.float64)
-    
+
+    # fill in the original features in the simple cell tensor
     count = 0
     for k in range(w_out):
-        for i in range(nx):
-            for j in range(ny):
+        for i in range(0, nx, args.stride_x):
+            for j in range(0, ny, args.stride_y):
                 nonshared[i:i + w_x, j:j + w_y, :, count] = weights[:, :, :, k]
                 count += 1
                 
