@@ -121,6 +121,7 @@ def test_elastic_net(design_mat, trace_dir, save_dir, n_frames_in_time = 9):
     with h5py.File(os.path.join(save_dir, 'strfs.h5'), 'r') as h5file:
         # standardize with training statistics saved in .h5 file
         mean_vec, std_vec = h5file['mean_vec'][()], h5file['std_vec'][()]
+        assert mean_vec.shape[1] == design_mat.shape[1]
         design_mat = (design_mat - mean_vec) / std_vec
         
         # get cell ids in the h5file
