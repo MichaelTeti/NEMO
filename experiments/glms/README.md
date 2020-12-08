@@ -54,11 +54,11 @@ python3 elastic_net.py \
     ../../data/BrainObservatoryData/ExtractedData/TrialAveragedTraces/natural_movie_three/three_session_A/ \
     ../../data/BrainObservatoryData/ExtractedData/Stimuli/natural_movie_three_resized/ elasticnet_rfs_natural-movie-three \
     --write_rf_images \
-    --n_jobs 50 \
-    --max_iter 6000 \
+    --n_jobs 24 \
+    --max_iter 5000 \
     --n_alphas 35 \
     --write_mse_plots \
-    --min_l1_ratio 0.2 \
-    --max_l1_ratio 0.8 \
-    --n_l1_ratios 4
+    --min_l1_ratio 1e-6 \
+    --max_l1_ratio 1.0 \
+    --n_l1_ratios 6
 ```
