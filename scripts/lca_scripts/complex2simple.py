@@ -122,4 +122,8 @@ for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
     octave.push(['write_fpath', 'feat_data'], [write_fpath, feat_data])
     octave.eval('writepvpsharedweightfile(write_fpath, feat_data)')
     
-print('[INFO] NONSHARED GRID SIZE IS {}x{}x{}.'.format(ny, nx, w_out_new))
+print('[INFO] NONSHARED GRID SIZE IS {}x{}x{}.'.format(
+    ny // args.stride_y, 
+    nx // args.stride_x, 
+    w_out
+))
