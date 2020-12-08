@@ -90,19 +90,11 @@ for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
     assert w_x % 2 != 0
     assert w_y % 2 != 0
     
-    # compute the new number of features you will have
+    # compute the new number of features you will have and make placeholder to store them
     nx = args.input_w - (w_x - 1)
     ny = args.input_h - (w_y - 1)
     w_out_new = nx * ny * w_out
-    nonshared = np.zeros(
-        [
-            args.input_w, 
-            args.input_h, 
-            w_in, 
-            w_out_new
-        ], 
-        dtype = np.float64
-    )
+    nonshared = np.zeros([args.input_w, args.input_h, w_in, w_out_new], dtype = np.float64)
     
     count = 0
     for k in range(w_out):
