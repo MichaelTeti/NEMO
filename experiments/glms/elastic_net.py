@@ -128,7 +128,7 @@ mean_vec = np.mean(design_mat, 0)
 std_vec = np.std(design_mat, 0)
 design_mat = (design_mat - mean_vec) / std_vec
 
-def train(X, trace_fpaths, save_dir, min_l1_ratio = 1e-6, max_l1_ratio = 0.6, n_l1_ratios = 4, 
+def train(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, max_l1_ratio = 0.6, n_l1_ratios = 4, 
           n_frames_in_time = 9, n_alphas = 50, max_iter = 5000, n_jobs = 4, 
           write_mse_plots = False, write_rf_images = False):
           
