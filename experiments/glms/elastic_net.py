@@ -30,12 +30,17 @@ def train_elastic_net(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, m
     if write_mse_plots:
         mse_plot_dir = os.path.join(save_dir, 'MSEPathPlots')
         os.makedirs(mse_plot_dir, exist_ok = True)
+        
+    # standardize the columns of the design matrix
+    mean_vec = np.mean(design_mat, 0)
+    std_vec = np.std(design_mat, 0)
+    design_mat = (design_mat - mean_vec) / std_vec
 
     # create list of l1_ratios to try
     l1_ratios = np.linspace(min_l1_ratio, max_l1_ratio, n_l1_ratios)
     print('[INFO] L1 RATIOS: {}'.format(l1_ratios))
 
-    for fpath in ProgressBar()(trace_fpaths):
+    for cell_num, fpath in ProgressBar()(enumerate(trace_fpaths)):
         # pull cell ID from filename for later saving of results
         cell_id = os.path.splitext(os.path.split(fpath)[1])[0]
 
@@ -60,11 +65,9 @@ def train_elastic_net(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, m
             n_jobs = n_jobs
         )
 
-        # fit model and get params
+        # fit model and get params and reshape back to tensor
         elastic_net.fit(design_mat, traces)
         strf = elastic_net.coef_
-
-        # reshape the strs back to height x width
         strf = strf.reshape([h, w, n_frames_in_time])
 
         # get the mse across folds, alphas, and lambdas
@@ -92,9 +95,11 @@ def train_elastic_net(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, m
             plt.close() 
     
         # save the rf in an .h5 file where all will be saved
-        with h5py.File(os.path.join(save_dir, 'strfs.h5'), 'a') as f:
-            if cell_id not in list(f.keys()):
-                f.create_dataset(cell_id, data = strf)    
+        with h5py.File(os.path.join(save_dir, 'strfs.h5'), 'a') as h5file:
+            h5file.create_dataset(cell_id, data = strf)
+            if cell_num == 0:
+                h5file.create_dataset('mean_vec', data = mean_vec)
+                h5file.create_dataset('std_vec', data = std_vec)
 
         # write out the image if specified
         if write_rf_images:
@@ -104,6 +109,49 @@ def train_elastic_net(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, m
                 [strf[..., i] for i in range(n_frames_in_time)]
             )
 
+            
+def test_elastic_net(design_mat, trace_dir, save_dir, n_frames_in_time = 9):
+    assert os.path.isdir(save_dir) and 'strfs.h5' in os.listdir(save_dir)
+    
+    # make a folder for results
+    results_dir = os.path.join(save_dir, 'test_results')
+    os.makedirs(results_dir, exist_ok = True)
+    
+    # read in the coefficients
+    with h5py.File(os.path.join(save_dir, 'strfs.h5'), 'r') as h5file:
+        # standardize with training statistics saved in .h5 file
+        mean_vec, std_vec = h5file['mean_vec'][()], h5file['std_vec'][()]
+        design_mat = (design_mat - mean_vec) / std_vec
+        
+        # get cell ids in the h5file
+        cell_ids = [cell_id for cell_id in list(h5file.keys()) if cell_id not in ['mean_vec', 'std_vec']]
+        
+        # loop through each cell's strf and predict
+        for cell_id in cell_ids:
+            print(cell_id)
+            
+            # read in the traces
+            trace_fpath = os.path.join(trace_dir, cell_id + '.txt')
+            traces = pd.read_csv(trace_fpath)
+    
+            # cut the traces to make up for edge effects when compiling input video frame sequences
+            traces = traces.iloc[:, n_frames_in_time - 1:].to_numpy()[0]
+
+            # center traces and add to results as the first column
+            traces -= np.mean(traces)
+            
+            # read in the coefficients and reshape for matrix multiply
+            strf = h5file[cell_id][()]
+            strf = strf[:, None]
+            
+            # predict traces 
+            traces_pred = np.matmul(design_mat, strf)
+            
+            # save the data
+            results = pd.DataFrame({'true': traces, 'pred': traces_pred})
+            results.to_csv(os.path.join(results_dir, cell_id + '.txt'), index = False)
+            
+            
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -206,11 +254,6 @@ if __name__ == '__main__':
     design_mat = create_temporal_design_mat(stimulus, n_frames_in_time = args.n_frames_in_time)
     n_samples = design_mat.shape[0]
     design_mat = design_mat.reshape([n_samples, -1])
-
-    # standardize the columns of the design matrix
-    mean_vec = np.mean(design_mat, 0)
-    std_vec = np.std(design_mat, 0)
-    design_mat = (design_mat - mean_vec) / std_vec
     
     if args.mode == 'train':
         train_elastic_net(
@@ -227,4 +270,11 @@ if __name__ == '__main__':
             write_mse_plots = args.write_mse_plots,
             write_rf_images = args.write_rf_images,
             args_to_write = args
+        )
+    elif args.mode == 'test':
+        test_elastic_net(
+            design_mat,
+            trace_dir,
+            save_dir,
+            n_frames_in_time = args.n_frames_in_time
         )
