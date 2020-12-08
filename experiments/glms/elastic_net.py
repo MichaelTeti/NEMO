@@ -6,7 +6,6 @@ import imageio
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from progressbar import ProgressBar
 from sklearn.linear_model import ElasticNetCV as ElasticNet
 
 from NEMO.utils.image_utils import read_frames, max_min_scale
