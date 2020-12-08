@@ -13,124 +13,14 @@ from NEMO.utils.image_utils import read_frames, max_min_scale
 from NEMO.utils.model_utils import create_temporal_design_mat, save_args
 
 
-parser = ArgumentParser()
-parser.add_argument(
-    'trace_dir',
-    type = str,
-    help = 'Path containing the .txt files with trial-averaged traces \
-        for a single session type and stimulus.'
-)
-parser.add_argument(
-    'stimulus_dir',
-    type = str,
-    help = 'Path to the stimulus templates corresponding to the trace_dir.'
-)
-parser.add_argument(
-    'save_dir',
-    type = str,
-    help = 'Directory to save results in (if mode = train) or to read in strfs \
-        from and write test results to (if mode = test).' 
-)
-parser.add_argument(
-    '--write_rf_images',
-    action = 'store_true',
-    help = 'If specified, write the receptive fields out as images/.gifs.'
-)
-parser.add_argument(
-    '--write_mse_plots',
-    action = 'store_true',
-    help = 'If specified, write the mse grid path as a plot.'
-)
-parser.add_argument(
-    '--mode',
-    type = str,
-    choices = ['train', 'test'],
-    default = 'train',
-    help = 'Whether to train a new model or test a trained model.'
-)
-
-
-model_args = parser.add_argument_group(
-    'model parameters',
-    description = 'Parameter settings for the model and cross-validation.'
-)
-model_args.add_argument(
-    '--n_frames_in_time',
-    type = int,
-    default = 9,
-    help = 'The number of consecutive video frames to comprise a single input.'
-)
-model_args.add_argument(
-    '--n_jobs',
-    type = int,
-    default = 8,
-    help = 'Number of jobs for the model.'
-)
-model_args.add_argument(
-    '--max_iter',
-    type = int,
-    default = 5000,
-    help = 'The maximum number of iterations for the model.'
-)
-model_args.add_argument(
-    '--n_alphas',
-    type = int,
-    default = 75,
-    help = 'The number of alpha (aka lambda) values to search over.'
-)
-model_args.add_argument(
-    '--min_l1_ratio',
-    type = float,
-    default = 1e-6, # must be non-zero for some reason 
-    help = 'The minimum l1_ratio to try in the grid search.'
-)
-model_args.add_argument(
-    '--max_l1_ratio',
-    type = float,
-    default = 1.0,
-    help = 'The maximum l1_ratio to try in the grid search.'
-)
-model_args.add_argument(
-    '--n_l1_ratios',
-    type = int,
-    default = 6,
-    help = 'The number of l1_ratios to try in the range [min_l1_ratio, max_l1_ratio].'
-)
-
-args = parser.parse_args()
-
-# make sure the save_dir exists or create it
-if args.mode == 'train':
-    os.makedirs(args.save_dir, exist_ok = True)
-else:
-    assert os.path.isdir(args.save_dir)
-
-# save the args in the save_dir
-if args.mode == 'train': save_args(args, args.save_dir)
-
-# get a list of all cell traces in trace_dir
-trace_fpaths = [os.path.join(args.trace_dir, f) for f in os.listdir(args.trace_dir)]
-
-assert(all([os.path.splitext(fpath)[1] == '.txt' for fpath in trace_fpaths])), \
-    'All files in trace_dir must be .txt files made by the get_trial_averaged_responses.py script.'
-
-# get array of stimulus frames
-stimulus = read_frames(args.stimulus_dir, gray = True)
-_, h, w = stimulus.shape
-
-# create the temporal design mat
-design_mat = create_temporal_design_mat(stimulus, n_frames_in_time = args.n_frames_in_time)
-n_samples = design_mat.shape[0]
-design_mat = design_mat.reshape([n_samples, -1])
-
-# standardize the columns of the design matrix
-mean_vec = np.mean(design_mat, 0)
-std_vec = np.std(design_mat, 0)
-design_mat = (design_mat - mean_vec) / std_vec
-
-def train(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, max_l1_ratio = 0.6, n_l1_ratios = 4, 
-          n_frames_in_time = 9, n_alphas = 50, max_iter = 5000, n_jobs = 4, 
-          write_mse_plots = False, write_rf_images = False):
+def train_elastic_net(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, max_l1_ratio = 0.6, 
+                      n_l1_ratios = 4, n_frames_in_time = 9, n_alphas = 50, max_iter = 5000, 
+                      n_jobs = 4, write_mse_plots = False, write_rf_images = False, args_to_write = None):
+    
+    # make save_dir if it doesn't exist and write args to it if specified
+    os.makedirs(save_dir, exist_ok = True)
+    if args_to_write is not None:
+        save_args(args_to_write, save_dir)
           
     # check if save dirs they exist / create them if they don't
     if write_rf_images:
@@ -213,3 +103,128 @@ def train(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, max_l1_ratio 
                 os.path.join(rf_img_dir, cell_id + '.gif'),
                 [strf[..., i] for i in range(n_frames_in_time)]
             )
+
+
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument(
+        'trace_dir',
+        type = str,
+        help = 'Path containing the .txt files with trial-averaged traces \
+            for a single session type and stimulus.'
+    )
+    parser.add_argument(
+        'stimulus_dir',
+        type = str,
+        help = 'Path to the stimulus templates corresponding to the trace_dir.'
+    )
+    parser.add_argument(
+        'save_dir',
+        type = str,
+        help = 'Directory to save results in (if mode = train) or to read in strfs \
+            from and write test results to (if mode = test).' 
+    )
+    parser.add_argument(
+        '--write_rf_images',
+        action = 'store_true',
+        help = 'If specified, write the receptive fields out as images/.gifs.'
+    )
+    parser.add_argument(
+        '--write_mse_plots',
+        action = 'store_true',
+        help = 'If specified, write the mse grid path as a plot.'
+    )
+    parser.add_argument(
+        '--mode',
+        type = str,
+        choices = ['train', 'test'],
+        default = 'train',
+        help = 'Whether to train a new model or test a trained model.'
+    )
+
+
+    model_args = parser.add_argument_group(
+        'model parameters',
+        description = 'Parameter settings for the model and cross-validation.'
+    )
+    model_args.add_argument(
+        '--n_frames_in_time',
+        type = int,
+        default = 9,
+        help = 'The number of consecutive video frames to comprise a single input.'
+    )
+    model_args.add_argument(
+        '--n_jobs',
+        type = int,
+        default = 8,
+        help = 'Number of jobs for the model.'
+    )
+    model_args.add_argument(
+        '--max_iter',
+        type = int,
+        default = 5000,
+        help = 'The maximum number of iterations for the model.'
+    )
+    model_args.add_argument(
+        '--n_alphas',
+        type = int,
+        default = 75,
+        help = 'The number of alpha (aka lambda) values to search over.'
+    )
+    model_args.add_argument(
+        '--min_l1_ratio',
+        type = float,
+        default = 1e-6, # must be non-zero for some reason 
+        help = 'The minimum l1_ratio to try in the grid search.'
+    )
+    model_args.add_argument(
+        '--max_l1_ratio',
+        type = float,
+        default = 1.0,
+        help = 'The maximum l1_ratio to try in the grid search.'
+    )
+    model_args.add_argument(
+        '--n_l1_ratios',
+        type = int,
+        default = 6,
+        help = 'The number of l1_ratios to try in the range [min_l1_ratio, max_l1_ratio].'
+    )
+
+    args = parser.parse_args()
+
+    # get a list of all cell traces in trace_dir
+    trace_fpaths = [os.path.join(args.trace_dir, f) for f in os.listdir(args.trace_dir)]
+
+    assert(all([os.path.splitext(fpath)[1] == '.txt' for fpath in trace_fpaths])), \
+        'All files in trace_dir must be .txt files made by the get_trial_averaged_responses.py script.'
+
+    # get array of stimulus frames
+    stimulus = read_frames(args.stimulus_dir, gray = True)
+    _, h, w = stimulus.shape
+
+    # create the temporal design mat
+    design_mat = create_temporal_design_mat(stimulus, n_frames_in_time = args.n_frames_in_time)
+    n_samples = design_mat.shape[0]
+    design_mat = design_mat.reshape([n_samples, -1])
+
+    # standardize the columns of the design matrix
+    mean_vec = np.mean(design_mat, 0)
+    std_vec = np.std(design_mat, 0)
+    design_mat = (design_mat - mean_vec) / std_vec
+    
+    if args.mode == 'train':
+        train_elastic_net(
+            design_mat = design_mat,
+            trace_fpaths = trace_fpaths,
+            save_dir = args.save_dir,
+            min_l1_ratio = args.min_l1_ratio,
+            max_l1_ratio = args.max_l1_ratio,
+            n_l1_ratios = args.n_l1_ratios,
+            n_frames_in_time = args.n_frames_in_time,
+            n_alphas = args.n_alphas,
+            max_iter = args.max_iter,
+            n_jobs = args.n_jobs,
+            write_mse_plots = args.write_mse_plots,
+            write_rf_images = args.write_rf_images,
+            args_to_write = args
+        )
