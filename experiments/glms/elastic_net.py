@@ -49,6 +49,7 @@ def train_elastic_net(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, m
     
         # cut the traces to make up for edge effects when compiling input video frame sequences
         traces = traces.iloc[:, n_frames_in_time - 1:].to_numpy()[0]
+        assert traces.size == design_mat.shape[0]
 
         # center traces so we don't have to fit an intercept
         traces -= np.mean(traces)    
