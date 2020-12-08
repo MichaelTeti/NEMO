@@ -13,8 +13,8 @@ from NEMO.utils.image_utils import read_frames, max_min_scale
 from NEMO.utils.model_utils import create_temporal_design_mat, save_args
 
 
-def train_elastic_net(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, max_l1_ratio = 0.6, 
-                      n_l1_ratios = 4, n_frames_in_time = 9, n_alphas = 50, max_iter = 5000, 
+def train_elastic_net(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, max_l1_ratio = 1.0, 
+                      n_l1_ratios = 6, n_frames_in_time = 9, n_alphas = 50, max_iter = 5000, 
                       n_jobs = 4, write_mse_plots = False, write_rf_images = False, args_to_write = None):
     
     # make save_dir if it doesn't exist and write args to it if specified
