@@ -9,8 +9,11 @@ import pandas as pd
 from sklearn.linear_model import ElasticNetCV as ElasticNet
 
 from NEMO.utils.image_utils import read_frames, max_min_scale
-from NEMO.utils.model_utils import create_temporal_design_mat, save_args
-
+from NEMO.utils.model_utils import (
+    create_temporal_design_mat, 
+    save_args,
+    load_trial_averaged_traces
+)
 
 def train_elastic_net(design_mat, trace_dir, save_dir, min_l1_ratio = 1e-6, max_l1_ratio = 1.0, 
                       n_l1_ratios = 6, n_frames_in_time = 9, n_alphas = 50, max_iter = 5000, 
@@ -50,10 +53,7 @@ def train_elastic_net(design_mat, trace_dir, save_dir, min_l1_ratio = 1e-6, max_
         print(cell_id)
 
         # read in the traces 
-        traces = pd.read_csv(fpath)
-    
-        # cut the traces to make up for edge effects when compiling input video frame sequences
-        traces = traces.iloc[:, n_frames_in_time - 1:].to_numpy()[0]
+        traces = load_trial_averaged_traces(fpath)
         assert traces.size == design_mat.shape[0]
 
         # center traces so we don't have to fit an intercept
@@ -139,10 +139,7 @@ def test_elastic_net(design_mat, trace_dir, save_dir, n_frames_in_time = 9):
             
             # read in the traces
             trace_fpath = os.path.join(trace_dir, cell_id + '.txt')
-            traces = pd.read_csv(trace_fpath)
-    
-            # cut the traces to make up for edge effects when compiling input video frame sequences
-            traces = traces.iloc[:, n_frames_in_time - 1:].to_numpy()[0]
+            traces = load_trial_averaged_traces(trace_fpath)
             assert traces.size == design_mat.shape[0]
 
             # center traces and add to results as the first column
