@@ -40,9 +40,10 @@ def train_elastic_net(design_mat, trace_fpaths, save_dir, min_l1_ratio = 1e-6, m
     l1_ratios = np.linspace(min_l1_ratio, max_l1_ratio, n_l1_ratios)
     print('[INFO] L1 RATIOS: {}'.format(l1_ratios))
 
-    for cell_num, fpath in ProgressBar()(enumerate(trace_fpaths)):
+    for cell_num, fpath in enumerate(trace_fpaths):
         # pull cell ID from filename for later saving of results
         cell_id = os.path.splitext(os.path.split(fpath)[1])[0]
+        print(cell_id)
 
         # read in the traces 
         traces = pd.read_csv(fpath)
