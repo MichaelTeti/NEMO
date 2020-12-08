@@ -103,9 +103,9 @@ for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
     assert w_y % 2 != 0
     
     # compute the new number of features you will have and make placeholder to store them
-    nx = (args.input_w - (w_x - 1)) // args.stride_x
-    ny = (args.input_h - (w_y - 1)) // args.stride_y
-    w_out_new = nx * ny * w_out
+    nx = args.input_w - (w_x - 1)
+    ny = args.input_h - (w_y - 1)
+    w_out_new = (nx // args.stride_x) * (ny // args.stride_y) * w_out
     nonshared = np.zeros([args.input_w, args.input_h, w_in, w_out_new], dtype = np.float64)
 
     # fill in the original features in the simple cell tensor
