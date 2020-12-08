@@ -5,11 +5,18 @@ import os, sys
 import h5py
 from imageio import imread
 import numpy as np
+import pandas as pd
 import torch
 #from torchvision import transforms, utils
 from torch.utils.data import Dataset
 
 from NEMO.utils.general_utils import read_csv
+
+
+def load_trial_averaged_traces(fpath, n_frames_in_time = 9):
+    traces = pd.read_csv(fpath)
+    traces = traces.iloc[:, n_frames_in_time - 1:].to_numpy()[0]
+    return traces
 
 
 def save_args(args, save_dir):
