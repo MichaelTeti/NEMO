@@ -8,7 +8,11 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import ElasticNetCV as ElasticNet
 
-from NEMO.utils.image_utils import read_frames, max_min_scale
+from NEMO.utils.image_utils import (
+    read_frames, 
+    max_min_scale,
+    get_img_frame_names
+)
 from NEMO.utils.model_utils import (
     create_temporal_design_mat, 
     save_args,
@@ -140,26 +144,34 @@ def test_elastic_net(design_mat, trace_dir, save_dir, n_frames_in_time = 9):
         # loop through each cell's strf and predict
         for cell_id in cell_ids:
             print(cell_id)
+
+            # make array to store results in for each cell
+            results_array = np.zeros([2, design_mat.shape[0]])
             
             # read in the traces
             trace_fpath = os.path.join(trace_dir, cell_id + '.txt')
             traces = load_trial_averaged_traces(trace_fpath)
             assert traces.size == design_mat.shape[0]
 
-            # center traces and add to results as the first column
+            # center traces and add to results as the first row
             traces -= np.mean(traces)
+            results_array[0] = traces
             
             # read in the coefficients and reshape for matrix multiply
             strf = h5file[cell_id][()]
             strf = strf.flatten()[:, None]
             assert design_mat.shape[1] == strf.shape[0]
             
-            # predict traces 
+            # predict traces and add to results array 
             traces_pred = np.matmul(design_mat, strf)
-            
-            # save the data
-            results = pd.DataFrame({'true': traces, 'pred': np.squeeze(traces_pred)})
-            results.to_csv(os.path.join(results_dir, cell_id + '.txt'), index = False)
+            results_array[1] = np.squeeze(traces_pred)
+
+            # turn results in to dataframe and save
+            col_nums = get_img_frame_names(design_mat.shape[0] + n_frames_in_time - 1)
+            col_names = [str(num) + '.png' for num in col_nums]
+            results_df = pd.DataFrame(results_array, columns = col_names[n_frames_in_time - 1:])
+            results_df.insert(loc = 0, column = 'ResponseType', value = ['Ground Truth', 'Predicted'])
+            results_df.to_csv(os.path.join(results_dir, cell_id + '.txt'), index = False)
             
             
 
