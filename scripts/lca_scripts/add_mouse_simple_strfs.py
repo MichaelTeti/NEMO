@@ -45,7 +45,7 @@ lca_fpaths.sort()
 
 # read in the mouse strfs from the .h5 file
 with h5py.File(args.mouse_rf_fpath, 'r') as h5file:
-    cell_ids = list(h5file.keys())
+    cell_ids = [id for id in list(h5file.keys()) if id not in ['mean_vec', 'std_vec']]
     n_cells = len(cell_ids)
     cell_inds = []
 
