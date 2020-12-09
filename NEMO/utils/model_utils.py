@@ -13,6 +13,20 @@ from torch.utils.data import Dataset
 from NEMO.utils.general_utils import read_csv
 
 
+def cv_splitter_video(n_samples, n_folds = 5):
+    n_val = int(n_samples * (1 / n_folds))
+    n_train = n_samples - n_val
+    fold_inds = []
+
+    for fold in range(n_folds):
+        train_inds = np.arange(n_samples)
+        val_inds = train_inds[fold * n_val:(fold + 1) * n_val]
+        train_inds = np.delete(train_inds, val_inds)
+        fold_inds.append((train_inds, val_inds))
+
+    return fold_inds
+
+
 def load_trial_averaged_traces(fpath, n_frames_in_time = 9):
     traces = pd.read_csv(fpath)
     traces = traces.iloc[:, n_frames_in_time - 1:].to_numpy()[0]
