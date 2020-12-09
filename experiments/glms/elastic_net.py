@@ -12,7 +12,8 @@ from NEMO.utils.image_utils import read_frames, max_min_scale
 from NEMO.utils.model_utils import (
     create_temporal_design_mat, 
     save_args,
-    load_trial_averaged_traces
+    load_trial_averaged_traces,
+    cv_splitter_video
 )
 
 def train_elastic_net(design_mat, trace_dir, save_dir, min_l1_ratio = 1e-6, max_l1_ratio = 1.0, 
@@ -47,6 +48,9 @@ def train_elastic_net(design_mat, trace_dir, save_dir, min_l1_ratio = 1e-6, max_
     assert(all([os.path.splitext(fpath)[1] == '.txt' for fpath in trace_fpaths])), \
         'All files in trace_dir must be .txt files made by the get_trial_averaged_responses.py script.'
 
+    # get disjoint cv folds since the preds and responses overlap
+    cv_folds = cv_splitter_video(n_samples = design_mat.shape[0])
+
     for cell_num, fpath in enumerate(trace_fpaths):
         # pull cell ID from filename for later saving of results
         cell_id = os.path.splitext(os.path.split(fpath)[1])[0]
@@ -67,7 +71,7 @@ def train_elastic_net(design_mat, trace_dir, save_dir, min_l1_ratio = 1e-6, max_
             selection = 'random',  # coeff update order for coordinate descent
             normalize = False,
             max_iter = max_iter,
-            cv = 5,
+            cv = cv_folds,
             n_jobs = n_jobs
         )
 
