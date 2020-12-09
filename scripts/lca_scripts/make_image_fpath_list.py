@@ -50,6 +50,6 @@ for root, dirs, files in os.walk(args.data_dir_parent):
     vid_count += 1
 
     for i in range(args.n_frames_in_time):
-        img_paths_i = files[i:len(files) - (args.n_frames_in_time - i)]
+        img_paths_i = files[i:len(files) - (args.n_frames_in_time - i - 1)]
         save_path = os.path.join(args.save_dir, 'filenames_frame{}.txt'.format(i))
         write_csv(img_paths_i, save_path, mode = 'a')
