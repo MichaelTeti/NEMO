@@ -19,6 +19,7 @@ setup(
         'pandas==0.25.3',
         'h5py<3.0.0',
         'torch',
+        'torchvision',
         'urllib3',
         'chardet',
         'idna',
