@@ -2,12 +2,16 @@ from glob import glob
 import os
 
 import imageio
+import matplotlib.pyplot as plt
 import numpy as np
 from oct2py import octave
+import pandas as pd
+import seaborn
 import torch
 from torchvision.utils import make_grid
 
 from NEMO.utils.image_utils import max_min_scale
+from NEMO.utils.general_utils import read_csv
 
 
 def get_mean_activations(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/mlab/util'):
@@ -381,3 +385,75 @@ def plot_objective_probes(probe_dir, save_dir, probe_type, probe_key,
     
     plt.savefig(os.path.join(save_dir, 'final_probe_val.png'), bbox_inches = 'tight')
     plt.close()
+    
+    
+def plot_adaptive_timescale_probes(probe_dir, save_dir, probe_key, display_period = 3000, 
+        n_display_periods = None):
+    '''
+    Plot data in adaptive timescale probe. 
+    
+    Args:
+        probe_dir (str): Directory containing the .txt probe files.
+        save_dir (str): Directory to save the plots.
+        probe_key (str): A key to help select and differentiate the desired probe
+            files from all other probe files in probe_dir. For example, something
+            like "EnergyProbe*" if probe_type is energy.
+        n_display_periods (int): How many display periods (starting at the end and 
+            moving backwards) to plot here. If not given, will plot them all.
+        display_period (int): Number of timesteps in the display period. This is 
+            important if n_display_periods is given and for the moving average
+            plot.
+            
+    Returns:
+        None
+    '''
+    
+    # make sure save_dir exists or create it
+    os.makedirs(save_dir, exist_ok = True)
+    
+    ts_dir = os.path.join(save_dir, 'Timescale')
+    os.makedirs(ts_dir, exist_ok = True)
+    
+    ts_max_dir = os.path.join(save_dir, 'TimescaleMax')
+    os.makedirs(ts_max_dir, exist_ok = True)
+    
+    ts_true_dir = os.path.join(save_dir, 'TimescaleTrue')
+    os.makedirs(ts_true_dir, exist_ok = True)
+
+    # get a list of the probe files
+    probe_fpaths = glob(os.path.join(probe_dir, probe_key))
+
+    for fpath in probe_fpaths:
+        # adaptive timescale probes are saved differently, so need to parse out the values
+        data = read_csv(fpath)
+        times = [float(row.split(' = ')[1]) for row in data[0::2]]
+        ts = [float(row[1].split(' = ')[1]) for row in data[1::2]]
+        ts_true = [float(row[2].split(' = ')[1]) for row in data[1::2]]
+        ts_max = [float(row[3].split(' = ')[1]) for row in data[1::2]]
+        
+        # create a dataframe to put all of these probe values
+        probe = pd.DataFrame(
+            data = {
+                'Timestep': times,
+                'Timescale': ts,
+                'TimescaleTrue': ts_true,
+                'TimescaleMax': ts_max
+            }
+        )
+        
+        # only plot n_display_periods of information since it can be hard to see
+        if n_display_periods: 
+            probe = probe[probe['Timestep'] > probe['Timestep'].max() - n_display_periods * display_period]
+        
+        fig_fname = os.path.splitext(os.path.split(fpath)[1])[0] + '.png'
+        seaborn.lineplot(data = probe, x = 'Timestep', y = 'Timescale')
+        plt.savefig(os.path.join(ts_dir, fig_fname), bbox_inches = 'tight')
+        plt.close()
+        
+        seaborn.lineplot(data = probe, x = 'Timestep', y = 'TimescaleTrue')
+        plt.savefig(os.path.join(ts_true_dir, fig_fname), bbox_inches = 'tight')
+        plt.close()
+        
+        seaborn.lineplot(data = probe, x = 'Timestep', y = 'TimescaleMax')
+        plt.savefig(os.path.join(ts_max_dir, fig_fname), bbox_inches = 'tight')
+        plt.close()
