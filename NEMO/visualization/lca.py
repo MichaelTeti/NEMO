@@ -287,3 +287,97 @@ def get_num_neurons_active(sparse_activity_fpath, openpv_path = '/home/mteti/Ope
         ses[display_period] = np.std(np.array(n_active_over_batch, dtype = np.float64)) / sqrt_n
         
     return means, ses
+
+
+def plot_objective_probes(probe_dir, save_dir, probe_type, probe_key, 
+        display_period = 3000, n_display_periods = None):
+    '''
+    Plot L2, Total Energy, and L1 Probe data written out by PetaVision.
+    
+    Args:
+        probe_dir (str): Directory containing the .txt probe files.
+        save_dir (str): Directory to save the plots.
+        probe_type (str): 'energy', 'firm_thresh', or 'l2' for whichever probe
+            you are plotting. This is needed because they have different formats.
+        probe_key (str): A key to help select and differentiate the desired probe
+            files from all other probe files in probe_dir. For example, something
+            like "EnergyProbe*" if probe_type is energy.
+        n_display_periods (int): How many display periods (starting at the end and 
+            moving backwards) to plot here. If not given, will plot them all.
+        display_period (int): Number of timesteps in the display period. This is 
+            important if n_display_periods is given and for the moving average
+            plot. 
+            
+    Returns:
+        None
+    '''
+    
+    assert probe_type in ['energy', 'firm_thresh', 'l2']
+    
+    # make sure save_dir exists or create it
+    os.makedirs(save_dir, exist_ok = True)
+    
+    # get a list of the probe files
+    probe_fpaths = glob(os.path.join(probe_dir, probe_key))
+    
+    # make an empty dataframe for aggregating across samples for moving average plotting
+    probe_agg = pd.DataFrame(columns = ['Timestep', 'ProbeVal'])
+
+    # read in and plot each probe file at a time
+    for probe_fpath in probe_fpaths:
+        probe = pd.read_csv(
+            probe_fpath, 
+            usecols = [0, 2] if probe_type == 'energy' else [0, 3],
+            header = 0 if probe_type == 'energy' else 'infer',
+            names = ['Timestep', 'ProbeVal']
+        )
+        
+        # keep only last value in each display period and add to the probe_agg df for moving avg plotting
+        probe_end_val = probe[probe['Timestep'] % display_period == 0]
+        probe_agg = probe_agg.append(probe_end_val, ignore_index = True)
+        
+        # only plot n_display_periods of information since it can be hard to see
+        if n_display_periods: 
+            probe = probe[probe['Timestep'] > probe['Timestep'].max() - n_display_periods * display_period]
+            
+        # plot the data for this probe file
+        seaborn.lineplot(
+            data = probe, 
+            x = 'Timestep', 
+            y = 'ProbeVal'
+        )
+        
+        # make ylabel depending on the probe_type 
+        if probe_type == 'energy':
+            plt.ylabel('Total Energy')
+        elif probe_type == 'firm_thresh':
+            plt.ylabel('L1 Sparsity Value')
+        else:
+            plt.ylabel('L2 Reconstruction Error')
+        
+        # save the figure
+        fig_fname = os.path.split(probe_fpath)[1]
+        plt.savefig(
+            os.path.join(save_dir, os.path.splitext(fig_fname)[0] + '.png'),
+            bbox_inches = 'tight'
+        )
+        plt.close()
+        
+        
+    # plot the moving average
+    seaborn.lineplot(
+        data = probe_agg, 
+        x = 'Timestep', 
+        y = 'ProbeVal'
+    )
+    
+    # make y label depending on probe type
+    if probe_type == 'energy':
+        plt.ylabel('Final Energy Value in Display Period +/- 95% CI')
+    elif probe_type == 'firm_thresh':
+        plt.ylabel('Final L1 Sparsity Value in Display Period +/- 95% CI')
+    else:
+        plt.ylabel('Final L2 Reconstruction Error in Display Period +/- 95% CI')
+    
+    plt.savefig(os.path.join(save_dir, 'final_probe_val.png'), bbox_inches = 'tight')
+    plt.close()
