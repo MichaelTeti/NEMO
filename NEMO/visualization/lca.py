@@ -385,7 +385,8 @@ def plot_objective_probes(probe_dir, save_dir, probe_type, probe_key,
         
         
     # plot the moving average
-    seaborn.lineplot(data = probe_agg, x = 'Timestep', y = 'ProbeVal')
+    probe_agg['Display Period'] = probe_agg['Timestep'] // display_period
+    seaborn.lineplot(data = probe_agg, x = 'Display Period', y = 'ProbeVal')
     
     # make y label depending on probe type
     if probe_type == 'energy':
