@@ -314,7 +314,7 @@ def get_percent_neurons_active(sparse_activity_fpath, n_neurons, feat_map_h, fea
 
 
 def plot_objective_probes(probe_dir, save_dir, probe_type, probe_key, 
-        display_period = 3000, n_display_periods = None):
+        display_period = 3000, n_display_periods = None, plot_individual = False):
     '''
     Plot L2, Total Energy, and L1 Probe data written out by PetaVision.
     
@@ -331,6 +331,7 @@ def plot_objective_probes(probe_dir, save_dir, probe_type, probe_key,
         display_period (int): Number of timesteps in the display period. This is 
             important if n_display_periods is given and for the moving average
             plot. 
+        plot_individual (bool): If True, will plot a graph for each probe .txt file.
             
     Returns:
         None
@@ -360,28 +361,29 @@ def plot_objective_probes(probe_dir, save_dir, probe_type, probe_key,
         probe_end_val = probe[probe['Timestep'] % display_period == 0]
         probe_agg = probe_agg.append(probe_end_val, ignore_index = True)
         
-        # only plot n_display_periods of information since it can be hard to see
-        if n_display_periods: 
-            probe = probe[probe['Timestep'] > probe['Timestep'].max() - n_display_periods * display_period]
-            
-        # plot the data for this probe file
-        seaborn.lineplot(data = probe, x = 'Timestep', y = 'ProbeVal')
-        
-        # make ylabel depending on the probe_type 
-        if probe_type == 'energy':
-            plt.ylabel('Total Energy')
-        elif probe_type == 'firm_thresh':
-            plt.ylabel('L1 Sparsity Value')
-        else:
-            plt.ylabel('L2 Reconstruction Error')
-        
-        # save the figure
-        fig_fname = os.path.split(probe_fpath)[1]
-        plt.savefig(
-            os.path.join(save_dir, os.path.splitext(fig_fname)[0] + '.png'),
-            bbox_inches = 'tight'
-        )
-        plt.close()
+        if plot_individual:
+            # only plot n_display_periods of information since it can be hard to see
+            if n_display_periods: 
+                probe = probe[probe['Timestep'] > probe['Timestep'].max() - n_display_periods * display_period]
+
+            # plot the data for this probe file
+            seaborn.lineplot(data = probe, x = 'Timestep', y = 'ProbeVal')
+
+            # make ylabel depending on the probe_type 
+            if probe_type == 'energy':
+                plt.ylabel('Total Energy')
+            elif probe_type == 'firm_thresh':
+                plt.ylabel('L1 Sparsity Value')
+            else:
+                plt.ylabel('L2 Reconstruction Error')
+
+            # save the figure
+            fig_fname = os.path.split(probe_fpath)[1]
+            plt.savefig(
+                os.path.join(save_dir, os.path.splitext(fig_fname)[0] + '.png'),
+                bbox_inches = 'tight'
+            )
+            plt.close()
         
         
     # plot the moving average
