@@ -389,11 +389,11 @@ def plot_objective_probes(probe_dir, save_dir, probe_type, probe_key,
     
     # make y label depending on probe type
     if probe_type == 'energy':
-        plt.ylabel('Final Energy Value in Display Period +/- 95% CI')
+        plt.ylabel('Final Energy Value in Display Period (95% CI Shaded)')
     elif probe_type == 'firm_thresh':
-        plt.ylabel('Final L1 Sparsity Value in Display Period +/- 95% CI')
+        plt.ylabel('Final L1 Sparsity Value in Display Period (95% CI Shaded)')
     else:
-        plt.ylabel('Final L2 Reconstruction Error in Display Period +/- 95% CI')
+        plt.ylabel('Final L2 Reconstruction Error in Display Period (95% CI Shaded)')
     
     plt.savefig(os.path.join(save_dir, 'final_probe_val.png'), bbox_inches = 'tight')
     plt.close()
