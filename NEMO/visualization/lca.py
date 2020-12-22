@@ -449,3 +449,91 @@ def plot_adaptive_timescale_probes(probe_dir, save_dir, probe_key, display_perio
         seaborn.lineplot(data = probe, x = 'Timestep', y = 'TimescaleMax')
         plt.savefig(os.path.join(ts_max_dir, fig_fname), bbox_inches = 'tight')
         plt.close()
+        
+         
+def view_reconstructions(ckpt_dir, save_dir, recon_layer_key = 'Frame*Recon_A.pvp',
+        input_layer_key = 'Frame[0-9]_A.pvp', openpv_path = '/home/mteti/OpenPV/mlab/util'):
+    '''
+    View inputs, reconstructions, and differences.
+    
+    Args:
+        ckpt_dir (str): The checkpoint containing the input and recon layer .pvp files.
+        save_dir (str): The directory to save the resulting images in.
+        recon_layer_key(str): A key to identify and isolate only the .pvp files in 
+            ckpt_dir containing the recons. 
+        input_layer_key (str): A key to identify and isolate only the .pvp files in
+            ckpt_dir containing the inputs. In the specific implementation of the 
+            model, an asterisk for the frame number will not be good enough here 
+            because it will find many unrelated files. 
+        openpv_path (str): Path to the */OpenPV/mlab/util directory.
+        
+    Returns:
+        None
+    '''
+        
+    # add path to octave to be able to use OpenPV's matlab utilities
+    octave.addpath(openpv_path)
+    
+    # make directories to save results in 
+    os.makedirs(save_dir, exist_ok = True)
+    
+    recon_dir = os.path.join(save_dir, 'Recons')
+    os.makedirs(recon_dir, exist_ok = True)
+    
+    input_dir = os.path.join(save_dir, 'Inputs')
+    os.makedirs(input_dir, exist_ok = True)
+    
+    diff_dir = os.path.join(save_dir, 'Diffs')
+    os.makedirs(diff_dir, exist_ok = True)
+    
+    # find all of the recon and input .pvp files
+    recon_fpaths = glob(os.path.join(ckpt_dir, recon_layer_key))
+    recon_fpaths.sort()
+    
+    input_fpaths = glob(os.path.join(ckpt_dir, input_layer_key))
+    input_fpaths.sort()
+    
+    # read in the pvp files and aggregate the inputs and recons
+    for frame_num, (input_fpath, recon_fpath) in enumerate(zip(input_fpaths, recon_fpaths)):
+        inputs = octave.readpvpfile(input_fpath)
+        recons = octave.readpvpfile(recon_fpath)
+        
+        for batch_num, (input_sample, recon_sample) in enumerate(zip(inputs, recons)):
+            input_img = input_sample['values']
+            recon_img = recon_sample['values']
+            
+            input_img = input_img.transpose([1, 0])
+            recon_img = recon_img.transpose([1, 0])
+            diff_img = input_img - recon_img
+            
+            if frame_num == 0 and batch_num == 0:
+                n_frames = len(input_fpaths)
+                batch_size = len(inputs)
+                h, w = input_img.shape
+                inputs_agg = np.zeros([batch_size, n_frames, h, w])
+                recons_agg = np.zeros([batch_size, n_frames, h, w])
+                diffs_agg = np.zeros([batch_size, n_frames, h, w])
+                
+            inputs_agg[batch_num, frame_num] = input_img
+            recons_agg[batch_num, frame_num] = recon_img
+            diffs_agg[batch_num, frame_num] = diff_img
+            
+    # save the images 
+    for sample_num, (input_img, recon_img, diff_img) in enumerate(zip(inputs_agg, recons_agg, diffs_agg)):
+        # scale to [0, 255]
+        input_img = np.uint8(max_min_scale(input_img) * 255)
+        recon_img = np.uint8(max_min_scale(recon_img) * 255)
+        diff_img = np.uint8(max_min_scale(diff_img) * 255)
+        
+        imageio.mimwrite(
+            os.path.join(input_dir, 'sample{}.gif'.format(sample_num)), 
+            [input_img[frame_num] for frame_num in range(n_frames)]
+        )
+        imageio.mimwrite(
+            os.path.join(recon_dir, 'sample{}.gif'.format(sample_num)), 
+            [recon_img[frame_num] for frame_num in range(n_frames)]
+        )
+        imageio.mimwrite(
+            os.path.join(diff_dir, 'sample{}.gif'.format(sample_num)), 
+            [diff_img[frame_num] for frame_num in range(n_frames)]
+        )
