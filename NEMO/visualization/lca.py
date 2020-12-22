@@ -451,7 +451,7 @@ def plot_adaptive_timescale_probes(probe_dir, save_dir, probe_key, display_perio
         plt.close()
         
          
-def view_reconstructions(ckpt_dir, save_dir, recon_layer_key = 'Frame*Recon_A.pvp',
+def view_reconstructions(ckpt_dir, save_dir, recon_layer_key = 'Frame[0-9]Recon_A.pvp',
         input_layer_key = 'Frame[0-9]_A.pvp', openpv_path = '/home/mteti/OpenPV/mlab/util'):
     '''
     View inputs, reconstructions, and differences.
