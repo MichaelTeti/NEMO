@@ -271,13 +271,17 @@ def get_mean_sparsity(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/ml
     return sorted_mean_sparsity, sorted_inds
 
 
-def get_num_neurons_active(sparse_activity_fpath, openpv_path = '/home/mteti/OpenPV/mlab/util'):
+def get_percent_neurons_active(sparse_activity_fpath, n_neurons, feat_map_h, feat_map_w,
+        openpv_path = '/home/mteti/OpenPV/mlab/util'):
     '''
     Computes the mean number of neurons active over each batch. 
     
     Args:
         sparse_activity_fpath (str): The <model_layer>.pvp file that contains the activities in 
             sparse format (e.g. S1.pvp).
+        n_neurons (int): The number of neurons (i.e. number of features in the dictionary).
+        feat_map_h (int): The height of the feature map. 
+        feat_map_w (int): The width of the feature map. 
         openpv_path (str): Path to the openpv matlab utility directory (*/OpenPV/mlab/util).
         
     Returns:
@@ -297,11 +301,12 @@ def get_num_neurons_active(sparse_activity_fpath, openpv_path = '/home/mteti/Ope
     n_display_periods = len(set([act['time'] for act in acts]))
     n_batch = len(acts) // n_display_periods
     sqrt_n = np.sqrt(n_batch)
+    total_acts = n_neurons * feat_map_h * feat_map_w
     means, ses = np.zeros([n_display_periods]), np.zeros([n_display_periods])
     
     for display_period in range(n_display_periods):
         acts_over_batch = acts[display_period * n_batch: (display_period + 1) * n_batch]
-        n_active_over_batch = [sample_acts['values'].shape[0] for sample_acts in acts_over_batch]
+        n_active_over_batch = [sample_acts['values'].shape[0] / total_acts * 100 for sample_acts in acts_over_batch]
         means[display_period] = np.mean(np.array(n_active_over_batch, dtype = np.float64))
         ses[display_period] = np.std(np.array(n_active_over_batch, dtype = np.float64)) / sqrt_n
         
