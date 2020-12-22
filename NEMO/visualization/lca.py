@@ -356,6 +356,7 @@ def plot_objective_probes(probe_dir, save_dir, probe_type, probe_key,
             header = 0 if probe_type == 'energy' else 'infer',
             names = ['Timestep', 'ProbeVal']
         )
+        probe = probe[probe['Timestep'] > 0]
         
         # keep only last value in each display period and add to the probe_agg df for moving avg plotting
         probe_end_val = probe[probe['Timestep'] % display_period == 0]
