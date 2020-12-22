@@ -50,12 +50,13 @@ def get_mean_activations(model_activity_fpath, openpv_path = '/home/mteti/OpenPV
     # get the mean activation for each neuron across batch and spatial dimensions
     # and sort them descending based on this mean and keep the neuron index too
     mean_acts = np.mean(acts, (0, 1, 2))
+    se_acts = np.std(acts, (0, 1, 2)) / np.sqrt(acts[..., 0].size)
     inds = list(range(mean_acts.size))
     sorted_inds = [ind for _,ind in sorted(zip(mean_acts, inds), reverse = True)]
-    sorted_acts = acts[..., sorted_inds]
     sorted_mean_acts = mean_acts[sorted_inds]
+    sorted_se_acts = se_acts[sorted_inds]
     
-    return sorted_acts, sorted_mean_acts, sorted_inds
+    return sorted_mean_acts, sorted_se_acts, sorted_inds
 
 
 def view_complex_cell_strfs(ckpt_dir, write_fpath, weight_file_key = None, 
