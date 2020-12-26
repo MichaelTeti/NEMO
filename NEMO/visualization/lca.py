@@ -14,6 +14,39 @@ from NEMO.utils.image_utils import max_min_scale
 from NEMO.utils.general_utils import read_csv
 
 
+def read_activity_file(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/mlab/util'):
+    '''
+    Read in the <model_layer_name>_A.pvp file containing the activations / feature maps of each neuron.
+    
+    Args:
+        model_activity_fpath (str): Path to the <model_layer_name>_A.pvp where the
+            activations of each neuron are contained in.
+        openpv_path (str): Path to the openpv matlab utility directory (*/OpenPV/mlab/util).
+        
+    Returns:
+        acts (np.ndarray): A B x H x W x C array of feature maps. 
+    '''
+    
+    # add OpenPV matlab utility dir to octave path
+    octave.addpath(openpv_path)
+    
+    # Read in the activity file and get the number of batch samples
+    # Should be a list of length batch size, where each item in the list is an array 
+    # of shape (input_width / stride x) x (input height / stride y) x # Neurons
+    # with the activations for that particular batch sample
+    act_data = octave.readpvpfile(model_activity_fpath)
+    n_batch = len(act_data)
+    
+    # concatenate across batch samples to produce a single array of shape 
+    # batch size x (input width / stride x) x (input height / stride y) x # Neurons
+    acts = np.concatenate([act_data[b]['values'][None, ...] for b in range(n_batch)], 0)
+    
+    # transpose the 2nd and third dimensions to make it B x H x W x # Neurons
+    acts = acts.transpose([0, 2, 1, 3])
+    
+    return acts
+
+
 def get_mean_activations(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/mlab/util'):
     '''
     Read in the activations of each neuron, average them over space and batch,
