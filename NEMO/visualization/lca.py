@@ -66,19 +66,8 @@ def get_mean_activations(model_activity_fpath, openpv_path = '/home/mteti/OpenPV
             consisting of the original index of the neuron with that sorted activation.
     '''
     
-    # add OpenPV matlab utility dir to octave path
-    octave.addpath(openpv_path)
-    
-    # Read in the activity file and get the number of batch samples
-    # Should be a list of length batch size, where each item in the list is an array 
-    # of shape (input_width / stride x) x (input height / stride y) x n_neurons
-    # with the activations for that particular batch sample
-    act_data = octave.readpvpfile(model_activity_fpath)
-    n_batch = len(act_data)
-    
-    # concatenate across batch samples to produce a single array of shape 
-    # batch size x (input width / stride x) x (input height / stride y) x n_neurons
-    acts = np.concatenate([act_data[b]['values'][None, ...] for b in range(n_batch)], 0)
+    # read in the activations
+    acts = read_activity_file(model_activity_fpath, openpv_path = openpv_path)
 
     # get the mean activation for each neuron across batch and spatial dimensions
     # and sort them descending based on this mean and keep the neuron index too
@@ -281,19 +270,8 @@ def get_mean_sparsity(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/ml
             consisting of the original index of the neuron with that sorted mean sparsity.
     '''
     
-    # add OpenPV matlab utility dir to octave
-    octave.addpath(openpv_path)
-    
-    # Read in the activity file and get the number of batch samples
-    # Should be a list of length batch size, where each item in the list is an array 
-    # of shape (input_width / stride x) x (input height / stride y) x n_neurons
-    # with the activations for that particular batch sample
-    act_data = octave.readpvpfile(model_activity_fpath)
-    n_batch = len(act_data)
-    
-    # concatenate across batch samples to produce a single array of shape 
-    # batch size x (input width / stride x) x (input height / stride y) x n_neurons
-    acts = np.concatenate([act_data[b]['values'][None, ...] for b in range(n_batch)], 0)
+    # read in activations
+    acts = read_activity_fpath(model_activity_fpath, openpv_path = openpv_path)
     
     # calculate mean sparsity and sort
     mean_sparsity = np.mean(acts == 0.0, (0, 1, 2))
