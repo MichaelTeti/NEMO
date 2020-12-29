@@ -415,7 +415,7 @@ def plot_objective_probes(probe_dir, save_dir, probe_type, probe_key,
     
     
 def plot_adaptive_timescale_probes(probe_dir, save_dir, probe_key, display_period = 3000, 
-        n_display_periods = None):
+        n_display_periods = None, plot_individual = False):
     '''
     Plot data in adaptive timescale probe. 
     
@@ -430,6 +430,7 @@ def plot_adaptive_timescale_probes(probe_dir, save_dir, probe_key, display_perio
         display_period (int): Number of timesteps in the display period. This is 
             important if n_display_periods is given and for the moving average
             plot.
+        plot_individual (bool): If True, will plot a graph for each probe .txt file.
             
     Returns:
         None
@@ -449,6 +450,9 @@ def plot_adaptive_timescale_probes(probe_dir, save_dir, probe_key, display_perio
 
     # get a list of the probe files
     probe_fpaths = glob(os.path.join(probe_dir, probe_key))
+    
+    # make an empty dataframe for aggregating across samples for moving average plotting
+    probe_agg = pd.DataFrame(columns = ['Timestep', 'Timescale', 'TimescaleTrue', 'TimescaleMax'])
 
     for fpath in probe_fpaths:
         # adaptive timescale probes are saved differently, so need to parse out the values
@@ -468,22 +472,49 @@ def plot_adaptive_timescale_probes(probe_dir, save_dir, probe_key, display_perio
             }
         )
         
-        # only plot n_display_periods of information since it can be hard to see
-        if n_display_periods: 
-            probe = probe[probe['Timestep'] > probe['Timestep'].max() - n_display_periods * display_period]
+        # keep only last value in each display period and add to the probe_agg df for moving avg plotting
+        probe_end_val = probe[probe['Timestep'] % display_period == 0]
+        probe_agg = probe_agg.append(probe_end_val, ignore_index = True)
         
-        fig_fname = os.path.splitext(os.path.split(fpath)[1])[0] + '.png'
-        seaborn.lineplot(data = probe, x = 'Timestep', y = 'Timescale')
-        plt.savefig(os.path.join(ts_dir, fig_fname), bbox_inches = 'tight')
-        plt.close()
+        if plot_individual:
+            # only plot n_display_periods of information since it can be hard to see
+            if n_display_periods: 
+                probe = probe[probe['Timestep'] > probe['Timestep'].max() - n_display_periods * display_period]
+
+            # make name for each figure based on the .txt file name
+            fig_fname = os.path.splitext(os.path.split(fpath)[1])[0] + '.png'
+            
+            # plot and save each probe
+            seaborn.lineplot(data = probe, x = 'Timestep', y = 'Timescale')
+            plt.savefig(os.path.join(ts_dir, fig_fname), bbox_inches = 'tight')
+            plt.close()
+
+            seaborn.lineplot(data = probe, x = 'Timestep', y = 'TimescaleTrue')
+            plt.savefig(os.path.join(ts_true_dir, fig_fname), bbox_inches = 'tight')
+            plt.close()
+
+            seaborn.lineplot(data = probe, x = 'Timestep', y = 'TimescaleMax')
+            plt.savefig(os.path.join(ts_max_dir, fig_fname), bbox_inches = 'tight')
+            plt.close()
+            
         
-        seaborn.lineplot(data = probe, x = 'Timestep', y = 'TimescaleTrue')
-        plt.savefig(os.path.join(ts_true_dir, fig_fname), bbox_inches = 'tight')
-        plt.close()
+    # plot the moving averages
+    probe_agg['Display Period'] = probe_agg['Timestep'] // display_period
         
-        seaborn.lineplot(data = probe, x = 'Timestep', y = 'TimescaleMax')
-        plt.savefig(os.path.join(ts_max_dir, fig_fname), bbox_inches = 'tight')
-        plt.close()
+    seaborn.lineplot(data = probe_agg, x = 'Display Period', y = 'Timescale')
+    plt.ylabel('Final Timescale Value in Display Period (95% CI Shaded)')
+    plt.savefig(os.path.join(ts_dir, 'final_probe_val.png'), bbox_inches = 'tight')
+    plt.close()
+
+    seaborn.lineplot(data = probe_agg, x = 'Display Period', y = 'TimescaleTrue')
+    plt.ylabel('Final Timescale True Value in Display Period (95% CI Shaded)')
+    plt.savefig(os.path.join(ts_true_dir, 'final_probe_val.png'), bbox_inches = 'tight')
+    plt.close()
+
+    seaborn.lineplot(data = probe_agg, x = 'Display Period', y = 'TimescaleMax')
+    plt.ylabel('Final Timescale Max Value in Display Period (95% CI Shaded)')
+    plt.savefig(os.path.join(ts_max_dir, 'final_probe_val.png'), bbox_inches = 'tight')
+    plt.close()
         
          
 def view_reconstructions(ckpt_dir, save_dir, recon_layer_key = 'Frame[0-9]Recon_A.pvp',
