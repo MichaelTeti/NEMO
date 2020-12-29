@@ -236,16 +236,15 @@ if not args.no_probes:
         display_period = args.display_period_length,
         n_display_periods = args.n_display_periods,
         plot_individual = args.plot_individual_probes
+    )    
+    plot_adaptive_timescale_probes(
+        probe_dir = args.probe_dir,
+        save_dir = os.path.join(args.save_dir, 'AdaptiveTimescaleProbe'),
+        probe_key = args.adaptive_ts_probe_key,
+        display_period = args.display_period_length,
+        n_display_periods = args.n_display_periods,
+        plot_individual = args.plot_individual_probes
     )
-    
-    if args.plot_individual_probes:    
-        plot_adaptive_timescale_probes(
-            probe_dir = args.probe_dir,
-            save_dir = os.path.join(args.save_dir, 'AdaptiveTimescaleProbe'),
-            probe_key = args.adaptive_ts_probe_key,
-            display_period = args.display_period_length,
-            n_display_periods = args.n_display_periods
-        )
 
 if not args.no_activity:
     # mean acts, mean sparsity, and number active
