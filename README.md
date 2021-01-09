@@ -2,11 +2,11 @@
 # Create an Anaconda Environment
 Begginning with anaconda already installed, create an environment for this repo 
 ```
-conda create -n NEMO python=3.6
+conda create -n nemo python=3.6
 ```
 Next, activate the newly-created conda environment
 ```
-conda activate NEMO
+conda activate nemo
 ```
 Finally, install octave in this environment (all other libraries will be installed 
 to this environment below when running setup.py).
