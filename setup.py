@@ -1,12 +1,12 @@
 from setuptools import setup
 
 setup(
-    name = 'NEMO',
+    name = 'nemo',
     version = '0.0.1',
     description = 'Neural Encoding Models for Ophys Data project module.',
     author = 'Michael Teti',
     author_email = 'mteti@fau.edu',
-    packages = ['NEMO'],
+    packages = ['nemo'],
     install_requires = [
         'numpy<1.19.0',
         'scipy',
