@@ -2,7 +2,7 @@
 # Create an Anaconda Environment
 Begginning with anaconda already installed, create an environment for this repo 
 ```
-conda create -n nemo
+conda create -n nemo python=3.8
 ```
 Next, activate the newly-created conda environment
 ```
