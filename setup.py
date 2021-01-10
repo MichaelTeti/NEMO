@@ -22,7 +22,7 @@ setup(
         'torchvision==0.8.2',
         'urllib3',
         'chardet',
-        'idna',
+        'idna<3',
         'jinja2<2.12.0',
         'oct2py'
     ]
