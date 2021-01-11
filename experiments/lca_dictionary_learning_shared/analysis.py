@@ -3,7 +3,7 @@ import os
 
 import matplotlib.pyplot as plt
 
-from NEMO.visualization.lca import (
+from nemo.model.analysis.lca import (
     get_mean_activations,
     get_mean_sparsity,
     view_complex_cell_strfs,
