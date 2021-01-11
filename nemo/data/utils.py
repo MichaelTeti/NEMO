@@ -1,6 +1,8 @@
 from multiprocessing import Process, cpu_count
 import os
 
+import numpy as np
+
 
 def multiproc(func, iterator_key, n_workers = 4, **kwargs):
     '''
