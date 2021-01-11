@@ -4,7 +4,7 @@ import os, sys
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
 import allensdk.brain_observatory.stimulus_info as stim_info
 
-from NEMO.utils.general_utils import multiproc
+from nemo.data.utils import multiproc
 
 
 def download_experiment_data(ids, boc):
