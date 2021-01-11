@@ -114,3 +114,32 @@ def load_trial_averaged_traces(fpath):
     traces = traces.iloc[:, n_frames_in_time - 1:].to_numpy()[0]
     
     return traces
+
+
+def read_csv(fpath, remove_header = False, remove_footer = False, mode = 'r',):
+    '''
+    Read a .csv file and return the items as a list.
+
+    Args:
+        fpath (str): The path to the .csv file.
+        remove_header (bool): True to return lines 1-n.
+        remove_footer (bool): True to return lines 0-(n-1).
+        mode (str): Mode to open the file in.
+
+    Returns:
+        A list of items (e.g. strs, floats, ints, lists, etc.)
+    '''
+
+    with open(fpath, mode) as f:
+        reader = csv.reader(f, delimiter = ',')
+        data = []
+
+        try:
+            for row_num, row in enumerate(reader[:-1] if remove_footer else reader):
+                if row_num == 0 and remove_header: continue
+                data.append(row[0] if len(row) == 1 else row)
+        except:
+            pass
+
+    return data
+    
