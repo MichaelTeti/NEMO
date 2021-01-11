@@ -37,7 +37,7 @@ Install PetaVision with the [install_openpv.sh](https://github.com/MichaelTeti/N
 ```
 bash scripts/install_openpv.sh <dir-to-install-in>
 ```
-The script takes one required argument, which is the directory you wish to install in (make sure you have permissions in this dir). You may need to first install some of PetaVision's dependencies (listed [here](https://github.com/PetaVision/OpenPV)), which can be installed via most Linux package managers.
+The script takes one required argument, which is the directory you wish to install in (make sure you have permissions in this dir). You may need to first install some of PetaVision's dependencies (listed [here](https://github.com/PetaVision/OpenPV)), which can be installed via most Linux-based package managers.
 
 ### Downloading and Processing the Data
 1. Download and pre-process the ImageNet video dataset (directions [here](https://github.com/MichaelTeti/NEMO/tree/main/scripts/image_scripts))
