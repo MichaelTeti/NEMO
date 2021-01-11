@@ -10,8 +10,8 @@ import seaborn
 import torch
 from torchvision.utils import make_grid
 
-from NEMO.utils.image_utils import max_min_scale
-from NEMO.utils.general_utils import read_csv
+from nemo.data.preprocess import max_min_scale
+from nemo.data.io import read_csv
 
 
 def read_activity_file(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/mlab/util'):
