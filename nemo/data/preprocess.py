@@ -168,3 +168,5 @@ def normalize_traces(traces):
     
     traces -= np.mean(traces)
     traces /= np.amax(np.absolute(traces))
+    
+    return traces
