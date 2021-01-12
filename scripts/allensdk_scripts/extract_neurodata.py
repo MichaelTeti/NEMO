@@ -8,7 +8,7 @@ from cv2 import imwrite
 import numpy as np
 import pandas as pd
 
-from nemo.data.io import save_vid_array_as_frames, write_csv, write_h5
+from nemo.data.io import save_vid_array_as_frames, write_csv
 from nemo.data.preprocess import max_min_scale, normalize_traces
 from nemo.data.utils import get_img_frame_names, multiproc
 
