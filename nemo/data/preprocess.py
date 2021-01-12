@@ -153,3 +153,18 @@ def create_temporal_design_mat(vid_frame_array, n_frames_in_time = 9):
     design_mat = np.concatenate(cat_list, axis = 3)
     
     return design_mat
+
+
+def normalize_traces(traces):
+    '''
+    Zero-mean and scale traces.
+    
+    Args:
+        traces (np.ndarray): The array of unscaled fluorescence trace values.
+        
+    Returns:
+        traces_scaled (np.ndarray): The array of fluorescence traces with zero mean and range [-1, 1].
+    '''
+    
+    traces -= np.mean(traces)
+    traces /= np.amax(np.absolute(traces))
