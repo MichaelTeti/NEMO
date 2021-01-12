@@ -4,13 +4,12 @@ import os, sys
 import cv2
 import numpy as np
 
-from NEMO.utils.general_utils import (
+from nemo.data.utils import (
     multiproc,
     add_string_to_fpaths,
     get_fpaths_in_dir,
     change_file_exts
 )
-from NEMO.utils.image_utils import resize_and_keep_aspect
 
 
 def smooth_imgs(old_and_new_fpaths, neighborhood = 9, sigma_color = 75, sigma_space = 75):
