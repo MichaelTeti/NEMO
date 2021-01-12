@@ -5,13 +5,13 @@ import cv2
 import numpy as np
 import torch
 
-from NEMO.utils.general_utils import (
+from nemo.data.preprocess import spatial_whiten, max_min_scale
+from nemo.data.utils import (
     multiproc,
     add_string_to_fpaths,
     get_fpaths_in_dir,
     change_file_exts
 )
-from NEMO.utils.image_utils import spatial_whiten, max_min_scale
 
 
 def whiten_imgs(old_and_new_fpaths, full_svd = False, scale_method = 'video'):
