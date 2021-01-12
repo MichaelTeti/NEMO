@@ -47,7 +47,7 @@ def save_natural_video_stimuli(cell_data_list, save_dir, n_workers, stimuli):
         )
 
 
-def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thresh, stimuli):
+def save_natural_video_neurodata(cell_data_list, save_dir, missing_pupil_coords_thresh, stimuli):
     print('[INFO] SAVING TRACES AND PUPIL COORDS NOW.')
 
     if missing_pupil_coords_thresh:
@@ -309,7 +309,7 @@ if __name__ == '__main__':
         )
 
     if args.save_traces_and_pupil_coords:
-        save_natural_video_traces(
+        save_natural_video_neurodata(
             cell_data_list = data,
             save_dir = args.save_dir,
             missing_pupil_coords_thresh = args.missing_pupil_coords_thresh,
