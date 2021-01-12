@@ -4,13 +4,13 @@ import os, sys
 from cv2 import imread, imwrite
 import numpy as np
 
-from NEMO.utils.general_utils import (
+from nemo.data.preprocess import center_crop
+from nemo.data.utils import (
     multiproc,
     get_fpaths_in_dir,
     add_string_to_fpaths,
     change_file_exts
 )
-from NEMO.utils.image_utils import center_crop
 
 
 def crop_imgs(old_and_new_fpaths, crop_height, crop_width):
