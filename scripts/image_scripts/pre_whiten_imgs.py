@@ -4,13 +4,13 @@ import os
 import cv2
 import numpy as np
 
-from NEMO.utils.general_utils import (
+from nemo.data.preprocess import max_min_scale, make_lgn_freq_filter
+from nemo.data.utils import (
     multiproc,
     add_string_to_fpaths,
     get_fpaths_in_dir,
     change_file_exts,
 )
-from NEMO.utils.image_utils import max_min_scale, make_lgn_freq_filter
 
 
 def pre_whiten_imgs(old_and_new_fpaths, f_0 = None):
