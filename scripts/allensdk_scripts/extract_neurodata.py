@@ -8,12 +8,8 @@ from cv2 import imwrite
 import numpy as np
 import pandas as pd
 
-from nemo.data.io import (
-    save_vid_array_as_frames,
-    write_csv,
-    write_h5
-)
-from nemo.data.preprocess import max_min_scale
+from nemo.data.io import save_vid_array_as_frames, write_csv, write_h5
+from nemo.data.preprocess import max_min_scale, normalize_traces
 from nemo.data.utils import get_img_frame_names, multiproc
 
 
@@ -82,8 +78,7 @@ def save_natural_video_traces(cell_data_list, save_dir, missing_pupil_coords_thr
                 # get the corrected fluorescence traces for the current cell
                 # and scale them over all stimuli
                 trace_ts, traces = dataset.get_corrected_fluorescence_traces(cell_specimen_ids = [cell_id])
-                traces -= np.mean(traces)
-                traces /= np.amax(np.absolute(traces))
+                traces = normalize_traces(traces)
 
                 # get pupil coordinates, but put nan if they aren't available
                 try:
