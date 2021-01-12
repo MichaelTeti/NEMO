@@ -4,7 +4,7 @@ import os, sys
 from cv2 import imread, imwrite
 import numpy as np
 
-from NEMO.utils.general_utils import (
+from nemo.data.utils import (
     multiproc,
     get_fpaths_in_dir,
     add_string_to_fpaths,
