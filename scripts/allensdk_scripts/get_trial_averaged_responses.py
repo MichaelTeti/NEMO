@@ -5,14 +5,8 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from NEMO.utils.image_utils import save_vid_array_as_frames
-from NEMO.utils.general_utils import (
-    get_fpaths_in_dir,
-    read_csv,
-    str2float_list,
-    find_common_vals_in_lists,
-    get_intersection_col_vals
-)
+from nemo.data.io import save_vid_array_as_frames
+from nemo.data.utils import get_fpaths_in_dir
 
 
 parser = ArgumentParser()
