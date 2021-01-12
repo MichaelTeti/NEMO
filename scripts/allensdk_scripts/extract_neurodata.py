@@ -8,13 +8,13 @@ from cv2 import imwrite
 import numpy as np
 import pandas as pd
 
-from nemo.data.preprocess import max_min_scale
-from nemo.data.utils import get_img_frame_names, multiproc
 from nemo.data.io import (
     save_vid_array_as_frames,
     write_csv,
     write_h5
 )
+from nemo.data.preprocess import max_min_scale
+from nemo.data.utils import get_img_frame_names, multiproc
 
 
 def save_natural_video_stimuli(cell_data_list, save_dir, n_workers, stimuli):
