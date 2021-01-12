@@ -4,13 +4,13 @@ import os, sys
 from cv2 import imread, imwrite
 import numpy as np
 
-from NEMO.utils.general_utils import (
+from nemo.data.preprocess import resize_and_keep_aspect
+from nemo.data.utils import (
     multiproc,
     add_string_to_fpaths,
     get_fpaths_in_dir,
     change_file_exts
 )
-from NEMO.utils.image_utils import resize_and_keep_aspect
 
 
 def resize_imgs(old_and_new_fpaths, desired_height, desired_width, aspect_ratio_tol):
