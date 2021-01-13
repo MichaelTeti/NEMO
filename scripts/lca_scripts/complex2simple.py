@@ -6,6 +6,8 @@ import numpy as np
 from oct2py import octave
 from progressbar import ProgressBar
 
+from nemo.model.analysis.lca import get_mean_activations
+
 parser = ArgumentParser()
 parser.add_argument(
     'lca_ckpt_dir',
@@ -68,22 +70,13 @@ args = parser.parse_args()
 # make save_dir if doesn't exist
 os.makedirs(args.save_dir, exist_ok = True)
 
-# add OpenPV matlab utility directory to octave path
-octave.addpath(args.openpv_path)
-
 # get a list of the filepaths
 weight_fpaths = glob(os.path.join(args.lca_ckpt_dir, args.weight_file_key))
 weight_fpaths.sort()
 
 # get top features if specified
 if args.n_features_keep:
-    act_data = octave.readpvpfile(args.act_fpath)
-    n_batch = len(act_data)
-    acts = np.concatenate([act_data[b]['values'][None, ...] for b in range(n_batch)], 0)
-    assert args.n_features_keep <= acts.shape[-1]
-    mean_acts = np.mean(acts, (0, 1, 2))
-    inds = list(range(mean_acts.size))
-    sorted_inds = [ind for _, ind in sorted(zip(mean_acts, inds), reverse = True)]
+    _, _, sorted_inds = get_mean_activations(args.act_fpath, openpv_path = args.openpv_path)
     sorted_inds_keep = sorted_inds[:args.n_features_keep]
 
 for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
