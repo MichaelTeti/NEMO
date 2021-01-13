@@ -246,7 +246,6 @@ if not args.no_activity:
     plt.close()
 
     _, feat_map_h, feat_map_w, n_neurons = read_activity_file(args.model_activity_fpath).shape
-    print(feat_map_h, feat_map_w, n_neurons)
     mean_active, se_active = get_percent_neurons_active(
         args.model_write_fpath, 
         n_neurons,
