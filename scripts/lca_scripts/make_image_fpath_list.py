@@ -6,7 +6,7 @@ images in order.
 from argparse import ArgumentParser
 import os, sys
 
-from NEMO.utils.general_utils import write_csv
+from nemo.data.io import write_csv
 
 
 parser = ArgumentParser()
