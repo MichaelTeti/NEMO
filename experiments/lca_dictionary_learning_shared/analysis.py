@@ -10,7 +10,8 @@ from nemo.model.analysis.lca import (
     get_percent_neurons_active,
     plot_objective_probes,
     plot_adaptive_timescale_probes,
-    view_reconstructions
+    view_reconstructions,
+    read_activity_file
 )
 
 
@@ -108,24 +109,6 @@ n_active_args.add_argument(
     required = True,
     type = str,
     help = 'Path to the <model_layer_name>.pvp file.'
-)
-n_active_args.add_argument(
-    '--n_neurons',
-    type = int,
-    default = 256,
-    help = 'The number of dictionary features.'
-)
-n_active_args.add_argument(
-    '--feat_map_h',
-    type = int,
-    default = 32,
-    help = 'The height of the feature map grid of activations.'
-)
-n_active_args.add_argument(
-    '--feat_map_w',
-    type = int,
-    default = 64,
-    help = 'The width of the feature map grid of activations.'
 )
 
 # probe arguments 
@@ -262,11 +245,13 @@ if not args.no_activity:
     plt.savefig(os.path.join(args.save_dir, 'mean_sparsity.png'), bbox_inches = 'tight')
     plt.close()
 
+    _, feat_map_h, feat_map_w, n_neurons = read_activity_file(args.model_activity_fpath).shape
+    print(feat_map_h, feat_map_w, n_neurons)
     mean_active, se_active = get_percent_neurons_active(
         args.model_write_fpath, 
-        args.n_neurons,
-        args.feat_map_h,
-        args.feat_map_w,
+        n_neurons,
+        feat_map_h,
+        feat_map_w,
         openpv_path = args.openpv_path
     )
     plt.errorbar(x = list(range(mean_active.size)), y = mean_active, yerr = se_active)
