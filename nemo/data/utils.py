@@ -19,7 +19,8 @@ def multiproc(func, iterator_key, n_workers = 4, **kwargs):
         None
     '''
 
-    assert n_workers <= cpu_count()
+    if n_workers > cpu_count():
+        raise ValueError('n_workers should be <= the value returned by multiprocessing.cpu_count()')
 
     # find out how many inputs to each worker
     procs = []
@@ -58,11 +59,12 @@ def change_file_exts(fpaths, desired_ext = '.png'):
         fpaths_new (list): List of fpaths corresponding to fpaths input with desired_ext
             the extension of the files.
     '''
-
-    assert type(desired_ext) == str
-    if desired_ext[0] != '.': desired_ext = '.' + desired_ext
+        
+    if desired_ext[0] != '.': 
+        desired_ext = '.' + desired_ext
 
     fpaths_new = [os.path.splitext(fpath)[0] + desired_ext for fpath in fpaths]
+    
     return fpaths_new
 
 
@@ -78,8 +80,6 @@ def get_fpaths_in_dir(dir, key = None):
     Returns:
         fpaths (list): List of fpaths.
     '''
-
-    if key: assert type(key) == str
 
     fpaths = []
     for root, _, files in os.walk(dir):
@@ -106,9 +106,9 @@ def add_string_to_fpaths(fpaths, string):
     Returns:
         fpaths_modified (list): fpaths modified by the string
     '''
-
-    assert type(string) == str 
-    assert type(fpaths) == list
+    
+    if type(fpaths) not in [list, tuple]:
+        raise TypeError('fpaths must be a list or tuple.')
 
     fpaths = [os.path.join(os.path.split(fpath)[0] + string, os.path.split(fpath)[1]) for fpath in fpaths]
 
@@ -126,7 +126,8 @@ def get_img_frame_names(n_frames):
         frame_numbers (list of strings)
     '''
 
-    assert n_frames > 0
+    if n_frames <= 0:
+        raise ValueError('n_frames should be > 0.')
 
     n_decimals = len(str(n_frames))
     
