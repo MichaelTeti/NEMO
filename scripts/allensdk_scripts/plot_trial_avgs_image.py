@@ -24,10 +24,6 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-assert(os.path.isdir(args.trace_dir) and os.listdir(args.trace_dir) != []), \
-    'trace_dir must exist and must not be empty.'
-assert(os.path.splitext(args.save_fpath)[1] in ['.png', '.jpg', '.PNG', '.jpeg', '.JPG']), \
-    'save_fpath must have an image extension.'
 
 os.makedirs(os.path.split(args.save_fpath)[0], exist_ok = True)
 
