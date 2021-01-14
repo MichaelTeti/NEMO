@@ -133,7 +133,6 @@ def view_complex_cell_strfs(ckpt_dir, write_fpath, weight_file_key = None,
         
         # sort the features based on the activation indices if given
         if activity_fpath:
-            assert len(inds) == n_neurons
             weights = weights[inds]
         
         # make the grid for the features corresponding to this video frame
@@ -348,7 +347,8 @@ def plot_objective_probes(probe_dir, save_dir, probe_type, probe_key,
         None
     '''
     
-    assert probe_type in ['energy', 'firm_thresh', 'l2']
+    if probe_type not in ['energy', 'firm_thresh', 'l2']:
+        raise ValueError("probe_type not in ['energy', 'firm_thresh', 'l2'].")
     
     # make sure save_dir exists or create it
     os.makedirs(save_dir, exist_ok = True)
