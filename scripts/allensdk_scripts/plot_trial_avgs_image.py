@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn
 
+from nemo.data.io import compile_trial_avg_traces
+
 
 parser = ArgumentParser()
 parser.add_argument(
@@ -27,20 +29,10 @@ args = parser.parse_args()
 
 os.makedirs(os.path.split(args.save_fpath)[0], exist_ok = True)
 
-# get paths to all the trace files in the given trace_dir
-fnames = os.listdir(args.trace_dir)
-fnames.sort() # sort them so they'll be lined up regardless of stimuli etc.
-fpaths = [os.path.join(args.trace_dir, f) for f in fnames]
-
-# loop through and read them all into a pandas dataframe
-for fpath_num, fpath in enumerate(fpaths):
-    if fpath_num == 0:
-        df = pd.read_csv(fpath)
-    else:
-        df = df.append(pd.read_csv(fpath))
+# get traces and cell_ids
+df, cell_ids = compile_trial_avg_traces(args.trace_dir)
 
 # plot the image and save
-df = df.reset_index(drop = True)
 df.columns = list(range(len(df.columns)))
 seaborn.heatmap(data = df, cmap = 'viridis')
 plt.xlabel('Frame Number')
