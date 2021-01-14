@@ -24,8 +24,6 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-assert(os.path.isdir(args.trace_dir) and os.listdir(args.trace_dir) != []), \
-    'args.trace_dir does not exist or it is empty.'
 
 os.makedirs(args.save_dir, exist_ok = True)
 
