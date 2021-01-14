@@ -145,3 +145,33 @@ def read_csv(fpath, remove_header = False, remove_footer = False, mode = 'r',):
 
     return data
     
+
+def compile_trial_avg_traces(trace_dir):
+    '''
+    Reads in trial-averaged traces and aggregates them into a single dataframe.
+
+    Args:
+        trace_dir (str): The directory containing all of the cellID_*.txt trace files.
+
+    Returns:
+        df (pd.DataFrame): The dataframe of shape # neurons x # frames.
+        cell_ids (list): A list of the cell IDs for those in the dataframe. 
+    '''
+
+    # get paths to all the trace files in the given trace_dir
+    fnames = os.listdir(trace_dir)
+    fnames.sort() # sort them so they'll be lined up regardless of stimuli etc.
+    fpaths = [os.path.join(trace_dir, f) for f in fnames]
+    cell_ids = [os.path.splitext(fname)[0].split('_')[1] for fname in fnames]
+
+    # loop through and read them all into a pandas dataframe
+    for fpath_num, fpath in enumerate(fpaths):
+        if fpath_num == 0:
+            df = pd.read_csv(fpath)
+        else:
+            df = df.append(pd.read_csv(fpath))
+
+    # reset the indices 
+    df = df.reset_index(drop = True)
+
+    return df, cell_ids
