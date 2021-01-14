@@ -8,17 +8,10 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import ElasticNetCV as ElasticNet
 
-from NEMO.utils.image_utils import (
-    read_frames, 
-    max_min_scale,
-    get_img_frame_names
-)
-from NEMO.utils.model_utils import (
-    create_temporal_design_mat, 
-    save_args,
-    load_trial_averaged_traces,
-    cv_splitter_video
-)
+from nemo.data.io import read_frames, load_trial_averaged_traces
+from nemo.data.preprocess import max_min_scale, create_temporal_design_mat
+from nemo.data.utils import get_img_frame_names, save_args, cv_splitter_video
+
 
 def train_elastic_net(design_mat, trace_dir, save_dir, min_l1_ratio = 1e-6, max_l1_ratio = 1.0, 
                       n_l1_ratios = 6, n_frames_in_time = 9, n_alphas = 50, max_iter = 5000, 
