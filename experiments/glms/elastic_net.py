@@ -43,8 +43,6 @@ def train_elastic_net(design_mat, trace_dir, save_dir, min_l1_ratio = 1e-6, max_
 
     # get a list of all cell traces in trace_dir
     trace_fpaths = [os.path.join(trace_dir, f) for f in os.listdir(trace_dir)]
-    assert(all([os.path.splitext(fpath)[1] == '.txt' for fpath in trace_fpaths])), \
-        'All files in trace_dir must be .txt files made by the get_trial_averaged_responses.py script.'
 
     # get disjoint cv folds since the preds and responses overlap
     cv_folds = cv_splitter_video(n_samples = design_mat.shape[0])
@@ -56,7 +54,6 @@ def train_elastic_net(design_mat, trace_dir, save_dir, min_l1_ratio = 1e-6, max_
 
         # read in the traces 
         traces = load_trial_averaged_traces(fpath)
-        assert traces.size == design_mat.shape[0]
 
         # center traces so we don't have to fit an intercept
         traces -= np.mean(traces)    
