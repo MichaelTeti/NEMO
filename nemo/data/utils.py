@@ -132,3 +132,19 @@ def get_img_frame_names(n_frames):
     n_decimals = len(str(n_frames))
     
     return ['0' * (n_decimals - len(str(i))) + str(i) for i in range(n_frames)]
+
+
+def download_experiment_data(ids, boc):
+    '''
+    Download AllenSDK experiment container files.
+
+    Args:
+        ids (list): experiment ids to download data.
+        boc (BrainObservatoryCache object)
+        
+    Returns:
+        None
+    '''
+
+    for id in ids:
+        boc.get_ophys_experiment_data(id)
