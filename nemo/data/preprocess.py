@@ -17,7 +17,7 @@ def resize_and_keep_aspect(img, desired_height, desired_width):
     '''
 
     if desired_height <= 0 or desired_width <= 0:
-        print('desired_height and desired_width must be non-zero and positive.')
+        raise ValueError('desired_height and desired_width must be non-zero and positive.')
 
     h, w = img.shape[:2]
     desired_aspect = desired_width / desired_height
@@ -58,8 +58,8 @@ def center_crop(img, crop_height, crop_width):
         img_cropped (np.ndarray): The cropped image.
     '''
 
-    assert crop_height > 0
-    assert crop_width > 0
+    if crop_height <= 0 or crop_width <= 0:
+        raise ValueError('crop_height and crop_width must be non-zero and positive')
 
     crop_y = img.shape[0] // 2 - crop_height // 2
     crop_x = img.shape[1] // 2 - crop_width // 2
@@ -84,7 +84,8 @@ def spatial_whiten(imgs, return_zca_mat = False, full_matrix = False):
         ZCAMatrix (np.ndarray) or whitened image matrix (np.ndarray) depending on return_zca_mat.
     '''
 
-    assert len(imgs.shape) == 2
+    if len(imgs.shape) != 2:
+        raise ValueError('imgs must be a 2D array.')
 
     imgs = imgs - np.mean(imgs, 0)
     U,S,V = np.linalg.svd(np.matmul(imgs, imgs.transpose()), full_matrices = full_matrix)
