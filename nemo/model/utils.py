@@ -15,6 +15,9 @@ def cv_splitter_video(n_samples, n_folds = 5):
         fold_inds (list): A list of n_folds tuples of train inds and val inds.
     '''
 
+    if n_folds <= 0:
+        raise ValueError('n_folds should be > 0.')
+    
     n_val = int(n_samples * (1 / n_folds))
     n_train = n_samples - n_val
     fold_inds = []
@@ -60,7 +63,11 @@ def shuffle_data(self, preds, responses):
             preds_shuffled. 
     '''
 
-    data = np.concatenate((preds, responses[:, None]), 1)
+    try:
+        data = np.concatenate((preds, responses[:, None]), 1)
+    except ValueError:
+        raise
+        
     np.random.shuffle(data)
 
     return data[:, :-1], data[:, -1]
