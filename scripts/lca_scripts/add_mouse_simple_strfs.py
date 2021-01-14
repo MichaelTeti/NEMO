@@ -68,15 +68,15 @@ for frame_num, lca_fpath in enumerate(lca_fpaths):
     pvp_data = octave.readpvpfile(lca_fpath)
     weights = pvp_data[0]['values'][0]
     w_out_original = weights.shape[-1]
-    
-    # check that mouse strfs and dictionary features are same spatial shape
-    assert weights.shape[0] == mouse_strfs.shape[0]
-    assert weights.shape[1] == mouse_strfs.shape[1]
 
     # take out the current frame from the strf and add to the weights
     mouse_strfs_frame = mouse_strfs[:, :, frame_num, :]
-    mouse_strfs_frame = mouse_strfs_frame[:, :, None, :] 
-    weights = np.concatenate((weights, mouse_strfs_frame), 3)
+    mouse_strfs_frame = mouse_strfs_frame[:, :, None, :]
+    
+    try:  # if shapes don't line up
+        weights = np.concatenate((weights, mouse_strfs_frame), 3)
+    except ValueError:
+        raise
     
     # add the new weights back to the pvp_data structure and push to octave session
     pvp_data[0]['values'][0] = weights
