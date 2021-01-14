@@ -16,8 +16,8 @@ def resize_and_keep_aspect(img, desired_height, desired_width):
         img_resized (np.ndarray): The resized image with the same aspect ratio as img.
     '''
 
-    assert desired_height > 0
-    assert desired_width > 0
+    if desired_height <= 0 or desired_width <= 0:
+        print('desired_height and desired_width must be non-zero and positive.')
 
     h, w = img.shape[:2]
     desired_aspect = desired_width / desired_height
