@@ -171,3 +171,31 @@ def normalize_traces(traces):
     traces /= np.amax(np.absolute(traces))
     
     return traces
+
+
+def standardize_cols(design_mat, mean_vec = None, std_vec = None, eps = 1e-8):
+    '''
+    Standardizes each column in the design matrix with the statistics of that column. 
+    
+    Args:
+        design_mat (np.ndarray): A matrix of shape # samples x # predictors. 
+        mean_vec (np.ndarray): A vector of length # predictors representing the mean 
+            of each column in design_mat.
+        std_vec (np.ndarray): A vector of length # predictors representing the std 
+            of each column in design_mat.
+        eps (float): A scalar added to the elements in std_vec to avoid (unlikely)
+            division by zero. 
+            
+    Returns:
+        design_mat (np.ndarray): The design_mat with columns standardized. 
+    '''
+    
+    # if mean_vec and/or std_vec not given, calculate from the data
+    if not mean_vec:
+        mean_vec = np.mean(design_mat, 0)
+    if not std_vec:
+        std_vec = np.std(design_mat, 0)
+        
+    design_mat = (design_mat - mean_vec) / (std_vec + eps)
+    
+    return design_mat
