@@ -101,12 +101,13 @@ def read_frames(dir, return_type = 'array', gray = False):
         return frames
 
 
-def load_trial_averaged_traces(fpath):
+def load_trial_averaged_traces(fpath, n_frames_in_time = 9):
     '''
     Loads trial-averaged traces as a 1D array for a model. 
 
     Args:
         fpath (str): The file path to the .txt file with the trial-averaged traces.
+        n_frames_in_time (int): The number of consecutive frames in a single sample. 
 
     Returns:
         traces (np.ndarray): A 1D array with the trial-averaged traces over stimulus frames.
