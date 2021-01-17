@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.linear_model import ElasticNetCV as ElasticNet
 
 from nemo.data.io import read_frames, load_trial_averaged_traces
-from nemo.data.preprocess import max_min_scale, create_temporal_design_mat
+from nemo.data.preprocess import max_min_scale, create_temporal_design_mat, standardize_cols
 from nemo.data.utils import get_img_frame_names
 from nemo.model.utils import save_args, cv_splitter_video
 
@@ -35,7 +35,7 @@ def train_elastic_net(design_mat, trace_dir, save_dir, min_l1_ratio = 1e-6, max_
     # standardize the columns of the design matrix
     mean_vec = np.mean(design_mat, 0)
     std_vec = np.std(design_mat, 0)
-    design_mat = (design_mat - mean_vec) / std_vec
+    design_mat = standardize_cols(design_mat, mean_vec = mean_vec, std_vec = std_vec)
 
     # create list of l1_ratios to try
     l1_ratios = np.linspace(min_l1_ratio, max_l1_ratio, n_l1_ratios)
