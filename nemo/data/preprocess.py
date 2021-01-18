@@ -173,7 +173,7 @@ def normalize_traces(traces):
     return traces
 
 
-def standardize_cols(design_mat, mean_vec = None, std_vec = None, eps = 1e-8):
+def standardize_cols(design_mat, mean_vec = None, std_vec = None, eps = 1e-12):
     '''
     Standardizes each column in the design matrix with the statistics of that column. 
     
