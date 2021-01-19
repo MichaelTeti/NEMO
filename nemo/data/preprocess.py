@@ -137,16 +137,18 @@ def make_lgn_freq_filter(x_dim, y_dim, f_0 = 300):
     return freq_filter
 
 
-def create_temporal_design_mat(vid_frame_array, n_frames_in_time = 9):
+def create_video_frame_sequences(vid_frame_array, n_frames_in_time = 9):
     '''
-    Creates a design mat composed of flattened video frame sequences. 
+    Takes in an array of consecutive video frames and concatenates consecutive frames 
+        to make samples of subsequences. 
 
     Args:
         vid_frame_array (np.ndarray): A N x H x W array of the video frames in order.
-        n_frames_in_time (int): The number of frames to look at at a time.
+        n_frames_in_time (int): The number of frames to have in a single sample subsequence.
 
     Returns:
-        design_mat (np.ndarray): A design matrix of flattened video frame sequences. 
+        design_mat (np.ndarray): An (N-n_frames_in_time+1) x H x W x n_frames_in_time array 
+            of flattened video frame sequences. 
     '''
     
     n_frames, h, w = vid_frame_array.shape
