@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.linear_model import ElasticNetCV as ElasticNet
 
 from nemo.data.io import read_frames, load_trial_averaged_traces
-from nemo.data.preprocess import max_min_scale, create_temporal_design_mat, standardize_preds
+from nemo.data.preprocess import max_min_scale, create_video_frame_sequences, standardize_preds
 from nemo.data.utils import get_img_frame_names
 from nemo.model.utils import save_args, cv_splitter_video
 
@@ -259,7 +259,7 @@ if __name__ == '__main__':
     _, h, w = stimulus.shape
 
     # create the temporal design mat
-    design_mat = create_temporal_design_mat(stimulus, n_frames_in_time = args.n_frames_in_time)
+    design_mat = create_video_frame_sequences(stimulus, n_frames_in_time = args.n_frames_in_time)
     n_samples = design_mat.shape[0]
     design_mat = design_mat.reshape([n_samples, -1])
     
