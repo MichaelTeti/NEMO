@@ -2,7 +2,7 @@
 ## Setup
 ### System Specifications
 Experiments were run on a system with the following specifications:
-* CentOS 7.8
+* CentOS 7.8 / Ubuntu 18.04
 * NVIDIA Cuda Toolkit 10.2
 * NVIDIA CUDNN 7
 * Python 3.7
