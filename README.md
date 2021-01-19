@@ -18,14 +18,10 @@ Next, activate the newly-created conda environment
 ```
 conda activate nemo
 ```
-Install Lua in the conda environment.
-```
-conda install -c conda-forge lua
-```
-Finally, install octave in this environment (all other libraries will be installed 
+Finally, install GNU Octave and Lua in this environment (all other libraries will be installed 
 to this environment below when running setup.py).
 ```
-conda install -c conda-forge octave
+conda install -c conda-forge octave lua
 ```
 
 ### Cloning the Repository and Getting Setup
