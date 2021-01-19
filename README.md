@@ -24,7 +24,7 @@ to this environment below when running setup.py).
 conda install -c conda-forge octave lua
 ```
 
-### Cloning the Repository and Getting Setup
+### Cloning the Repository and Installing Python Packages
 First, clone this repository (https shown) and run setup.py.
 ```
 git clone https://github.com/MichaelTeti/NEMO.git &&
