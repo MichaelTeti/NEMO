@@ -173,21 +173,22 @@ def normalize_traces(traces):
     return traces
 
 
-def standardize_cols(design_mat, mean_vec = None, std_vec = None, eps = 1e-12):
+def standardize_preds(design_mat, mean_vec = None, std_vec = None, eps = 1e-12):
     '''
-    Standardizes each column in the design matrix with the statistics of that column. 
+    Standardizes each predictor variable in the design matrix with the statistics of that column. 
     
     Args:
-        design_mat (np.ndarray): A matrix of shape # samples x # predictors. 
-        mean_vec (np.ndarray): A vector of length # predictors representing the mean 
-            of each column in design_mat.
-        std_vec (np.ndarray): A vector of length # predictors representing the std 
-            of each column in design_mat.
+        design_mat (np.ndarray): An N-dimensional array where the first dimension indexes
+            the data samples. 
+        mean_vec (np.ndarray): An (N-1)-dimensional array with the mean of each dimension
+            taken along the first dimension of design_mat. 
+        std_vec (np.ndarray): An (N-1)-dimensional array with the std of each dimension
+            taken along the first dimension of design_mat.
         eps (float): A scalar added to the elements in std_vec to avoid (unlikely)
             division by zero. 
             
     Returns:
-        design_mat (np.ndarray): The design_mat with columns standardized. 
+        design_mat (np.ndarray): The design_mat with standardized predictors. 
     '''
     
     # if mean_vec and/or std_vec not given, calculate from the data
