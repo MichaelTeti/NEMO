@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from nemo.data.io import save_vid_array_as_frames
 from nemo.data.utils import get_fpaths_in_dir
 
 
