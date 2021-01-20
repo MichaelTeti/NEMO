@@ -87,9 +87,12 @@ def read_frames(dir, return_type = 'array', gray = False):
     frames = []
     for root, dirs, files in os.walk(dir):
         files.sort()
+
         for file in files:
+
             if os.path.splitext(file)[1] in ['.jpeg', '.jpg', '.JPG', '.JPEG', '.PNG', '.png']:
                 frame = cv2.imread(os.path.join(root, file))
+                
                 if gray:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
