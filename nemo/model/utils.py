@@ -49,7 +49,7 @@ def save_args(args, save_dir):
         json.dump(arg_dict, fp, sort_keys = True, indent = 4)
 
 
-def shuffle_data(preds, responses):
+def shuffle_design_mat(preds, responses):
     '''
     Shuffles the rows of the design matrix and the responses. 
 
