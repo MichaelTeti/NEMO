@@ -67,6 +67,7 @@ def save_vid_array_as_frames(vid_arrays_and_save_dirs):
         n_frames = vid_array.shape[0]
         fnames = [fname + '.png' for fname in get_img_frame_names(n_frames)]
         fpaths = [os.path.join(save_dir, fname) for fname in fnames]
+        
         for i_frame, (frame, fpath) in enumerate(zip(vid_array, fpaths)):
             cv2.imwrite(fpath, np.uint8(frame))
 
