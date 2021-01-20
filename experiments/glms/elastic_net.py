@@ -53,7 +53,7 @@ def train_elastic_net(design_mat, trace_dir, save_dir, min_l1_ratio = 1e-6, max_
         print(cell_id)
 
         # read in the traces 
-        traces = load_trial_averaged_traces(fpath)
+        traces = load_trial_avg_trace_array(fpath)
 
         # center traces so we don't have to fit an intercept
         traces -= np.mean(traces)    
