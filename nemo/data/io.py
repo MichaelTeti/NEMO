@@ -104,7 +104,7 @@ def read_frames(dir, return_type = 'array', gray = False):
         return frames
 
 
-def load_trial_averaged_traces(fpath, n_frames_in_time = 9):
+def load_trial_avg_trace_array(fpath, n_frames_in_time = 9):
     '''
     Loads trial-averaged traces as a 1D array for a model. 
 
@@ -116,6 +116,9 @@ def load_trial_averaged_traces(fpath, n_frames_in_time = 9):
         traces (np.ndarray): A 1D array with the trial-averaged traces over stimulus frames.
     '''
 
+    if n_frames_in_time <= 0:
+        raise ValueError('n_frames_in_time should be > 0.')
+    
     traces = pd.read_csv(fpath)
     traces = traces.iloc[:, n_frames_in_time - 1:].to_numpy()[0]
     
