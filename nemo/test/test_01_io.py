@@ -13,6 +13,7 @@ import h5py
 import numpy as np
 
 from nemo.data.io import (
+    compile_trial_avg_traces,
     read_frames,
     read_h5_as_array,
     save_vid_array_as_frames,
@@ -66,7 +67,7 @@ class TestIO(unittest.TestCase):
                 read[i] = cv2.imread(os.path.join(tmp_dir, fname), cv2.IMREAD_GRAYSCALE)
 
             self.assertEqual(np.sum(read - write), 0.0)
-            
+
 
     def test_read_frames(self):
         write = np.random.uniform(0, 255, size = (10, 32, 64))
@@ -78,6 +79,22 @@ class TestIO(unittest.TestCase):
             
             read = read_frames(tmp_dir, gray = True)
             self.assertEqual(np.sum(read - write), 0.0)
+
+
+    def test_compile_trial_avg_traces(self):
+        write = np.random.randn(100, 10)
+
+        with TemporaryDirectory() as tmp_dir:
+            for i in range(100):
+                write_fpath = os.path.join(tmp_dir, 'cellID_{}.txt'.format(i))
+
+                with open(write_fpath, 'w') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(['0{}.png'.format(j) for j in range(10)])
+                    writer.writerow(list(write[i]))
+
+            traces, cell_ids = compile_trial_avg_traces(tmp_dir)
+            self.assertAlmostEqual(np.sum(traces.to_numpy() - write), 0.0, places = 12)
 
 
 
