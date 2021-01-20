@@ -63,11 +63,7 @@ def shuffle_data(self, preds, responses):
             preds_shuffled. 
     '''
 
-    try:
-        data = np.concatenate((preds, responses[:, None]), 1)
-    except ValueError:
-        raise
-        
+    data = np.concatenate((preds, responses[:, None]), 1)   
     np.random.shuffle(data)
 
     return data[:, :-1], data[:, -1]
