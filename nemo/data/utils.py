@@ -4,40 +4,43 @@ import os
 import numpy as np
 
 
-def multiproc(func, iterator_key, n_workers = 4, **kwargs):
+def multiproc(func, iterator_keys, n_workers = 4, **kwargs):
     '''
     A general function to use multiprocessing to perform other functions that do not return anything.
 
     Args:
         func (function): A previously defined function.
-        iterator_key (str): A key in kwargs whose value is the list to divide up
+        iterator_keys (str): A list of keys in kwargs whose values are the lists to divide up
             among n_workers in separate calls to func.
-        n_workers (int): The number of processes to use.
-        kwargs: keyword arguments to func.
+        n_workers (int): The number of processes to use. Be careful with this.
+        kwargs: keyword arguments to func. The items specified by iterator_keys should be lists.
 
     Returns:
         None
     '''
 
-    if n_workers > cpu_count():
-        raise ValueError('n_workers should be <= the value returned by multiprocessing.cpu_count()')
+    # check if all lists to be divided up are same length
+    n_inputs = len(kwargs[iterator_keys[0]])
+    if not all([len(kwargs[key]) == n_inputs for key in iterator_keys]):
+        raise ValueError('lists corresponding to iterator_keys should all have same length.')
 
     # find out how many inputs to each worker
-    procs = []
-    inputs = kwargs[iterator_key]
-    n_inputs = len(inputs)
     if n_inputs < n_workers: n_workers = n_inputs
-    if n_inputs == 0: return
     inputs_per_worker = int(np.ceil(n_inputs / n_workers))
 
     # loop over inputs and divide up between the workers for each process
+    procs = []
     for worker_num, input_num in enumerate(range(0, n_inputs, inputs_per_worker)):
-        func_inputs = inputs.copy()
         kwarg_inputs = kwargs.copy()
         start_ind = input_num
         end_ind = input_num + inputs_per_worker
-        func_inputs = func_inputs[start_ind:end_ind]
-        kwarg_inputs[iterator_key] = func_inputs
+
+        for key in iterator_keys:
+            kwarg_inputs[key] = kwarg_inputs[key][start_ind:end_ind]
+
+            if len(kwarg_inputs[key]) == 1:
+                kwarg_inputs[key] = kwarg_inputs[key][0]
+
         process = Process(target = func, kwargs = kwarg_inputs)
         procs.append(process)
         process.start()
