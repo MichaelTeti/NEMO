@@ -3,7 +3,7 @@ These scripts are used to download and process the ImageNet video frames for the
 # Download the Dataset
 To download the dataset, simply navigate to ./scripts/imagenet_scripts/ and run the [download_imagenet_vid.sh](https://github.com/MichaelTeti/NEMO/blob/main/scripts/image_scripts/download_imagenet_vid.sh) script. This script will make a data folder in the NEMO root directory and then download and extract the dataset in that directory. 
 ```
-cd scripts/imagenet_scripts &&
+cd scripts/image_scripts &&
 bash download_imagenet_vid.sh
 ```
 
