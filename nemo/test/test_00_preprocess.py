@@ -20,6 +20,7 @@ from nemo.data.preprocess import (
     read_pre_whiten_write,
     read_resize_write,
     read_smooth_write,
+    read_whiten_write,
     standardize_preds
 )
 
@@ -94,7 +95,7 @@ class TestPreprocess(unittest.TestCase):
 
         with TemporaryDirectory() as tmp_dir:
             fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
-            write_fpaths = [os.path.splitext(fpath)[0] + '_resized.png' for fpath in fpaths]
+            write_fpaths = [os.path.splitext(fpath)[0] + '_write.png' for fpath in fpaths]
 
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
@@ -111,7 +112,7 @@ class TestPreprocess(unittest.TestCase):
 
         with TemporaryDirectory() as tmp_dir:
             fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
-            write_fpaths = [os.path.splitext(fpath)[0] + '_resized.png' for fpath in fpaths]
+            write_fpaths = [os.path.splitext(fpath)[0] + '_write.png' for fpath in fpaths]
 
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
@@ -127,7 +128,7 @@ class TestPreprocess(unittest.TestCase):
 
         with TemporaryDirectory() as tmp_dir:
             fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
-            write_fpaths = [os.path.splitext(fpath)[0] + '_resized.png' for fpath in fpaths]
+            write_fpaths = [os.path.splitext(fpath)[0] + '_write.png' for fpath in fpaths]
 
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
@@ -141,7 +142,7 @@ class TestPreprocess(unittest.TestCase):
 
         with TemporaryDirectory() as tmp_dir:
             fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
-            write_fpaths = [os.path.splitext(fpath)[0] + '_resized.png' for fpath in fpaths]
+            write_fpaths = [os.path.splitext(fpath)[0] + '_write.png' for fpath in fpaths]
 
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
@@ -158,7 +159,7 @@ class TestPreprocess(unittest.TestCase):
 
         with TemporaryDirectory() as tmp_dir:
             fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
-            write_fpaths = [os.path.splitext(fpath)[0] + '_resized.png' for fpath in fpaths]
+            write_fpaths = [os.path.splitext(fpath)[0] + '_write.png' for fpath in fpaths]
 
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
@@ -193,7 +194,7 @@ class TestPreprocess(unittest.TestCase):
 
         with TemporaryDirectory() as tmp_dir:
             fpath = os.path.join(tmp_dir, 'test_img.png')
-            write_fpath = os.path.join(tmp_dir, 'test_img_cropped.png')
+            write_fpath = os.path.join(tmp_dir, 'test_img_write.png')
             cv2.imwrite(fpath, img)
             read_downsample_write([fpath], [write_fpath], 2, 2)
             img_downsampled = cv2.imread(write_fpath)
@@ -205,7 +206,7 @@ class TestPreprocess(unittest.TestCase):
 
         with TemporaryDirectory() as tmp_dir:
             fpath = os.path.join(tmp_dir, 'test_img.png')
-            write_fpath = os.path.join(tmp_dir, 'test_img_cropped.png')
+            write_fpath = os.path.join(tmp_dir, 'test_img_write.png')
             cv2.imwrite(fpath, img)
             read_downsample_write([fpath], [write_fpath], 2, 2)
             img_downsampled = cv2.imread(write_fpath)
@@ -213,13 +214,29 @@ class TestPreprocess(unittest.TestCase):
             diff = np.sum(img[::2, ::2] - img_downsampled)
             self.assertEqual(diff, 0.0)
 
+    
+    def test_read_downsample_write_n_files(self):
+        imgs = [np.uint8(np.random.uniform(0, 255, size = (64, 128))) for _ in range(10)]
+
+        with TemporaryDirectory() as tmp_dir:
+            fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
+            write_fpaths = [os.path.splitext(fpath)[0] + '_write.png' for fpath in fpaths]
+
+            for fpath, img in zip(fpaths, imgs):
+                cv2.imwrite(fpath, img)
+
+            read_downsample_write(fpaths, write_fpaths, 2, 2)
+            
+            for fpath in write_fpaths:
+                self.assertTrue(os.path.split(fpath)[1] in os.listdir(tmp_dir))
+
 
     def test_read_smooth_write_shape(self):
         img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
 
         with TemporaryDirectory() as tmp_dir:
             fpath = os.path.join(tmp_dir, 'test_img.png')
-            write_fpath = os.path.join(tmp_dir, 'test_img_smoothed.png')
+            write_fpath = os.path.join(tmp_dir, 'test_img_write.png')
             cv2.imwrite(fpath, img)
             read_smooth_write([fpath], [write_fpath])
             img_smoothed = cv2.imread(write_fpath)
@@ -227,17 +244,85 @@ class TestPreprocess(unittest.TestCase):
             self.assertCountEqual(img_smoothed.shape[:2], [64, 128])
 
 
+    def test_read_smooth_write_n_files(self):
+        imgs = [np.uint8(np.random.uniform(0, 255, size = (64, 128))) for _ in range(10)]
+
+        with TemporaryDirectory() as tmp_dir:
+            fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
+            write_fpaths = [os.path.splitext(fpath)[0] + '_write.png' for fpath in fpaths]
+
+            for fpath, img in zip(fpaths, imgs):
+                cv2.imwrite(fpath, img)
+
+            read_smooth_write(fpaths, write_fpaths)
+            
+            for fpath in write_fpaths:
+                self.assertTrue(os.path.split(fpath)[1] in os.listdir(tmp_dir))
+
+
     def test_read_pre_whiten_write_shape(self):
         img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
 
         with TemporaryDirectory() as tmp_dir:
             fpath = os.path.join(tmp_dir, 'test_img.png')
-            write_fpath = os.path.join(tmp_dir, 'test_img_smoothed.png')
+            write_fpath = os.path.join(tmp_dir, 'test_img_write.png')
             cv2.imwrite(fpath, img)
             read_pre_whiten_write([fpath], [write_fpath])
             img_pre_whitened = cv2.imread(write_fpath)
             img_pre_whitened = cv2.cvtColor(img_pre_whitened, cv2.COLOR_BGR2GRAY)
             self.assertCountEqual(img_pre_whitened.shape[:2], [64, 128])
+
+
+    def test_read_pre_whiten_write_n_files(self):
+        imgs = [np.uint8(np.random.uniform(0, 255, size = (64, 128))) for _ in range(10)]
+
+        with TemporaryDirectory() as tmp_dir:
+            fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
+            write_fpaths = [os.path.splitext(fpath)[0] + '_write.png' for fpath in fpaths]
+
+            for fpath, img in zip(fpaths, imgs):
+                cv2.imwrite(fpath, img)
+
+            read_pre_whiten_write(fpaths, write_fpaths)
+            
+            for fpath in write_fpaths:
+                self.assertTrue(os.path.split(fpath)[1] in os.listdir(tmp_dir))
+
+
+    def test_read_whiten_write_shape(self):
+        imgs = [np.uint8(np.random.uniform(0, 255, size = (32, 64))) for _ in range(10)]
+
+        with TemporaryDirectory() as tmp_dir:
+            fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
+            write_fpaths = [os.path.join(tmp_dir, '0{}_write.png'.format(i)) for i in range(10)]
+
+            for fpath, img in zip(fpaths, imgs):
+                cv2.imwrite(fpath, img)
+
+            read_whiten_write([fpaths], [write_fpaths])
+            
+            for fpath in write_fpaths:
+                whitened = cv2.imread(fpath)
+                whitened = cv2.cvtColor(whitened, cv2.COLOR_BGR2GRAY)
+                self.assertCountEqual(whitened.shape[:2], [32, 64])
+
+
+    def test_read_whiten_write_n_files(self):
+        imgs = [np.uint8(np.random.uniform(0, 255, size = (32, 64))) for _ in range(10)]
+
+        with TemporaryDirectory() as tmp_dir:
+            fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
+            write_fpaths = [os.path.join(tmp_dir, '0{}_write.png'.format(i)) for i in range(10)]
+
+            for fpath, img in zip(fpaths, imgs):
+                cv2.imwrite(fpath, img)
+
+            read_whiten_write([fpaths], [write_fpaths])
+            
+            for fpath in write_fpaths:
+                fname = os.path.split(fpath)[1]
+                self.assertTrue(fname in os.listdir(tmp_dir))
+
 
 
 if __name__ == '__main__':
