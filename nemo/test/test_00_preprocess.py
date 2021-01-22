@@ -16,6 +16,7 @@ from nemo.data.preprocess import (
     max_min_scale,
     normalize_traces,
     read_crop_write,
+    read_downsample_write,
     read_resize_write,
     standardize_preds
 )
@@ -183,6 +184,32 @@ class TestPreprocess(unittest.TestCase):
         img = np.uint8(np.random.uniform(0, 255, size = (65, 129)))
         img_cropped = center_crop(img, 32, 64)
         self.assertCountEqual(img_cropped.shape, [32, 64])
+
+
+    def test_read_downsample_write_shape(self):
+        img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
+
+        with TemporaryDirectory() as tmp_dir:
+            fpath = os.path.join(tmp_dir, 'test_img.png')
+            write_fpath = os.path.join(tmp_dir, 'test_img_cropped.png')
+            cv2.imwrite(fpath, img)
+            read_downsample_write([fpath], [write_fpath], 2, 2)
+            img_downsampled = cv2.imread(write_fpath)
+            self.assertCountEqual(img_downsampled.shape[:2], [32, 64])
+
+
+    def test_read_downsample_write_values(self):
+        img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
+
+        with TemporaryDirectory() as tmp_dir:
+            fpath = os.path.join(tmp_dir, 'test_img.png')
+            write_fpath = os.path.join(tmp_dir, 'test_img_cropped.png')
+            cv2.imwrite(fpath, img)
+            read_downsample_write([fpath], [write_fpath], 2, 2)
+            img_downsampled = cv2.imread(write_fpath)
+            img_downsampled = cv2.cvtColor(img_downsampled, cv2.COLOR_BGR2GRAY)
+            diff = np.sum(img[::2, ::2] - img_downsampled)
+            self.assertEqual(diff, 0.0)
 
 
 if __name__ == '__main__':
