@@ -11,9 +11,11 @@ import cv2
 import numpy as np
 
 from nemo.data.preprocess import (
+    center_crop,
     create_video_frame_sequences,
     max_min_scale,
     normalize_traces,
+    read_crop_write,
     read_resize_write,
     standardize_preds
 )
@@ -130,6 +132,57 @@ class TestPreprocess(unittest.TestCase):
             with self.assertRaises(ValueError):
                 read_resize_write(fpaths, write_fpaths, 32, 64, -10.0)
 
+
+    def test_read_crop_write_shape(self):
+        imgs = [np.uint8(np.random.uniform(0, 255, size = (64, 128))) for _ in range(10)]
+
+        with TemporaryDirectory() as tmp_dir:
+            fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
+            write_fpaths = [os.path.splitext(fpath)[0] + '_resized.png' for fpath in fpaths]
+
+            for fpath, img in zip(fpaths, imgs):
+                cv2.imwrite(fpath, img)
+
+            read_crop_write(fpaths, write_fpaths, 32, 64)
+
+            for fpath in write_fpaths:
+                resized_img = cv2.imread(fpath)
+                self.assertCountEqual(resized_img.shape[:2], [32, 64])
+
+
+    def test_read_crop_write_n_files(self):
+        imgs = [np.uint8(np.random.uniform(0, 255, size = (64, 128))) for _ in range(10)]
+
+        with TemporaryDirectory() as tmp_dir:
+            fpaths = [os.path.join(tmp_dir, '0{}.png'.format(i)) for i in range(10)]
+            write_fpaths = [os.path.splitext(fpath)[0] + '_resized.png' for fpath in fpaths]
+
+            for fpath, img in zip(fpaths, imgs):
+                cv2.imwrite(fpath, img)
+
+            read_crop_write(fpaths, write_fpaths, 32, 64)
+            
+            for fpath in write_fpaths:
+                self.assertTrue(os.path.split(fpath)[1] in os.listdir(tmp_dir))
+
+
+    def test_center_crop_values(self):
+        img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
+        img_cropped = center_crop(img, 62, 126)
+        diff = np.sum(img[1:-1, 1:-1] - img_cropped)
+        self.assertEqual(diff, 0.0)
+
+
+    def test_center_crop_shape_even2odd(self):
+        img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
+        img_cropped = center_crop(img, 35, 79)
+        self.assertCountEqual(img_cropped.shape, [35, 79])
+
+
+    def test_center_crop_shape_odd2even(self):
+        img = np.uint8(np.random.uniform(0, 255, size = (65, 129)))
+        img_cropped = center_crop(img, 32, 64)
+        self.assertCountEqual(img_cropped.shape, [32, 64])
 
 
 if __name__ == '__main__':
