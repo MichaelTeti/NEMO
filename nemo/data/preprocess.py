@@ -251,8 +251,8 @@ def read_crop_write(read_fpaths, write_fpaths, crop_height, crop_width):
     Read in images, crop them, and resave them.
     
     Args:
-        read_fpaths (list): List of the fpaths to read the pre-resized images from.
-        write_fpaths (list): List of the fpaths to write the post-resized images to.
+        read_fpaths (list): List of the fpaths to read the pre-cropped images from.
+        write_fpaths (list): List of the fpaths to write the post-cropped images to.
         crop_height (int): Height of the cropped image.
         crop_width (int): Width of the cropped image.
         
@@ -279,8 +279,8 @@ def read_downsample_write(read_fpaths, write_fpaths, downsample_h = 2, downsampl
     Reads in images from fpaths, subsamples, and resaves them.
     
     Args:
-        read_fpaths (list): List of the fpaths to read the pre-resized images from.
-        write_fpaths (list): List of the fpaths to write the post-resized images to.
+        read_fpaths (list): List of the fpaths to read the pre-downsampled images from.
+        write_fpaths (list): List of the fpaths to write the post-downsampled images to.
         downsample_h (int): The factor to downsample the image height by.
         downsample_w (int): The factor to downsample the image width by.
         
@@ -301,8 +301,8 @@ def read_smooth_write(read_fpaths, write_fpaths, neighborhood = 9, sigma_color =
     Read in images based on fpaths, smooth, and save in a new fpath.
 
     Args:
-        read_fpaths (list): List of the fpaths to read the pre-resized images from.
-        write_fpaths (list): List of the fpaths to write the post-resized images to.
+        read_fpaths (list): List of the fpaths to read the pre-smoothed images from.
+        write_fpaths (list): List of the fpaths to write the post-smoothed images to.
         neighborhood (int): Diameter of the pixel neighborhood.
         sigma_color (float): Larger values mean larger differences in colors can be mixed together.
         sigma_space (float): Larger values mean larger differences in space can be mixed together.
@@ -325,3 +325,37 @@ def read_smooth_write(read_fpaths, write_fpaths, neighborhood = 9, sigma_color =
 
         # save the resized image
         cv2.imwrite(new_fpath, img)
+
+
+def read_pre_whiten_write(read_fpaths, write_fpaths, f_0 = None):
+    '''
+    Read in images based on fpaths, whiten, and save in a new fpath.
+    
+    Args:
+        read_fpaths (list): List of the fpaths to read the non pre-whitened images from.
+        write_fpaths (list): List of the fpaths to write the pre-whitened images to.
+        f_0 (int): Cycles/s desired.
+        
+    Returns:
+        None
+    '''
+
+    for fpath_num, (fpath, new_fpath) in enumerate(zip(read_fpaths, write_fpaths)):
+        # read in the image and make grayscale
+        img = cv2.imread(fpath)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        h, w = img.shape[0], img.shape[1]
+
+        # make the filter
+        if fpath_num == 0:
+            if not f_0: f_0 = np.ceil(min(h, w) * 0.4)
+            ffilter = make_lgn_freq_filter(w, h, f_0 = f_0)
+
+        # fft transform on image, filter, and go back to image
+        img_fft = np.fft.fft2(img)
+        img_fft *= ffilter
+        img_rec = np.absolute(np.fft.ifft2(img_fft))
+
+        # scale image to [0, 255] and write image
+        img_scaled = max_min_scale(img_rec) * 255
+        cv2.imwrite(new_fpath, img_scaled)
