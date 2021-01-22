@@ -18,6 +18,7 @@ from nemo.data.preprocess import (
     read_crop_write,
     read_downsample_write,
     read_resize_write,
+    read_smooth_write,
     standardize_preds
 )
 
@@ -210,6 +211,19 @@ class TestPreprocess(unittest.TestCase):
             img_downsampled = cv2.cvtColor(img_downsampled, cv2.COLOR_BGR2GRAY)
             diff = np.sum(img[::2, ::2] - img_downsampled)
             self.assertEqual(diff, 0.0)
+
+
+    def test_read_smooth_write_shape(self):
+        img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
+
+        with TemporaryDirectory() as tmp_dir:
+            fpath = os.path.join(tmp_dir, 'test_img.png')
+            write_fpath = os.path.join(tmp_dir, 'test_img_smoothed.png')
+            cv2.imwrite(fpath, img)
+            read_smooth_write([fpath], [write_fpath])
+            img_smoothed = cv2.imread(write_fpath)
+            img_smoothed = cv2.cvtColor(img_smoothed, cv2.COLOR_BGR2GRAY)
+            self.assertCountEqual(img_smoothed.shape[:2], [64, 128])
 
 
 if __name__ == '__main__':
