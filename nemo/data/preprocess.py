@@ -272,3 +272,25 @@ def read_crop_write(read_fpaths, write_fpaths, crop_height, crop_width):
         # crop it and save
         img = center_crop(img, crop_height, crop_width)
         cv2.imwrite(save_fpath, img)
+
+
+def read_downsample_write(read_fpaths, write_fpaths, downsample_h = 2, downsample_w = 2):
+    '''
+    Reads in images from fpaths, subsamples, and resaves them.
+    
+    Args:
+        read_fpaths (list): List of the fpaths to read the pre-resized images from.
+        write_fpaths (list): List of the fpaths to write the post-resized images to.
+        downsample_h (int): The factor to downsample the image height by.
+        downsample_w (int): The factor to downsample the image width by.
+        
+    Returns:
+        None
+    '''
+
+    for fpath, save_fpath in zip(read_fpaths, write_fpaths):
+        # read in the video frames and downsample
+        img = cv2.imread(fpath)[::downsample_h, ::downsample_w]
+        
+        # save the downsampled frame
+        cv2.imwrite(save_fpath, img)
