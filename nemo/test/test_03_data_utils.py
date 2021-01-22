@@ -91,7 +91,7 @@ class TestDataUtils(unittest.TestCase):
             multiproc(
                 test_func,
                 ['list1', 'fnames'],
-                n_workers = 5,
+                n_workers = 3,
                 list1 = list1,
                 fnames = fnames
             )
@@ -105,7 +105,6 @@ class TestDataUtils(unittest.TestCase):
                 with open(fpath, 'r') as f:
                     data = list(csv.reader(f))[0]
                     self.assertEqual(int(data[0]), file_num)
-                    self.assertEqual(int(data[1]), 2)
 
 
 
