@@ -1,11 +1,12 @@
+import os
+
 import cv2
 import numpy as np
 
 
-def resize_and_keep_aspect(img, desired_height, desired_width):
+def resize_img(img, desired_height, desired_width):
     '''
-    Resizes an image to a new size while keeping the original aspect ratio by
-    cropping the larger side.
+    Resizes an image to a new size without warping by cropping the smaller dim.
 
     Args:
         img (np.ndarray): Color or grayscale image to resize.
@@ -202,3 +203,44 @@ def standardize_preds(design_mat, mean_vec = None, std_vec = None, eps = 1e-12):
     design_mat = (design_mat - mean_vec) / (std_vec + eps)
     
     return design_mat
+
+
+def read_resize_write(read_fpaths, write_fpaths, desired_height, desired_width, aspect_ratio_tol):
+    '''
+    Read in images based on fpaths, resize, and save in a new fpath.
+    
+    Args:
+        read_fpaths (list): List of the fpaths to read the pre-resized images from.
+        write_fpaths (list): List of the fpaths to write the post-resized images to.
+        desired_height (int): Height to resize each image.
+        desired_width (int): Width to resize each image.
+        aspect_ratio_tol (float): Discard images if absolute value between
+            original aspect ratio and resized aspect ratio >= aspect_ratio_tol
+            to help avoid cropping more than a desired amount.
+            
+    Returns:
+        None
+    '''
+
+    if aspect_ratio_tol < 0:
+        raise ValueError('aspect_ratio_tol should be >= 0.')
+    
+    for fpath, new_fpath in zip(read_fpaths, write_fpaths):
+        # read in the image
+        img = cv2.imread(fpath)
+        
+        # calculate aspect ratio
+        original_aspect = img.shape[1] / img.shape[0]
+        
+        # if aspect is not within aspect_ratio_tol of desired aspect, remove new dir then continue
+        desired_aspect = desired_width / desired_height
+        
+        if abs(desired_aspect - original_aspect) > aspect_ratio_tol:
+            if os.path.isdir(os.path.split(new_fpath)[0]): os.rmdir(os.path.split(new_fpath)[0])
+            continue
+
+        # resize the images
+        img = resize_img(img, desired_height, desired_width)
+        
+        # save the resized image
+        cv2.imwrite(new_fpath, img)
