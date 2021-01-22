@@ -294,3 +294,34 @@ def read_downsample_write(read_fpaths, write_fpaths, downsample_h = 2, downsampl
         
         # save the downsampled frame
         cv2.imwrite(save_fpath, img)
+
+
+def read_smooth_write(read_fpaths, write_fpaths, neighborhood = 9, sigma_color = 75, sigma_space = 75):
+    '''
+    Read in images based on fpaths, smooth, and save in a new fpath.
+
+    Args:
+        read_fpaths (list): List of the fpaths to read the pre-resized images from.
+        write_fpaths (list): List of the fpaths to write the post-resized images to.
+        neighborhood (int): Diameter of the pixel neighborhood.
+        sigma_color (float): Larger values mean larger differences in colors can be mixed together.
+        sigma_space (float): Larger values mean larger differences in space can be mixed together.
+
+    Returns:
+        None
+    '''
+
+    for fpath, new_fpath in zip(read_fpaths, write_fpaths):
+        # read in the image
+        img = cv2.imread(fpath)
+
+        # smooth the image
+        img = cv2.bilateralFilter(
+            img,
+            d = neighborhood,
+            sigmaColor = sigma_color,
+            sigmaSpace = sigma_space
+        )
+
+        # save the resized image
+        cv2.imwrite(new_fpath, img)
