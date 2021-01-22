@@ -244,3 +244,31 @@ def read_resize_write(read_fpaths, write_fpaths, desired_height, desired_width, 
         
         # save the resized image
         cv2.imwrite(new_fpath, img)
+
+
+def read_crop_write(read_fpaths, write_fpaths, crop_height, crop_width):
+    '''
+    Read in images, crop them, and resave them.
+    
+    Args:
+        read_fpaths (list): List of the fpaths to read the pre-resized images from.
+        write_fpaths (list): List of the fpaths to write the post-resized images to.
+        crop_height (int): Height of the cropped image.
+        crop_width (int): Width of the cropped image.
+        
+    Returns:
+        None
+    '''
+
+    for fpath, save_fpath in zip(read_fpaths, write_fpaths):
+        # read in the image
+        img = cv2.imread(fpath)
+        
+        # check if the image is smaller than the specified crop dims
+        if img.shape[0] <= crop_height or img.shape[1] <= crop_width:
+            if os.path.isdir(os.path.split(save_fpath)[0]): os.rmdir(os.path.split(save_fpath)[0])
+            continue
+
+        # crop it and save
+        img = center_crop(img, crop_height, crop_width)
+        cv2.imwrite(save_fpath, img)
