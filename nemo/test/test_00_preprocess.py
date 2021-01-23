@@ -137,6 +137,18 @@ class TestPreprocess(unittest.TestCase):
                 read_resize_write(fpaths, write_fpaths, 32, 64, -10.0)
 
 
+    def test_read_resize_write_over_tol(self):
+        img = np.uint8(np.random.uniform(0, 255, size = (64, 32)))
+
+        with TemporaryDirectory() as tmp_dir:
+            read_fpath = os.path.join(tmp_dir, 'dataset' 'test_img.png')
+            write_fpath = os.path.join(tmp_dir, 'dataset_resize', 'test_img_resize.png')
+            cv2.imwrite(read_fpath, img)
+
+            read_resize_write([read_fpath], [write_fpath], 32, 64, aspect_ratio_tol = 1.0)
+            self.assertTrue('dataset_resize' not in os.listdir(tmp_dir))
+
+
     def test_read_crop_write_shape(self):
         imgs = [np.uint8(np.random.uniform(0, 255, size = (64, 128))) for _ in range(10)]
 
