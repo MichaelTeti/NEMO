@@ -368,7 +368,7 @@ def read_whiten_write(read_fpaths, write_fpaths, full_svd = False, scale_method 
     Args:
         read_fpaths (list): List of the fpaths to read the non whitened images from.
         write_fpaths (list): List of the fpaths to write the whitened images to.
-        full_svd (bool): If True, use all SVD components.
+        full_svd (bool): If True, use full SVD.
         scale_method (str): Whether to scale each frame from max/min of the video or only that frame.
 
     Returns:
