@@ -205,7 +205,7 @@ def standardize_preds(design_mat, mean_vec = None, std_vec = None, eps = 1e-12):
     return design_mat
 
 
-def read_resize_write(read_fpaths, write_fpaths, desired_height, desired_width, aspect_ratio_tol):
+def read_resize_write(read_fpaths, write_fpaths, desired_height, desired_width, aspect_ratio_tol = 0.26):
     '''
     Read in images based on fpaths, resize, and save in a new fpath.
     
