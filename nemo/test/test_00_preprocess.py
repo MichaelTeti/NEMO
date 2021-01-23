@@ -21,6 +21,7 @@ from nemo.data.preprocess import (
     read_resize_write,
     read_smooth_write,
     read_whiten_write,
+    resize_img,
     standardize_preds
 )
 
@@ -88,6 +89,12 @@ class TestPreprocess(unittest.TestCase):
         test_array = np.random.randn(1000, 32, 64)
         test_array_standardized = standardize_preds(test_array)
         self.assertCountEqual(test_array_standardized.shape, test_array.shape)
+
+
+    def test_resize_img_shape(self):
+        img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
+        img_resized = resize_img(img, 10, 20)
+        self.assertCountEqual(img_resized.shape, [10, 20])
 
 
     def test_read_resize_write_shape(self):
