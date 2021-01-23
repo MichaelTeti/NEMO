@@ -366,8 +366,12 @@ def read_whiten_write(read_fpaths, write_fpaths, full_svd = False, scale_method 
     Read in images based on fpaths, resize, and save in a new fpath.
     
     Args:
-        read_fpaths (list): List of the fpaths to read the non whitened images from.
-        write_fpaths (list): List of the fpaths to write the whitened images to.
+        read_fpaths (list): List of lists, where each sublist contains the fpaths to all video frames
+            within a single non-whitened video (i.e. read_fpaths has length of # videos and each sublist
+            in read_fpaths has a length of # frames per video). 
+        write_fpaths (list): List of lists, where each sublist contains the fpaths to all video frames
+            within a single whitened video (i.e. read_fpaths has length of # videos and each sublist
+            in read_fpaths has a length of # frames per video).
         full_svd (bool): If True, use full SVD.
         scale_method (str): Whether to scale each frame from max/min of the video or only that frame.
 
