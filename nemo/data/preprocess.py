@@ -90,8 +90,8 @@ def spatial_whiten(imgs, return_zca_mat = False, full_matrix = False):
 
     imgs = imgs - np.mean(imgs, 0)
     U,S,V = np.linalg.svd(np.matmul(imgs, imgs.transpose()), full_matrices = full_matrix)
-    epsilon = 1e-6
-    ZCAMatrix = np.matmul(U, np.matmul(np.diag(1.0 / np.sqrt(S + epsilon)), U.transpose()))
+    eps = 1e-8
+    ZCAMatrix = np.matmul(U, np.matmul(np.diag(1.0 / np.sqrt(S + eps)), U.transpose()))
 
     if return_zca_mat:
         return ZCAMatrix
@@ -363,7 +363,7 @@ def read_pre_whiten_write(read_fpaths, write_fpaths, f_0 = None):
 
 def read_whiten_write(read_fpaths, write_fpaths, full_svd = False, scale_method = 'video'):
     '''
-    Read in images based on fpaths, resize, and save in a new fpath.
+    Read in images based on fpaths, whiten via individual video statistics, and save in a new fpath.
     
     Args:
         read_fpaths (list): List of lists, where each sublist contains the fpaths to all video frames
