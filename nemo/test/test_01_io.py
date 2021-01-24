@@ -117,7 +117,8 @@ class TestIO(unittest.TestCase):
     def test_load_trial_avg_trace_array_ValueError(self):
         write = np.random.randn(10)
         for i in range(-10, 1):
-            self.assertRaises(ValueError, load_trial_avg_trace_array, write, n_frames_in_time = i)
+            with self.assertRaises(ValueError):
+                load_trial_avg_trace_array(write, n_frames_in_time = i)
 
 if __name__ == '__main__':
     unittest.main(verbosity = 2)

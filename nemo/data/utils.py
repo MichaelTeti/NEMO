@@ -113,7 +113,7 @@ def add_string_to_fpaths(fpaths, string):
     if type(fpaths) not in [list, tuple]:
         raise TypeError('fpaths must be a list or tuple.')
 
-    fpaths = [os.path.join(os.path.split(fpath)[0] + string, os.path.split(fpath)[1]) for fpath in fpaths]
+    fpaths = [os.path.join(os.path.split(fpath)[0] + str(string), os.path.split(fpath)[1]) for fpath in fpaths]
 
     return fpaths
 

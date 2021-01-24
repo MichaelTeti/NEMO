@@ -1,11 +1,12 @@
+import os
+
 import cv2
 import numpy as np
 
 
-def resize_and_keep_aspect(img, desired_height, desired_width):
+def resize_img(img, desired_height, desired_width):
     '''
-    Resizes an image to a new size while keeping the original aspect ratio by
-    cropping the larger side.
+    Resizes an image to a new size without warping by cropping the smaller dim.
 
     Args:
         img (np.ndarray): Color or grayscale image to resize.
@@ -89,8 +90,8 @@ def spatial_whiten(imgs, return_zca_mat = False, full_matrix = False):
 
     imgs = imgs - np.mean(imgs, 0)
     U,S,V = np.linalg.svd(np.matmul(imgs, imgs.transpose()), full_matrices = full_matrix)
-    epsilon = 1e-6
-    ZCAMatrix = np.matmul(U, np.matmul(np.diag(1.0 / np.sqrt(S + epsilon)), U.transpose()))
+    eps = 1e-8
+    ZCAMatrix = np.matmul(U, np.matmul(np.diag(1.0 / np.sqrt(S + eps)), U.transpose()))
 
     if return_zca_mat:
         return ZCAMatrix
@@ -202,3 +203,208 @@ def standardize_preds(design_mat, mean_vec = None, std_vec = None, eps = 1e-12):
     design_mat = (design_mat - mean_vec) / (std_vec + eps)
     
     return design_mat
+
+
+def read_resize_write(read_fpaths, write_fpaths, desired_height, desired_width, aspect_ratio_tol = 0.26):
+    '''
+    Read in images based on fpaths, resize, and save in a new fpath.
+    
+    Args:
+        read_fpaths (list): List of the fpaths to read the pre-resized images from.
+        write_fpaths (list): List of the fpaths to write the post-resized images to.
+        desired_height (int): Height to resize each image.
+        desired_width (int): Width to resize each image.
+        aspect_ratio_tol (float): Discard images if absolute value between
+            original aspect ratio and resized aspect ratio >= aspect_ratio_tol
+            to help avoid cropping more than a desired amount.
+            
+    Returns:
+        None
+    '''
+
+    if aspect_ratio_tol < 0:
+        raise ValueError('aspect_ratio_tol should be >= 0.')
+    
+    for fpath, new_fpath in zip(read_fpaths, write_fpaths):
+        # read in the image
+        img = cv2.imread(fpath)
+        
+        # calculate aspect ratio
+        original_aspect = img.shape[1] / img.shape[0]
+        
+        # if aspect is not within aspect_ratio_tol of desired aspect, remove new dir then continue
+        desired_aspect = desired_width / desired_height
+        
+        if abs(desired_aspect - original_aspect) > aspect_ratio_tol:
+            if os.path.isdir(os.path.split(new_fpath)[0]): os.rmdir(os.path.split(new_fpath)[0])
+            continue
+
+        # resize the images
+        img = resize_img(img, desired_height, desired_width)
+        
+        # save the resized image
+        cv2.imwrite(new_fpath, img)
+
+
+def read_crop_write(read_fpaths, write_fpaths, crop_height, crop_width):
+    '''
+    Read in images, crop them, and resave them.
+    
+    Args:
+        read_fpaths (list): List of the fpaths to read the pre-cropped images from.
+        write_fpaths (list): List of the fpaths to write the post-cropped images to.
+        crop_height (int): Height of the cropped image.
+        crop_width (int): Width of the cropped image.
+        
+    Returns:
+        None
+    '''
+
+    for fpath, save_fpath in zip(read_fpaths, write_fpaths):
+        # read in the image
+        img = cv2.imread(fpath)
+        
+        # check if the image is smaller than the specified crop dims
+        if img.shape[0] <= crop_height or img.shape[1] <= crop_width:
+            if os.path.isdir(os.path.split(save_fpath)[0]): os.rmdir(os.path.split(save_fpath)[0])
+            continue
+
+        # crop it and save
+        img = center_crop(img, crop_height, crop_width)
+        cv2.imwrite(save_fpath, img)
+
+
+def read_downsample_write(read_fpaths, write_fpaths, downsample_h = 2, downsample_w = 2):
+    '''
+    Reads in images from fpaths, subsamples, and resaves them.
+    
+    Args:
+        read_fpaths (list): List of the fpaths to read the pre-downsampled images from.
+        write_fpaths (list): List of the fpaths to write the post-downsampled images to.
+        downsample_h (int): The factor to downsample the image height by.
+        downsample_w (int): The factor to downsample the image width by.
+        
+    Returns:
+        None
+    '''
+
+    for fpath, save_fpath in zip(read_fpaths, write_fpaths):
+        # read in the video frames and downsample
+        img = cv2.imread(fpath)[::downsample_h, ::downsample_w]
+        
+        # save the downsampled frame
+        cv2.imwrite(save_fpath, img)
+
+
+def read_smooth_write(read_fpaths, write_fpaths, neighborhood = 9, sigma_color = 75, sigma_space = 75):
+    '''
+    Read in images based on fpaths, smooth, and save in a new fpath.
+
+    Args:
+        read_fpaths (list): List of the fpaths to read the pre-smoothed images from.
+        write_fpaths (list): List of the fpaths to write the post-smoothed images to.
+        neighborhood (int): Diameter of the pixel neighborhood.
+        sigma_color (float): Larger values mean larger differences in colors can be mixed together.
+        sigma_space (float): Larger values mean larger differences in space can be mixed together.
+
+    Returns:
+        None
+    '''
+
+    for fpath, new_fpath in zip(read_fpaths, write_fpaths):
+        # read in the image
+        img = cv2.imread(fpath)
+
+        # smooth the image
+        img = cv2.bilateralFilter(
+            img,
+            d = neighborhood,
+            sigmaColor = sigma_color,
+            sigmaSpace = sigma_space
+        )
+
+        # save the resized image
+        cv2.imwrite(new_fpath, img)
+
+
+def read_pre_whiten_write(read_fpaths, write_fpaths, f_0 = None):
+    '''
+    Read in images based on fpaths, whiten, and save in a new fpath.
+    
+    Args:
+        read_fpaths (list): List of the fpaths to read the non pre-whitened images from.
+        write_fpaths (list): List of the fpaths to write the pre-whitened images to.
+        f_0 (int): Cycles/s desired.
+        
+    Returns:
+        None
+    '''
+
+    for fpath_num, (fpath, new_fpath) in enumerate(zip(read_fpaths, write_fpaths)):
+        # read in the image and make grayscale
+        img = cv2.imread(fpath)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        h, w = img.shape[0], img.shape[1]
+
+        # make the filter
+        if fpath_num == 0:
+            if not f_0: f_0 = np.ceil(min(h, w) * 0.4)
+            ffilter = make_lgn_freq_filter(w, h, f_0 = f_0)
+
+        # fft transform on image, filter, and go back to image
+        img_fft = np.fft.fft2(img)
+        img_fft *= ffilter
+        img_rec = np.absolute(np.fft.ifft2(img_fft))
+
+        # scale image to [0, 255] and write image
+        img_scaled = max_min_scale(img_rec) * 255
+        cv2.imwrite(new_fpath, img_scaled)
+
+
+def read_whiten_write(read_fpaths, write_fpaths, full_svd = False, scale_method = 'video'):
+    '''
+    Read in images based on fpaths, whiten via individual video statistics, and save in a new fpath.
+    
+    Args:
+        read_fpaths (list): List of lists, where each sublist contains the fpaths to all video frames
+            within a single non-whitened video (i.e. read_fpaths has length of # videos and each sublist
+            in read_fpaths has a length of # frames per video). 
+        write_fpaths (list): List of lists, where each sublist contains the fpaths to all video frames
+            within a single whitened video (i.e. read_fpaths has length of # videos and each sublist
+            in read_fpaths has a length of # frames per video).
+        full_svd (bool): If True, use full SVD.
+        scale_method (str): Whether to scale each frame from max/min of the video or only that frame.
+
+    Returns:
+        None
+    '''
+
+    for read_dir, save_dir in zip(read_fpaths, write_fpaths):
+        for fpath_num, fpath in enumerate(read_dir):
+            # read in the image and make grayscale
+            img = cv2.imread(fpath, cv2.IMREAD_GRAYSCALE)
+
+            # make a matrix to store the images if first image
+            if fpath_num == 0:
+                h, w = img.shape
+                img_mat = np.zeros([len(read_dir), h * w])
+
+            # add the image to the mat
+            img_mat[fpath_num] = img.flatten()
+
+        # do whitening
+        img_mat_whitened = spatial_whiten(img_mat, full_matrix = full_svd)
+
+        # scale frames based on max/min from entire video
+        if scale_method == 'video':
+            img_mat_whitened = max_min_scale(img_mat_whitened) * 255
+
+        # save images
+        for save_fpath_num, (new_fpath, flattened_img) in enumerate(zip(save_dir, img_mat_whitened)):
+            # scale frame based on max/min from that frame if specified
+            if scale_method == 'frame':
+                flattened_img = max_min_scale(flattened_img) * 255
+
+            img_rec = flattened_img.reshape([h, w])
+            if save_fpath_num == 0: os.makedirs(os.path.split(new_fpath)[0], exist_ok = True)
+            cv2.imwrite(new_fpath, img_rec)
