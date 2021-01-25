@@ -18,28 +18,19 @@ def resize_img(img, desired_height, desired_width):
     '''
 
     if desired_height <= 0 or desired_width <= 0:
-        raise ValueError('desired_height and desired_width must be non-zero and positive.')
+        raise ValueError('desired_height and desired_width must be > 0.')
 
     h, w = img.shape[:2]
     desired_aspect = desired_width / desired_height
     actual_aspect = w / h
 
     if desired_aspect > actual_aspect:
-        crop_height = h - int(w * desired_height / desired_width)
-        if crop_height == 1:
-            img = img[:-1]
-        elif crop_height % 2 != 0:
-            img = img[crop_height // 2:h - (crop_height // 2 + 1)]
-        else:
-            img = img[crop_height // 2: h - crop_height // 2]
-    else:
-        crop_width = w - int(h * desired_width / desired_height)
-        if crop_width == 1:
-            img = img[:, :-1]
-        elif crop_width % 2 != 0:
-            img = img[:, crop_width // 2:w - (crop_width // 2 + 1)]
-        else:
-            img = img[:, crop_width // 2:w - crop_width // 2]
+        crop_height = int(w * desired_height / desired_width)
+        img = center_crop(img, crop_height = crop_height, crop_width = w)
+
+    elif desired_aspect < actual_aspect:
+        crop_width = int(h * desired_width / desired_height)
+        img = center_crop(img, crop_height = h, crop_width = crop_width)
 
     img_resized = cv2.resize(img, (desired_width, desired_height))
 
@@ -60,7 +51,7 @@ def center_crop(img, crop_height, crop_width):
     '''
 
     if crop_height <= 0 or crop_width <= 0:
-        raise ValueError('crop_height and crop_width must be non-zero and positive')
+        raise ValueError('crop_height and crop_width must be > 0.')
 
     crop_y = img.shape[0] // 2 - crop_height // 2
     crop_x = img.shape[1] // 2 - crop_width // 2
