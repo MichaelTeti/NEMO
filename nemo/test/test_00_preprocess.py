@@ -109,6 +109,24 @@ class TestPreprocess(unittest.TestCase):
         self.assertCountEqual(img_resized.shape, [32, 80])
 
 
+    def test_resize_img_values_resize_smaller(self):
+        img = np.zeros([64, 128])
+        img[27:37, 59:69] = 255
+        img_resized = resize_img(img, 32, 64)
+        img_unresized = resize_img(img_resized, 64, 128)
+        diff = np.sum(img - img_unresized)
+        self.assertEqual(diff, 0.0)
+
+
+    def test_resize_img_values_resize_larger(self):
+        img = np.zeros([64, 128])
+        img[27:37, 59:69] = 255
+        img_resized = resize_img(img, 128, 256)
+        img_unresized = resize_img(img_resized, 64, 128)
+        diff = np.sum(img - img_unresized)
+        self.assertEqual(diff, 0.0)
+
+
     def test_read_resize_write_shape(self):
         imgs = [np.uint8(np.random.uniform(0, 255, size = (64, 128))) for _ in range(10)]
 
