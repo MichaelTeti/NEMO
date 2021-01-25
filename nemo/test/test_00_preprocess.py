@@ -91,10 +91,22 @@ class TestPreprocess(unittest.TestCase):
         self.assertCountEqual(test_array_standardized.shape, test_array.shape)
 
 
-    def test_resize_img_shape(self):
+    def test_resize_img_shape_same_aspect(self):
         img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
         img_resized = resize_img(img, 10, 20)
         self.assertCountEqual(img_resized.shape, [10, 20])
+
+
+    def test_resize_img_shape_actual_aspect_gt_desired_aspect(self):
+        img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
+        img_resized = resize_img(img, 32, 45)
+        self.assertCountEqual(img_resized.shape, [32, 45])
+
+
+    def test_resize_img_shape_actual_aspect_lt_desired_aspect(self):
+        img = np.uint8(np.random.uniform(0, 255, size = (64, 128)))
+        img_resized = resize_img(img, 32, 80)
+        self.assertCountEqual(img_resized.shape, [32, 80])
 
 
     def test_read_resize_write_shape(self):
