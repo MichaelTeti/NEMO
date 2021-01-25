@@ -13,7 +13,6 @@ setup(
         'h5py<3.0.0',
         'idna<3',
         'jinja2<2.12.0',
-        'jupyterlab',
         'matplotlib',
         'numpy<1.19.0',
         'oct2py',
