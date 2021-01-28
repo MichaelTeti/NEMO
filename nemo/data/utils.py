@@ -1,6 +1,8 @@
+import csv
 from multiprocessing import Process, cpu_count
 import os
 
+import h5py
 import numpy as np
 
 
@@ -151,3 +153,71 @@ def download_experiment_data(ids, boc):
 
     for id in ids:
         boc.get_ophys_experiment_data(id)
+
+
+def write_csv(items, fpath, mode = 'w'):
+    '''
+    Write a list to a .csv file.
+
+    Args:
+        items (list): A list of values (e.g. strings, floats, ints, etc.) or lists.
+        fpath (str): Desired fpath for the .csv file.
+        mode (str): Write mode. See https://docs.python.org/3.6/library/functions.html#open
+              for details.
+
+    Returns:
+        None
+    '''
+
+    with open(fpath, mode) as f:
+        writer = csv.writer(f, delimiter = ',')
+        for item in items:
+            if type(item) != list: item = [item]
+            writer.writerow(item)
+
+
+def read_h5_as_array(fpath):
+    '''
+    Read a .h5 file and return the items as a dictionary of np.ndarrays.
+
+    Args:
+        fpath (str): The path to the .h5 file.
+
+    Returns:
+        data (dict): A dictionary of keys and their corresponding arrays.
+    '''
+
+    with h5py.File(fpath, 'r+') as h5file:
+        data = {}
+        for key in list(h5file.keys()):
+            data[key] = h5file[key][()]
+
+    return data
+
+
+def read_csv(fpath, remove_header = False, remove_footer = False, mode = 'r',):
+    '''
+    Read a .csv file and return the items as a list.
+
+    Args:
+        fpath (str): The path to the .csv file.
+        remove_header (bool): True to return lines 1-n.
+        remove_footer (bool): True to return lines 0-(n-1).
+        mode (str): Mode to open the file in.
+
+    Returns:
+        A list of items (e.g. strs, floats, ints, lists, etc.)
+    '''
+
+    with open(fpath, mode) as f:
+        reader = csv.reader(f, delimiter = ',')
+        data = []
+
+        try:
+            for row_num, row in enumerate(reader[:-1] if remove_footer else reader):
+                if row_num == 0 and remove_header: continue
+                data.append(row[0] if len(row) == 1 else row)
+        except:
+            pass
+
+    return data

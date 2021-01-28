@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn
 
-from nemo.data.io import compile_trial_avg_traces
+from nemo.data.io.trace import compile_trial_avg_traces
 
 
 parser = ArgumentParser()

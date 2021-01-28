@@ -8,8 +8,9 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import ElasticNetCV as ElasticNet
 
-from nemo.data.io import read_frames, load_trial_averaged_traces
-from nemo.data.preprocess import max_min_scale, create_video_frame_sequences, standardize_preds
+from nemo.data.io.image import read_frames
+from nemo.data.io.trace import load_single_cell_avg_traces
+from nemo.data.preprocess.image import max_min_scale, create_video_frame_sequences, standardize_preds
 from nemo.data.utils import get_img_frame_names
 from nemo.model.utils import save_args, cv_splitter_video
 

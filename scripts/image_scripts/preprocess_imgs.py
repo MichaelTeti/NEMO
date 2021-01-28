@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 import os
 import sys
 
-from nemo.data.preprocess import (
+from nemo.data.preprocess.image import (
     read_crop_write,
     read_downsample_write,
     read_resize_write,

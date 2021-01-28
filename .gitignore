@@ -1,8 +1,12 @@
+# package
 *egg-info*
+
+# pycache
 *__pycache__*
 
 # data stuff
-data/
+data/BrainObservatoryData/
+data/ILSVRC2015
 *.txt
 
 # lca checkpoints

@@ -150,52 +150,6 @@ def create_video_frame_sequences(vid_frame_array, n_frames_in_time = 9):
     return design_mat
 
 
-def normalize_traces(traces):
-    '''
-    Zero-mean and scale traces.
-    
-    Args:
-        traces (np.ndarray): The array of unscaled fluorescence trace values.
-        
-    Returns:
-        traces_scaled (np.ndarray): The array of fluorescence traces with zero mean and range [-1, 1].
-    '''
-    
-    traces -= np.mean(traces)
-    traces /= np.amax(np.absolute(traces))
-    
-    return traces
-
-
-def standardize_preds(design_mat, mean_vec = None, std_vec = None, eps = 1e-12):
-    '''
-    Standardizes each predictor variable in the design matrix with the statistics of that column. 
-    
-    Args:
-        design_mat (np.ndarray): An N-dimensional array where the first dimension indexes
-            the data samples. 
-        mean_vec (np.ndarray): An (N-1)-dimensional array with the mean of each dimension
-            taken along the first dimension of design_mat. 
-        std_vec (np.ndarray): An (N-1)-dimensional array with the std of each dimension
-            taken along the first dimension of design_mat.
-        eps (float): A scalar added to the elements in std_vec to avoid (unlikely)
-            division by zero. 
-            
-    Returns:
-        design_mat (np.ndarray): The design_mat with standardized predictors. 
-    '''
-    
-    # if mean_vec and/or std_vec not given, calculate from the data
-    if not mean_vec:
-        mean_vec = np.mean(design_mat, 0)
-    if not std_vec:
-        std_vec = np.std(design_mat, 0)
-        
-    design_mat = (design_mat - mean_vec) / (std_vec + eps)
-    
-    return design_mat
-
-
 def read_resize_write(read_fpaths, write_fpaths, desired_height, desired_width, aspect_ratio_tol = 0.26):
     '''
     Read in images based on fpaths, resize, and save in a new fpath.
@@ -399,3 +353,32 @@ def read_whiten_write(read_fpaths, write_fpaths, full_svd = False, scale_method 
             img_rec = flattened_img.reshape([h, w])
             if save_fpath_num == 0: os.makedirs(os.path.split(new_fpath)[0], exist_ok = True)
             cv2.imwrite(new_fpath, img_rec)
+
+
+def standardize_preds(design_mat, mean_vec = None, std_vec = None, eps = 1e-12):
+    '''
+    Standardizes each predictor variable in the design matrix with the statistics of that column. 
+    
+    Args:
+        design_mat (np.ndarray): An N-dimensional array where the first dimension indexes
+            the data samples. 
+        mean_vec (np.ndarray): An (N-1)-dimensional array with the mean of each dimension
+            taken along the first dimension of design_mat. 
+        std_vec (np.ndarray): An (N-1)-dimensional array with the std of each dimension
+            taken along the first dimension of design_mat.
+        eps (float): A scalar added to the elements in std_vec to avoid (unlikely)
+            division by zero. 
+            
+    Returns:
+        design_mat (np.ndarray): The design_mat with standardized predictors. 
+    '''
+    
+    # if mean_vec and/or std_vec not given, calculate from the data
+    if not mean_vec:
+        mean_vec = np.mean(design_mat, 0)
+    if not std_vec:
+        std_vec = np.std(design_mat, 0)
+        
+    design_mat = (design_mat - mean_vec) / (std_vec + eps)
+    
+    return design_mat
