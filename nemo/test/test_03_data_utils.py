@@ -4,31 +4,34 @@ Unit tests for the classes in io.py
 
 
 import csv
-from multiprocessing import cpu_count
 import os
-from random import randint
 from tempfile import TemporaryDirectory
 import unittest
 
 import cv2
+import h5py
 import numpy as np
 
 from nemo.data.utils import (
     add_string_to_fpaths,
     change_file_exts,
     get_fpaths_in_dir,
-    multiproc 
+    multiproc,
+    read_h5_as_array,
+    write_csv
 )
 
 
 class TestDataUtils(unittest.TestCase):
 
-    def test_multiproc_ValueError1(self):
+    def test_multiproc_ValueError_iterables_not_equal_len(self):
+        '''
+        Check designated iterables have equal length.
+        '''
 
         def test_func(number1, number2):
             addition = number1 + number2
 
-        n_cpus = cpu_count()
         with self.assertRaises(ValueError):
             multiproc(
                 test_func,
@@ -186,6 +189,35 @@ class TestDataUtils(unittest.TestCase):
             rename_undone = os.path.join(fpath_renamed_dir.split('test_string')[0], fpath_renamed_fname)
             self.assertTrue(rename_undone in fpaths)
 
+
+    def test_write_csv_list(self):
+        with TemporaryDirectory() as tmp_dir:
+            write = [list(range(5)) for _ in range(10)]
+            write_fpath = os.path.join(tmp_dir, 'test_write_csv_list.txt')
+            write_csv(write, write_fpath)
+
+            with open(write_fpath, 'r') as f:
+                reader = csv.reader(f)
+                read = list(reader)
+                
+            compare = [
+                all([w == int(r) for w, r in zip(w_list, r_list)]) 
+                for w_list, r_list in zip(write, read)
+            ]
+            self.assertTrue(all(compare))
+
+
+    def test_read_h5_as_array(self):
+        write = np.random.randn(10000)
+        
+        with TemporaryDirectory() as tmp_dir:
+            write_fpath = os.path.join(tmp_dir, 'test_read_h5_as_array.h5')
+            
+            with h5py.File(write_fpath, 'a') as h5file:
+                h5file.create_dataset('test_array', data = write)
+
+            read = read_h5_as_array(write_fpath)['test_array'][()]
+            self.assertEqual(np.sum(write - read), 0.0)
 
 
 if __name__ == '__main__':
