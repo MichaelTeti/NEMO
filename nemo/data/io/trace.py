@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 
-def load_trial_avg_trace_array(fpath, n_frames_in_time = 9):
+def load_single_cell_avg_traces(fpath, n_frames_in_time = 9):
     '''
     Loads trial-averaged traces as a 1D array for a model. 
 

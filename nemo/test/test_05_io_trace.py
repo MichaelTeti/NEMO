@@ -12,7 +12,7 @@ import numpy as np
 
 from nemo.data.io.trace import (
     compile_trial_avg_traces,
-    load_trial_avg_trace_array
+    load_single_cell_avg_traces
 )
 
 
@@ -36,7 +36,7 @@ class TestIOTrace(unittest.TestCase):
             self.assertAlmostEqual(np.sum(traces.to_numpy() - write), 0.0, places = 12)
 
     
-    def test_load_trial_avg_trace_array(self):
+    def test_load_single_cell_avg_traces(self):
         write = np.random.randn(10)
 
         with TemporaryDirectory() as tmp_dir:
@@ -48,15 +48,15 @@ class TestIOTrace(unittest.TestCase):
                 writer.writerow(list(write))
                 
             for i in range(1, 10):
-                read = load_trial_avg_trace_array(write_fpath, n_frames_in_time = i)
+                read = load_single_cell_avg_traces(write_fpath, n_frames_in_time = i)
                 self.assertAlmostEqual(np.sum(write[i-1:] - read), 0.0, places = 12)
 
 
-    def test_load_trial_avg_trace_array_ValueError(self):
+    def test_load_single_cell_avg_traces_ValueError(self):
         write = np.random.randn(10)
         for i in range(-10, 1):
             with self.assertRaises(ValueError):
-                load_trial_avg_trace_array(write, n_frames_in_time = i)
+                load_single_cell_avg_traces(write, n_frames_in_time = i)
 
 
 
