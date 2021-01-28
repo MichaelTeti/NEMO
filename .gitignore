@@ -1,4 +1,7 @@
+# package
 *egg-info*
+
+# pycache
 *__pycache__*
 
 # data stuff
