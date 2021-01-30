@@ -93,7 +93,7 @@ mean_act_args = parser.add_argument_group(
     description = 'The arguments to plot the mean activations and mean sparstiy.'
 )
 mean_act_args.add_argument(
-    '--model_activity_fpath',
+    '--activity_fpath',
     required = True,
     type = str,
     help = 'The path to the <model_layer_name>_A.pvp file.'
@@ -105,7 +105,7 @@ n_active_args = parser.add_argument_group(
     description = 'The arguments for the plot_num_neurons_active function.'
 )
 n_active_args.add_argument(
-    '--model_write_fpath',
+    '--sparse_activity_fpath',
     required = True,
     type = str,
     help = 'Path to the <model_layer_name>.pvp file.'
@@ -176,7 +176,7 @@ if not args.no_features:
         ckpt_dir = args.ckpt_dir,
         write_fpath = os.path.join(args.save_dir, 'features.gif'),
         weight_file_key = args.weight_fpath_key,
-        activity_fpath = args.model_activity_fpath,
+        activity_fpath = args.activity_fpath,
         openpv_path = args.openpv_path
     )
 
@@ -231,23 +231,23 @@ if not args.no_probes:
 
 if not args.no_activity:
     # mean acts, mean sparsity, and number active
-    mean, se, _ = get_mean_activations(args.model_activity_fpath, openpv_path = args.openpv_path)
+    mean, se, _ = get_mean_activations(args.activity_fpath, openpv_path = args.openpv_path)
     plt.errorbar(x = list(range(mean.size)), y = mean, yerr = se)
     plt.xlabel('Neuron Index')
     plt.ylabel('Mean Activation +/- 1 SE')
     plt.savefig(os.path.join(args.save_dir, 'mean_activations.png'), bbox_inches = 'tight')
     plt.close()
 
-    mean_sparsity, _ = get_mean_sparsity(args.model_activity_fpath, openpv_path = args.openpv_path)
+    mean_sparsity, _ = get_mean_sparsity(args.activity_fpath, openpv_path = args.openpv_path)
     plt.plot(mean_sparsity)
     plt.xlabel('Neuron Index')
     plt.ylabel('Mean Sparsity')
     plt.savefig(os.path.join(args.save_dir, 'mean_sparsity.png'), bbox_inches = 'tight')
     plt.close()
 
-    _, feat_map_h, feat_map_w, n_neurons = read_activity_file(args.model_activity_fpath).shape
+    _, feat_map_h, feat_map_w, n_neurons = read_activity_file(args.activity_fpath).shape
     mean_active, se_active = get_percent_neurons_active(
-        args.model_write_fpath, 
+        args.sparse_activity_fpath, 
         n_neurons,
         feat_map_h,
         feat_map_w,
