@@ -66,10 +66,17 @@ parser.add_argument(
     help = 'Desired reporter lines. Default is all of them.'
 )
 parser.add_argument(
-    '--imaging_depths',
+    '--min_imaging_depth',
     type = int,
-    nargs = '+',
-    help = 'Desired imaging depths. Default is all of them.'
+    help = 'Minimum desired imaging depth.'
+    # http://www.nibb.ac.jp/brish/Gallery/cortexE.html
+    # https://www.jneurosci.org/content/35/18/7287
+    # https://sci-hub.se/10.3791/60600 250-450um
+)
+parser.add_argument(
+    '--max_imaging_depth',
+    type = int,
+    help = 'Maximium desired imaging depth.'
 )
 parser.add_argument(
     '--session_type',
@@ -88,7 +95,6 @@ boc = BrainObservatoryCache(manifest_file = manifest_path)
 # target area, imaging depth, and cre line
 conts = boc.get_experiment_containers(
     targeted_structures = args.targeted_structures,
-    imaging_depths = args.imaging_depths,
     include_failed = False,
     cre_lines = args.cre_lines,
     reporter_lines = args.reporter_lines
@@ -96,6 +102,12 @@ conts = boc.get_experiment_containers(
 
 # filter out ones with eplieptiform events
 conts = [cont for cont in conts if 'Epileptiform Events' not in cont['tags']]
+
+# filter imaging depths here so we can just give the range 
+if args.min_imaging_depth:
+    conts = [cont for cont in conts if cont['imaging_depth'] >= args.min_imaging_depth]
+if args.max_imaging_depth:
+    conts = [cont for cont in conts if cont['imaging_depth'] <= args.max_imaging_depth]
 
 # get experiments from the containers
 exps = boc.get_ophys_experiments(experiment_container_ids = [cont['id'] for cont in conts])
@@ -116,7 +128,7 @@ print('[INFO] FOUND {} EXPERIMENTS'.format(len(exps)))
 exp_ids = [exp['id'] for exp in exps]
 multiproc(
     func = download_experiment_data,
-    iterator_key = 'ids',
+    iterator_keys = ['ids'],
     n_workers = args.n_workers,
     ids = exp_ids,
     boc = boc
