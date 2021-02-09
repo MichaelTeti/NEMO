@@ -17,7 +17,7 @@ import pandas as pd
 from progressbar import ProgressBar
 
 from nemo.data.preprocess.trace import normalize_traces
-from nemo.data.utils import get_img_frame_names
+from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
 
 
 
@@ -156,28 +156,6 @@ def write_static_image_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_spe
         )
 
 
-def monitor_cm_coords_to_image(x_cm, y_cm, monitor_w_cm = 51.0, monitor_h_cm = 32.5, 
-                              img_w_pix = 1920, img_h_pix = 1200):
-
-    '''
-    Maps eye tracking coords in monitor dims to image dims.
-    '''
-
-    x_cm = (monitor_w_cm / 2) + x_cm
-    y_cm = (monitor_h_cm / 2) + y_cm
-    x_img = x_cm * img_w_pix / monitor_w_cm
-    y_img = y_cm * img_h_pix / monitor_h_cm
-    x_frac = x_img / img_w_pix
-    y_frac = y_img / img_h_pix
-    
-    if np.amin(x_frac) < 0 or np.amax(x_frac) >= 1:
-        raise ValueError
-    if np.amin(y_frac) < 0 or np.amax(y_frac) >= 1:
-        raise ValueError
-    
-    return x_frac, y_frac
-
-
 def get_eye_tracking_info(dataset, missing_data_fill_size, keep_no_eye_tracking = False):
     '''
     Gets the eye tracking data from the AIBO dataset.
@@ -196,8 +174,7 @@ def get_eye_tracking_info(dataset, missing_data_fill_size, keep_no_eye_tracking 
 
     pupil_x = pupil_loc[:, 0]
     pupil_y = pupil_loc[:, 1]
-    pupil_x, pupil_y = monitor_cm_coords_to_image(pupil_x, pupil_y)
-    pupil_x, pupil_y = np.round(pupil_x, 4), np.round(pupil_y, 4)
+    pupil_x, pupil_y = monitor_coord_to_image_ind(pupil_x, pupil_y)
 
     return pupil_x, pupil_y, pupil_size, pupil_ts
 
