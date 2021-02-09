@@ -225,7 +225,8 @@ def read_csv(fpath, remove_header = False, remove_footer = False, mode = 'r',):
 
 def monitor_coord_to_image_ind(x_cm, y_cm, monitor_w_cm = 51.91, monitor_h_cm = 32.44):
     '''
-    Takes in the monitor coordinates in centimeters (i.e. as_spherical = False),
+    Takes in the monitor coordinates in centimeters returned by 
+    dataset.get_pupil_location(as_spherical = False),
     where (0, 0) is the center of the monitor, and turns those into proportions 
     where (0, 0) is the top left corner of the monitor and (1, 1) is the bottom
     right corner.
@@ -248,6 +249,7 @@ def monitor_coord_to_image_ind(x_cm, y_cm, monitor_w_cm = 51.91, monitor_h_cm = 
     if type(y_cm) not in [np.ndarray, float, int]:
         raise TypeError
 
+    y_cm *= -1 
     x_img = np.round(((monitor_w_cm / 2) + x_cm) / monitor_w_cm, 5)
     y_img = np.round(((monitor_h_cm / 2) + y_cm) / monitor_h_cm, 5)
     
