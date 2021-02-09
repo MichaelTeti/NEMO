@@ -178,6 +178,30 @@ def monitor_cm_coords_to_image(x_cm, y_cm, monitor_w_cm = 51.0, monitor_h_cm = 3
     return x_frac, y_frac
 
 
+def get_eye_tracking_info(dataset, missing_data_fill_size, keep_no_eye_tracking = False):
+    '''
+    Gets the eye tracking data from the AIBO dataset.
+    '''
+
+    try:
+        pupil_ts, pupil_loc = dataset.get_pupil_location(as_spherical = False)
+        _, pupil_size = dataset.get_pupil_size()
+    except NoEyeTrackingException:
+        if keep_no_eye_tracking:
+            pupil_loc = np.full([missing_data_fill_size, 2], np.nan)
+            pupil_size = np.full([missing_data_fill_size], np.nan)
+            pupil_ts = np.full([missing_data_fill_size], np.nan)
+        else:
+            return
+
+    pupil_x = pupil_loc[:, 0]
+    pupil_y = pupil_loc[:, 1]
+    pupil_x, pupil_y = monitor_cm_coords_to_image(pupil_x, pupil_y)
+    pupil_x, pupil_y = np.round(pupil_x, 4), np.round(pupil_y, 4)
+
+    return pupil_x, pupil_y, pupil_size, pupil_ts
+
+
 def extract_neurodata(manifest_fpath, exp_dir, save_dir, keep_no_eye_tracking = False):
     stimuli_dir = os.path.join(save_dir, 'stimuli')
     trace_dir = os.path.join(save_dir, 'trace_data')
@@ -200,22 +224,17 @@ def extract_neurodata(manifest_fpath, exp_dir, save_dir, keep_no_eye_tracking = 
         # get running speed of animal
         run_ts, run_speed = dataset.get_running_speed()
         
-        # get eye tracking coordinates...not always available
-        try:
-            pupil_ts, pupil_loc = dataset.get_pupil_location(as_spherical = False)
-            _, pupil_size = dataset.get_pupil_size()
-        except NoEyeTrackingException:
-            if keep_no_eye_tracking:
-                pupil_loc = np.full([run_speed.shape[0], 2], np.nan)
-                pupil_size = np.full([run_speed.shape[0]], np.nan)
-                pupil_ts = np.full([run_speed.shape[0]], np.nan)
-            else:
-                continue
-
-        pupil_x = pupil_loc[:, 0]
-        pupil_y = pupil_loc[:, 1]
-        pupil_x, pupil_y = monitor_cm_coords_to_image(pupil_x, pupil_y)
-        pupil_x, pupil_y = np.round(pupil_x, 4), np.round(pupil_y, 4)
+        
+        # get eye tracking info
+        eye_data = get_eye_tracking_info(
+            dataset,
+            missing_data_fill_size = run_speed.shape[0], 
+            keep_no_eye_tracking = keep_no_eye_tracking
+        )
+        if eye_data:
+            pupil_x, pupil_y, pupil_size, pupil_ts = eye_data
+        else:
+            continue
             
             
         # get df/f corrected traces
@@ -309,6 +328,7 @@ def extract_rfs(manifest_fpath, exp_dir, write_dir):
         if 'locally_sparse_noise' in dataset.list_stimuli():
             lsn = LocallySparseNoise(dataset)
             rfs = lsn.receptive_field
+            rfs[np.isnan(rfs)] = 0
             
             for ind, cell_id in enumerate(cell_ids):
                 rf = rfs[:, :, ind, :]
