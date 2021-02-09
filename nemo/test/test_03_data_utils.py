@@ -16,6 +16,7 @@ from nemo.data.utils import (
     add_string_to_fpaths,
     change_file_exts,
     get_fpaths_in_dir,
+    monitor_coord_to_image_ind,
     multiproc,
     read_h5_as_array,
     write_csv
@@ -218,6 +219,61 @@ class TestDataUtils(unittest.TestCase):
 
             read = read_h5_as_array(write_fpath)['test_array'][()]
             self.assertEqual(np.sum(write - read), 0.0)
+
+
+    def test_monitor_coord_to_image_ind_TypeError(self):
+        with self.assertRaises(TypeError):
+            monitor_coord_to_image_ind([0], [0], 51.9, 32.4)
+
+
+    def test_monitor_coord_to_image_ind_ValueError_low_x(self):
+        with self.assertRaises(ValueError):
+            monitor_coord_to_image_ind(-26, 0, 51.9, 32.4)
+
+
+    def test_monitor_coord_to_image_ind_ValueError_high_x(self):
+        with self.assertRaises(ValueError):
+            monitor_coord_to_image_ind(26, 0, 51.9, 32.4)
+
+
+    def test_monitor_coord_to_image_ind_ValueError_low_y(self):
+        with self.assertRaises(ValueError):
+            monitor_coord_to_image_ind(0, -16.5, 51.9, 32.4)
+
+    
+    def test_monitor_coord_to_image_ind_ValueError_high_y(self):
+        with self.assertRaises(ValueError):
+            monitor_coord_to_image_ind(0, 16.5, 51.9, 32.4)
+
+
+    def test_monitor_coord_to_image_ind_values_center(self):
+        x, y = monitor_coord_to_image_ind(0, 0, 51.9, 32.4)
+        self.assertEqual(x, 0.5)
+        self.assertEqual(y, 0.5)
+
+
+    def test_monitor_coord_to_image_ind_values_top_left(self):
+        x, y = monitor_coord_to_image_ind(-25.9, -16.15, 51.9, 32.4)
+        self.assertAlmostEqual(x, 0.0, places = 2)
+        self.assertAlmostEqual(y, 0.0, places = 2)
+
+
+    def test_monitor_coord_to_image_ind_values_bottom_left(self):
+        x, y = monitor_coord_to_image_ind(-25.9, 16.15, 51.9, 32.4)
+        self.assertAlmostEqual(x, 0.0, places = 2)
+        self.assertAlmostEqual(y, 0.999, places = 2)
+
+
+    def test_monitor_coord_to_image_ind_values_top_right(self):
+        x, y = monitor_coord_to_image_ind(25.9, -16.15, 51.9, 32.4)
+        self.assertAlmostEqual(x, 0.999, places = 2)
+        self.assertAlmostEqual(y, 0.0, places = 2)
+
+
+    def test_monitor_coord_to_image_ind_values_bottom_right(self):
+        x, y = monitor_coord_to_image_ind(25.9, 16.15, 51.9, 32.4)
+        self.assertAlmostEqual(x, 0.999, places = 2)
+        self.assertAlmostEqual(y, 0.999, places = 2)
 
 
 if __name__ == '__main__':
