@@ -29,6 +29,14 @@ parser.add_argument(
     '--targeted_structures',
     type = str,
     nargs = '+',
+    choices = [
+        'VISp',
+        'VISl',
+        'VISal',
+        'VISrl',
+        'VISam',
+        'VISpm'
+    ],
     help = 'Targeted structures. Default is all of them.'
 )
 parser.add_argument(
