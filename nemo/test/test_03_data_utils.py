@@ -253,25 +253,25 @@ class TestDataUtils(unittest.TestCase):
 
 
     def test_monitor_coord_to_image_ind_values_top_left(self):
-        x, y = monitor_coord_to_image_ind(-25.9, -16.15, 51.9, 32.4)
+        x, y = monitor_coord_to_image_ind(-25.9, 16.15, 51.9, 32.4)
         self.assertAlmostEqual(x, 0.0, places = 2)
         self.assertAlmostEqual(y, 0.0, places = 2)
 
 
     def test_monitor_coord_to_image_ind_values_bottom_left(self):
-        x, y = monitor_coord_to_image_ind(-25.9, 16.15, 51.9, 32.4)
+        x, y = monitor_coord_to_image_ind(-25.9, -16.15, 51.9, 32.4)
         self.assertAlmostEqual(x, 0.0, places = 2)
         self.assertAlmostEqual(y, 0.999, places = 2)
 
 
     def test_monitor_coord_to_image_ind_values_top_right(self):
-        x, y = monitor_coord_to_image_ind(25.9, -16.15, 51.9, 32.4)
+        x, y = monitor_coord_to_image_ind(25.9, 16.15, 51.9, 32.4)
         self.assertAlmostEqual(x, 0.999, places = 2)
         self.assertAlmostEqual(y, 0.0, places = 2)
 
 
     def test_monitor_coord_to_image_ind_values_bottom_right(self):
-        x, y = monitor_coord_to_image_ind(25.9, 16.15, 51.9, 32.4)
+        x, y = monitor_coord_to_image_ind(25.9, -16.15, 51.9, 32.4)
         self.assertAlmostEqual(x, 0.999, places = 2)
         self.assertAlmostEqual(y, 0.999, places = 2)
 
