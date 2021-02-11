@@ -128,12 +128,11 @@ def get_AIBO_data(dataset):
     data = {}
 
     # get the cell IDs in the dataset 
-    cell_ids = dataset.get_cell_specimen_ids()
-    data['cell_ids'] = cell_ids 
+    data['cell_ids'] = dataset.get_cell_specimen_ids()
 
     # get df/f  for all cells in this experiment
     # after these lines, traces is of shape # acquisition frames x # cells
-    dff_ts, dff = dataset.get_dff_traces(cell_specimen_ids = cell_ids)
+    dff_ts, dff = dataset.get_dff_traces(cell_specimen_ids = data['cell_ids'])
     dff = normalize_traces(dff.transpose())
     data['dff'], data['dff_ts'] = dff, dff_ts
 
@@ -217,7 +216,11 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir):
                     stimulus = stimulus
                 )
 
-    del aibo_data, stim_frame_table, stim_epoch_table
+
+        del stim_frame_table 
+
+    del aibo_data, stim_epoch_table
+
 
 
 def loop_exps(manifest_fpath, exp_dir, save_dir):
