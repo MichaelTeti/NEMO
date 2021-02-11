@@ -276,5 +276,23 @@ class TestDataUtils(unittest.TestCase):
         self.assertAlmostEqual(y, 0.999, places = 2)
 
 
+    def test_monitor_coord_to_image_ind_array_shape(self):
+        x_cm, y_cm = np.zeros([10]), np.zeros([10])
+        x, y = monitor_coord_to_image_ind(x_cm, y_cm, 51.91, 32.4)
+        self.assertCountEqual(x.shape, [10])
+        self.assertCountEqual(y.shape, [10])
+
+
+    def test_monitor_coord_to_image_ind_array_with_nan(self):
+        x_cm, y_cm = np.zeros([10]), np.zeros([10])
+        x_cm[::2] = np.nan 
+        y_cm[::2] = np.nan 
+        x, y = monitor_coord_to_image_ind(x_cm, y_cm, 51.91, 32.4)
+        self.assertTrue(np.sum(x[1::2]), 0.5 * 5)
+        self.assertTrue(np.sum(y[1::2]), 0.5 * 5)
+        self.assertTrue(np.sum(np.isnan(x)), 5)
+        self.assertTrue(np.sum(np.isnan(y)), 5)
+
+
 if __name__ == '__main__':
     unittest.main(verbosity = 2)
