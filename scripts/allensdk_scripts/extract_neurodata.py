@@ -23,7 +23,7 @@ from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
 
 
 def write_natural_movie_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_speed, dff, 
-                             ts, cell_ids, session_type, stimulus):
+                             dff_ts, run_ts, pupil_ts, cell_ids, session_type, stimulus):
 
     '''
     Writes response and behavioral data to file for natural movie stimuli.
@@ -38,7 +38,9 @@ def write_natural_movie_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_sp
     df['run_speed'] = run_speed[inds]
     df['session_type'] = [session_type] * len(inds)
     df['stimulus'] = [stimulus] * len(inds)
-    df['ts'] = ts[inds]
+    df['dff_ts'] = dff_ts[inds]
+    df['run_ts'] = run_ts[inds]
+    df['pupil_ts'] = pupil_ts[inds]
     
     for cell_traces, cell_id in zip(dff.transpose(), cell_ids):
         df_write = df.copy()
@@ -55,7 +57,7 @@ def write_natural_movie_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_sp
 
 
 def write_static_image_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_speed, dff,
-                            ts, cell_ids, session_type):
+                            dff_ts, run_ts, pupil_ts, cell_ids, session_type):
 
     '''
     Writes response and behavioral data to file for static image data.
@@ -78,7 +80,9 @@ def write_static_image_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_spe
     better_df['pupil_y'] = pupil_y[inds]
     better_df['pupil_size'] = pupil_size[inds]
     better_df['run_speed'] = run_speed[inds]
-    better_df['ts'] = ts[inds]
+    better_df['dff_ts'] = dff_ts[inds]
+    better_df['run_ts'] = run_ts[inds]
+    better_df['pupil_ts'] = pupil_ts[inds]
     better_df['session_type'] = [session_type] * len(inds)
     
     for cell_traces, cell_id in zip(dff.transpose(), cell_ids):
@@ -125,6 +129,10 @@ def get_eye_tracking_info(dataset, missing_data_fill_size, keep_no_eye_tracking 
 
 def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = False):
 
+    os.makedirs(stimuli_dir, exist_ok = True)
+    os.makedirs(trace_dir, exist_ok = True)
+
+
     try:
         stim_epoch_table = dataset.get_stimulus_epoch_table()
     except EpochSeparationException:
@@ -153,7 +161,7 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
 
 
     # get running speed of animal in this experiment
-    _, run_speed = dataset.get_running_speed()
+    run_ts, run_speed = dataset.get_running_speed()
 
 
     if run_speed.shape[0] != traces.shape[0] or traces.shape[0] != eye_data['pupil_x'].shape[0]:
@@ -179,12 +187,14 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
                 pupil_size = eye_data['pupil_size'],
                 run_speed = run_speed,
                 dff = traces,
-                ts = trace_ts,
+                dff_ts = trace_ts,
+                run_ts = run_ts,
+                pupil_ts = eye_data['pupil_ts'],
                 cell_ids = cell_ids,
                 session_type = dataset.get_session_type(),
                 stimulus = stimulus
             )
-            
+
         elif stimulus in ['natural_scenes', 'static_gratings']:
 
             write_static_image_data(
@@ -195,7 +205,9 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
                 pupil_size = eye_data['pupil_size'],
                 run_speed = run_speed,
                 dff = traces,
-                ts = trace_ts,
+                dff_ts = trace_ts,
+                run_ts = run_ts,
+                pupil_ts = eye_data['pupil_ts'],
                 cell_ids = cell_ids,
                 session_type = dataset.get_session_type(),
             )
@@ -217,6 +229,8 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
                     save_dir = os.path.join(stimuli_dir, stimulus),
                     stimulus = stimulus
                 )
+
+    del run_speed, run_ts, traces, trace_ts, eye_data, stim_frame_table
 
 
 def loop_exps(manifest_fpath, exp_dir, save_dir, keep_no_eye_tracking = False):
