@@ -22,8 +22,7 @@ from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
 
 
 
-def write_natural_movie_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_speed, dff, 
-                             dff_ts, run_ts, pupil_ts, cell_ids, session_type, stimulus):
+def write_natural_movie_data(write_dir, df, data, session_type, stimulus):
 
     '''
     Writes response and behavioral data to file for natural movie stimuli.
@@ -32,17 +31,17 @@ def write_natural_movie_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_sp
     os.makedirs(write_dir, exist_ok = True)
     
     inds = list(df['end'])
-    df['pupil_x'] = pupil_x[inds]
-    df['pupil_y'] = pupil_y[inds]
-    df['pupil_size'] = pupil_size[inds]
-    df['run_speed'] = run_speed[inds]
+    df['pupil_x'] = data['pupil_x'][inds]
+    df['pupil_y'] = data['pupil_y'][inds]
+    df['pupil_size'] = data['pupil_size'][inds]
+    df['run_speed'] = data['run_speed'][inds]
     df['session_type'] = [session_type] * len(inds)
     df['stimulus'] = [stimulus] * len(inds)
-    df['dff_ts'] = dff_ts[inds]
-    df['run_ts'] = run_ts[inds]
-    df['pupil_ts'] = pupil_ts[inds]
+    df['dff_ts'] = data['dff_ts'][inds]
+    df['run_ts'] = data['run_ts'][inds]
+    df['pupil_ts'] = data['pupil_ts'][inds]
     
-    for cell_traces, cell_id in zip(dff.transpose(), cell_ids):
+    for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = df.copy()
         df_write['dff'] = cell_traces[inds]
         
@@ -56,8 +55,7 @@ def write_natural_movie_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_sp
         )
 
 
-def write_static_image_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_speed, dff,
-                            dff_ts, run_ts, pupil_ts, cell_ids, session_type):
+def write_static_image_data(write_dir, df, data, session_type):
 
     '''
     Writes response and behavioral data to file for static image data.
@@ -76,16 +74,16 @@ def write_static_image_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_spe
     better_df = pd.DataFrame(list_add, columns = list(df.columns)[:-2] + ['start', 'end'])
     
     inds = list(better_df['end'])
-    better_df['pupil_x'] = pupil_x[inds]
-    better_df['pupil_y'] = pupil_y[inds]
-    better_df['pupil_size'] = pupil_size[inds]
-    better_df['run_speed'] = run_speed[inds]
-    better_df['dff_ts'] = dff_ts[inds]
-    better_df['run_ts'] = run_ts[inds]
-    better_df['pupil_ts'] = pupil_ts[inds]
+    better_df['pupil_x'] = data['pupil_x'][inds]
+    better_df['pupil_y'] = data['pupil_y'][inds]
+    better_df['pupil_size'] = data['pupil_size'][inds]
+    better_df['run_speed'] = data['run_speed'][inds]
+    better_df['dff_ts'] = data['dff_ts'][inds]
+    better_df['run_ts'] = data['run_ts'][inds]
+    better_df['pupil_ts'] = data['pupil_ts'][inds]
     better_df['session_type'] = [session_type] * len(inds)
     
-    for cell_traces, cell_id in zip(dff.transpose(), cell_ids):
+    for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = better_df.copy()
         df_write['dff'] = cell_traces[inds]
         
@@ -99,7 +97,7 @@ def write_static_image_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_spe
         )
 
 
-def get_eye_tracking_info(dataset, missing_data_fill_size, keep_no_eye_tracking = False):
+def get_eye_tracking_data(dataset, missing_data_fill_size):
     '''
     Gets the eye tracking data from the AIBO dataset.
     '''
@@ -107,17 +105,16 @@ def get_eye_tracking_info(dataset, missing_data_fill_size, keep_no_eye_tracking 
     try:
         pupil_ts, pupil_loc = dataset.get_pupil_location(as_spherical = False)
         _, pupil_size = dataset.get_pupil_size()
-    except NoEyeTrackingException:
-        if keep_no_eye_tracking:
-            pupil_loc = np.full([missing_data_fill_size, 2], np.nan)
-            pupil_size = np.full([missing_data_fill_size], np.nan)
-            pupil_ts = np.full([missing_data_fill_size], np.nan)
-        else:
-            return
 
-    pupil_x = pupil_loc[:, 0]
-    pupil_y = pupil_loc[:, 1]
-    pupil_x, pupil_y = monitor_coord_to_image_ind(pupil_x, pupil_y)
+    except NoEyeTrackingException:
+        pupil_loc = np.full([missing_data_fill_size, 2], np.nan)
+        pupil_size = np.full([missing_data_fill_size], np.nan)
+        pupil_ts = np.full([missing_data_fill_size], np.nan)
+
+    finally:
+        pupil_x = pupil_loc[:, 0]
+        pupil_y = pupil_loc[:, 1]
+        pupil_x, pupil_y = monitor_coord_to_image_ind(pupil_x, pupil_y)
 
     return {
         'pupil_x': pupil_x,
@@ -127,7 +124,37 @@ def get_eye_tracking_info(dataset, missing_data_fill_size, keep_no_eye_tracking 
     }
 
 
-def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = False):
+def get_AIBO_data(dataset):
+    data = {}
+
+    # get the cell IDs in the dataset 
+    cell_ids = dataset.get_cell_specimen_ids()
+    data['cell_ids'] = cell_ids 
+
+    # get df/f  for all cells in this experiment
+    # after these lines, traces is of shape # acquisition frames x # cells
+    dff_ts, dff = dataset.get_dff_traces(cell_specimen_ids = cell_ids)
+    dff = normalize_traces(dff.transpose())
+    data['dff'], data['dff_ts'] = dff, dff_ts
+
+    # get eye tracking info for the animal in this experiment
+    eye_data = get_eye_tracking_data(
+        dataset, 
+        missing_data_fill_size = dff.shape[0]
+    )
+    data.update(eye_data) 
+
+    # get the running speed 
+    run_ts, run_speed = dataset.get_running_speed()
+    data['run_ts'], data['run_speed'] = run_ts, run_speed
+
+    if run_speed.shape[0] != dff.shape[0] or dff.shape[0] != eye_data['pupil_x'].shape[0]:
+        raise ValueError
+
+    return data
+
+
+def extract_exp_data(dataset, trace_dir, stimuli_dir):
 
     os.makedirs(stimuli_dir, exist_ok = True)
     os.makedirs(trace_dir, exist_ok = True)
@@ -138,35 +165,11 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
     except EpochSeparationException:
         # this only happens a few cases, so not really worth it to try to fix this
         return
-
-
-    # get cell IDs in this experiment
-    cell_ids = dataset.get_cell_specimen_ids()
-        
-        
-    # get df/f  for all cells in this experiment
-    # after these lines, traces is of shape # acquisition frames x # cells
-    trace_ts, traces = dataset.get_dff_traces(cell_specimen_ids = cell_ids)
-    traces = traces.transpose()
-    traces = normalize_traces(traces)
-
-
-    # get eye tracking info for the animal in this experiment
-    eye_data = get_eye_tracking_info(
-        dataset,
-        missing_data_fill_size = traces.shape[0], 
-        keep_no_eye_tracking = keep_no_eye_tracking
-    )
-    if not eye_data: return
-
-
-    # get running speed of animal in this experiment
-    run_ts, run_speed = dataset.get_running_speed()
-
-
-    if run_speed.shape[0] != traces.shape[0] or traces.shape[0] != eye_data['pupil_x'].shape[0]:
-        raise ValueError
     
+
+    # get the data
+    aibo_data = get_AIBO_data(dataset)
+
 
     # write out data by stimulus
     for stimulus in dataset.list_stimuli():
@@ -182,15 +185,7 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
             write_natural_movie_data(
                 write_dir = os.path.join(trace_dir, 'natural_movies'),
                 df = stim_frame_table,
-                pupil_x = eye_data['pupil_x'],
-                pupil_y = eye_data['pupil_y'],
-                pupil_size = eye_data['pupil_size'],
-                run_speed = run_speed,
-                dff = traces,
-                dff_ts = trace_ts,
-                run_ts = run_ts,
-                pupil_ts = eye_data['pupil_ts'],
-                cell_ids = cell_ids,
+                data = aibo_data,
                 session_type = dataset.get_session_type(),
                 stimulus = stimulus
             )
@@ -200,15 +195,7 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
             write_static_image_data(
                 write_dir = os.path.join(trace_dir, stimulus),
                 df = stim_frame_table,
-                pupil_x = eye_data['pupil_x'],
-                pupil_y = eye_data['pupil_y'],
-                pupil_size = eye_data['pupil_size'],
-                run_speed = run_speed,
-                dff = traces,
-                dff_ts = trace_ts,
-                run_ts = run_ts,
-                pupil_ts = eye_data['pupil_ts'],
-                cell_ids = cell_ids,
+                data = aibo_data,
                 session_type = dataset.get_session_type(),
             )
             
@@ -230,10 +217,10 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
                     stimulus = stimulus
                 )
 
-    del run_speed, run_ts, traces, trace_ts, eye_data, stim_frame_table
+    del aibo_data, stim_frame_table, stim_epoch_table
 
 
-def loop_exps(manifest_fpath, exp_dir, save_dir, keep_no_eye_tracking = False):
+def loop_exps(manifest_fpath, exp_dir, save_dir):
     boc = BrainObservatoryCache(manifest_file = manifest_fpath)
     exp_ids = [int(os.path.splitext(exp)[0]) for exp in os.listdir(exp_dir)]
 
@@ -241,8 +228,7 @@ def loop_exps(manifest_fpath, exp_dir, save_dir, keep_no_eye_tracking = False):
         extract_exp_data(
             dataset = boc.get_ophys_experiment_data(exp_id),
             trace_dir = os.path.join(save_dir, 'trace_data'),
-            stimuli_dir = os.path.join(save_dir, 'stimuli'),
-            keep_no_eye_tracking = keep_no_eye_tracking
+            stimuli_dir = os.path.join(save_dir, 'stimuli')
         )
 
 
@@ -295,11 +281,6 @@ if __name__ == '__main__':
         help = 'Where to save all extracted data.'
     )
     parser.add_argument(
-        '--keep_no_eye_tracking',
-        action = 'store_true',
-        help = 'If specified, write data with no eye tracking available.'
-    )
-    parser.add_argument(
         '--no_stim_or_trace_data',
         action = 'store_true',
         help = 'If specified, will not write out stimuli or trace data.'
@@ -323,8 +304,7 @@ if __name__ == '__main__':
         loop_exps(
             manifest_fpath = args.manifest_fpath,
             exp_dir = args.exp_dir,
-            save_dir = args.save_dir,
-            keep_no_eye_tracking = args.keep_no_eye_tracking
+            save_dir = args.save_dir
         )
 
     if not args.no_rfs:
