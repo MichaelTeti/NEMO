@@ -136,13 +136,13 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
     cell_ids = dataset.get_cell_specimen_ids()
         
         
-    # get df/f traces
+    # get df/f  for all cells in this experiment
     trace_ts, traces = dataset.get_dff_traces(cell_specimen_ids = cell_ids)
     traces = traces.transpose()
     traces = normalize_traces(traces)
 
 
-    # get eye tracking info
+    # get eye tracking info for the animal in this experiment
     eye_data = get_eye_tracking_info(
         dataset,
         missing_data_fill_size = traces.shape[0], 
@@ -151,11 +151,11 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
     if not eye_data: return
 
 
-    # get running speed 
+    # get running speed of animal in this experiment
     _, run_speed = dataset.get_running_speed()
     
 
-    # write out stimuli and data by stimuli
+    # write out data by stimulus
     for stimulus in dataset.list_stimuli():
 
         # stim_frame_table tells you how to index the trace, run, pupil, 
