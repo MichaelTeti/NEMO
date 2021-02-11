@@ -137,6 +137,7 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
         
         
     # get df/f  for all cells in this experiment
+    # after these lines, traces is of shape # acquisition frames x # cells
     trace_ts, traces = dataset.get_dff_traces(cell_specimen_ids = cell_ids)
     traces = traces.transpose()
     traces = normalize_traces(traces)
@@ -153,6 +154,10 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
 
     # get running speed of animal in this experiment
     _, run_speed = dataset.get_running_speed()
+
+
+    if run_speed.shape[0] != traces.shape[0] or traces.shape[0] != eye_data['pupil_x'].shape[0]:
+        raise ValueError
     
 
     # write out data by stimulus
@@ -165,6 +170,7 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
 
         # writing traces, pupil coords, etc.
         if 'natural_movie' in stimulus:
+
             write_natural_movie_data(
                 write_dir = os.path.join(trace_dir, 'natural_movies'),
                 df = stim_frame_table,
@@ -178,7 +184,9 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
                 session_type = dataset.get_session_type(),
                 stimulus = stimulus
             )
+            
         elif stimulus in ['natural_scenes', 'static_gratings']:
+
             write_static_image_data(
                 write_dir = os.path.join(trace_dir, stimulus),
                 df = stim_frame_table,
@@ -195,11 +203,14 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
             
         # writing the stimuli
         if stimulus == 'static_gratings':
+
             write_AIBO_static_grating_stimuli(
                 stim_table = stim_frame_table,
                 save_dir = os.path.join(stimuli_dir, stimulus)
             )
+
         elif 'natural' in stimulus:
+
             if stimulus not in os.listdir(stimuli_dir):
                 write_AIBO_natural_stimuli(
                     template = dataset.get_stimulus_template(stimulus),
