@@ -63,8 +63,6 @@ def write_static_image_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_spe
     
     os.makedirs(write_dir, exist_ok = True)
     
-    better_df = pd.DataFrame(columns = list(df.columns)[:-2] + ['start', 'end'])
-    
     list_add = []
     for row_num in range(len(df)):
         row = df.iloc[row_num].to_list()
@@ -73,7 +71,7 @@ def write_static_image_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_spe
         for ind in range(int(start), int(end)):
             list_add.append(row[:-2] + [ind, ind + 1])
             
-    better_df = better_df.append(pd.DataFrame(list_add, columns = better_df.columns))
+    better_df = pd.DataFrame(list_add, columns = list(df.columns)[:-2] + ['start', 'end'])
     
     inds = list(better_df['end'])
     better_df['pupil_x'] = pupil_x[inds]
