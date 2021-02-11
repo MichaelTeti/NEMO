@@ -16,69 +16,10 @@ import numpy as np
 import pandas as pd
 from progressbar import ProgressBar
 
+from nemo.data.io.image import write_AIBO_natural_stimuli, write_AIBO_static_grating_stimuli
 from nemo.data.preprocess.trace import normalize_traces
 from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
 
-
-
-def write_natural_video_stimuli(dataset, stimulus, save_dir, monitor):
-    '''
-    Obtains and writes the natural movie stimuli from the AIBO database.
-    '''
-
-    save_dir = os.path.join(save_dir, stimulus)
-    os.makedirs(save_dir, exist_ok = True)
-    
-    template = dataset.get_stimulus_template(stimulus)
-    n_frames = template.shape[0]
-    fnames = [fname + '.png' for fname in get_img_frame_names(n_frames)]
-
-    for fname, frame in zip(fnames, template):
-        frame_screen = monitor.natural_movie_image_to_screen(frame, origin = 'upper')
-        frame_warp = monitor.warp_image(frame_screen)
-        cv2.imwrite(os.path.join(save_dir, fname), frame_warp)
-
-
-def write_natural_image_stimuli(dataset, save_dir, monitor):
-    '''
-    Obtains and writes the natural scene stimuli from the AIBO database.
-    '''
-
-    save_dir = os.path.join(save_dir, 'natural_scenes')
-    os.makedirs(save_dir, exist_ok = True)
-    
-    imgs = dataset.get_stimulus_template('natural_scenes')
-    fnames = [fname + '.png' for fname in get_img_frame_names(imgs.shape[0])]
-    
-    for fname, img in zip(fnames, imgs):
-        img_screen = monitor.natural_scene_image_to_screen(img, origin = 'upper')
-        img_warp = monitor.warp_image(img_screen)
-        cv2.imwrite(os.path.join(save_dir, fname), img_warp)
-
-
-def write_static_grating_stimuli(dataset, stim_table, save_dir, monitor):
-    '''
-    Obtains and writes the static grating stimuli from the AIBO database.
-    '''
-
-    save_dir = os.path.join(save_dir, 'static_gratings')
-    os.makedirs(save_dir, exist_ok = True)
-    
-    for orient in stim_table['orientation'].unique():
-        for freq in stim_table['spatial_frequency'].unique():
-            for phase in stim_table['phase'].unique():
-                if np.isnan(orient) or np.isnan(freq) or np.isnan(phase):
-                    continue
-                    
-                fname = '{}_{}_{}.png'.format(orient, freq, phase)
-                if fname not in os.listdir(save_dir):
-                    grating = monitor.grating_to_screen(
-                        phase = phase, 
-                        spatial_frequency = freq, 
-                        orientation = orient
-                    )
-                    grating_warp = monitor.warp_image(grating)
-                    cv2.imwrite(os.path.join(save_dir, fname), grating_warp)
 
 
 def write_natural_movie_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_speed, dff, 
@@ -103,7 +44,7 @@ def write_natural_movie_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_sp
         df_write = df.copy()
         df_write['dff'] = cell_traces[inds]
         
-        fname = '{}.txt'.format(cell_id)
+        fname = '{}.xz'.format(cell_id)
         df_write.to_csv(
             os.path.join(write_dir, fname), 
             index = False, 
@@ -146,7 +87,7 @@ def write_static_image_data(write_dir, df, pupil_x, pupil_y, pupil_size, run_spe
         df_write = better_df.copy()
         df_write['dff'] = cell_traces[inds]
         
-        fname = '{}.txt'.format(cell_id)
+        fname = '{}.xz'.format(cell_id)
         df_write.to_csv(
             os.path.join(write_dir, fname), 
             index = False, 
@@ -176,113 +117,110 @@ def get_eye_tracking_info(dataset, missing_data_fill_size, keep_no_eye_tracking 
     pupil_y = pupil_loc[:, 1]
     pupil_x, pupil_y = monitor_coord_to_image_ind(pupil_x, pupil_y)
 
-    return pupil_x, pupil_y, pupil_size, pupil_ts
+    return {
+        'pupil_x': pupil_x,
+        'pupil_y': pupil_y,
+        'pupil_size': pupil_size,
+        'pupil_ts': pupil_ts
+    }
 
 
-def extract_neurodata(manifest_fpath, exp_dir, save_dir, keep_no_eye_tracking = False):
-    stimuli_dir = os.path.join(save_dir, 'stimuli')
-    trace_dir = os.path.join(save_dir, 'trace_data')
+def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = False):
+
+    try:
+        stim_epoch_table = dataset.get_stimulus_epoch_table()
+    except EpochSeparationException:
+        # this only happens a few cases, so not really worth it to try to fix this
+        return
+
+
+    # get cell IDs in this experiment
+    cell_ids = dataset.get_cell_specimen_ids()
+        
+        
+    # get df/f traces
+    trace_ts, traces = dataset.get_dff_traces(cell_specimen_ids = cell_ids)
+    traces = traces.transpose()
+    traces = normalize_traces(traces)
+
+
+    # get eye tracking info
+    eye_data = get_eye_tracking_info(
+        dataset,
+        missing_data_fill_size = traces.shape[0], 
+        keep_no_eye_tracking = keep_no_eye_tracking
+    )
+    if not eye_data: return
+
+
+    # get running speed 
+    _, run_speed = dataset.get_running_speed()
     
+
+    # write out stimuli and data by stimuli
+    for stimulus in dataset.list_stimuli():
+
+        # stim_frame_table tells you how to index the trace, run, pupil, 
+        # etc. data
+        stim_frame_table = dataset.get_stimulus_table(stimulus)
+
+
+        # writing traces, pupil coords, etc.
+        if 'natural_movie' in stimulus:
+            write_natural_movie_data(
+                write_dir = os.path.join(trace_dir, 'natural_movies'),
+                df = stim_frame_table,
+                pupil_x = eye_data['pupil_x'],
+                pupil_y = eye_data['pupil_y'],
+                pupil_size = eye_data['pupil_size'],
+                run_speed = run_speed,
+                dff = traces,
+                ts = trace_ts,
+                cell_ids = cell_ids,
+                session_type = dataset.get_session_type(),
+                stimulus = stimulus
+            )
+        elif stimulus in ['natural_scenes', 'static_gratings']:
+            write_static_image_data(
+                write_dir = os.path.join(trace_dir, stimulus),
+                df = stim_frame_table,
+                pupil_x = eye_data['pupil_x'],
+                pupil_y = eye_data['pupil_y'],
+                pupil_size = eye_data['pupil_size'],
+                run_speed = run_speed,
+                dff = traces,
+                ts = trace_ts,
+                cell_ids = cell_ids,
+                session_type = dataset.get_session_type(),
+            )
+            
+            
+        # writing the stimuli
+        if stimulus == 'static_gratings':
+            write_AIBO_static_grating_stimuli(
+                stim_table = stim_frame_table,
+                save_dir = os.path.join(stimuli_dir, stimulus)
+            )
+        elif 'natural' in stimulus:
+            if stimulus not in stimuli_dir:
+                write_AIBO_natural_stimuli(
+                    template = dataset.get_stimulus_template(stimulus),
+                    save_dir = os.path.join(stimuli_dir, stimulus),
+                    stimulus = stimulus
+                )
+
+
+def loop_exps(manifest_fpath, exp_dir, save_dir, keep_no_eye_tracking = False):
     boc = BrainObservatoryCache(manifest_file = manifest_fpath)
-    exps = os.listdir(exp_dir)
-    exp_ids = [int(os.path.splitext(exp)[0]) for exp in exps]
+    exp_ids = [int(os.path.splitext(exp)[0]) for exp in os.listdir(exp_dir)]
 
-    monitor = si.BrainObservatoryMonitor()
-    
     for exp_id in ProgressBar()(exp_ids):
-        dataset = boc.get_ophys_experiment_data(exp_id)
-        cell_ids = dataset.get_cell_specimen_ids()
-        
-        try:
-            stim_epoch_table = dataset.get_stimulus_epoch_table()
-        except EpochSeparationException:
-            continue
-        
-        # get running speed of animal
-        run_ts, run_speed = dataset.get_running_speed()
-        
-        
-        # get eye tracking info
-        eye_data = get_eye_tracking_info(
-            dataset,
-            missing_data_fill_size = run_speed.shape[0], 
+        extract_exp_data(
+            dataset = boc.get_ophys_experiment_data(exp_id),
+            trace_dir = os.path.join(save_dir, 'trace_data'),
+            stimuli_dir = os.path.join(save_dir, 'stimuli'),
             keep_no_eye_tracking = keep_no_eye_tracking
         )
-        if eye_data:
-            pupil_x, pupil_y, pupil_size, pupil_ts = eye_data
-        else:
-            continue
-            
-            
-        # get df/f corrected traces
-        trace_ts, traces = dataset.get_dff_traces(cell_specimen_ids = cell_ids)
-        traces = traces.transpose()
-        traces = normalize_traces(traces)
-        
-                
-        for stimulus in dataset.list_stimuli():
-            stim_frame_table = dataset.get_stimulus_table(stimulus)
-            
-            # writing traces, pupil coords, etc.
-            if 'natural_movie' in stimulus:
-                write_natural_movie_data(
-                    os.path.join(trace_dir, 'natural_movies'),
-                    stim_frame_table,
-                    pupil_x,
-                    pupil_y,
-                    pupil_size,
-                    run_speed,
-                    traces,
-                    trace_ts,
-                    cell_ids,
-                    dataset.get_session_type(),
-                    stimulus
-                )
-            elif stimulus in ['natural_scenes', 'static_gratings']:
-                write_static_image_data(
-                    os.path.join(trace_dir, stimulus),
-                    stim_frame_table,
-                    pupil_x,
-                    pupil_y,
-                    pupil_size,
-                    run_speed,
-                    traces,
-                    trace_ts,
-                    cell_ids,
-                    dataset.get_session_type(),
-                )
-                
-                
-            # writing the stimuli
-            if stimulus == 'static_gratings':
-                write_static_grating_stimuli(
-                    dataset,
-                    stim_frame_table,
-                    stimuli_dir,
-                    monitor
-                )
-            elif stimulus == 'drifting_gratings':
-                continue
-                # TODO
-                
-            # these only show up once in an experiment
-            # so if already there, then don't need to 
-            # write again
-            else:
-                if stimulus not in stimuli_dir:
-                    if 'natural_movie' in stimulus:
-                        write_natural_video_stimuli(
-                            dataset, 
-                            stimulus, 
-                            stimuli_dir, 
-                            monitor
-                        )
-                    elif stimulus == 'natural_scenes':
-                        write_natural_image_stimuli(
-                            dataset,
-                            stimuli_dir,
-                            monitor
-                        )
 
 
 def extract_rfs(manifest_fpath, exp_dir, write_dir):
@@ -324,7 +262,7 @@ if __name__ == '__main__':
         help = 'Directory containing the .nwb experiment files.'
     )
     parser.add_argument(
-        'manifest_path',
+        'manifest_fpath',
         type = str,
         help = 'Path to the manifest.json file.'
     )
@@ -359,8 +297,8 @@ if __name__ == '__main__':
 
     if not args.no_stim_or_trace_data:
         logging.info('Writing stimuli, traces, and behavioral data')
-        extract_neurodata(
-            manifest_fpath = args.manifest_path,
+        loop_exps(
+            manifest_fpath = args.manifest_fpath,
             exp_dir = args.exp_dir,
             save_dir = args.save_dir,
             keep_no_eye_tracking = args.keep_no_eye_tracking
@@ -369,7 +307,7 @@ if __name__ == '__main__':
     if not args.no_rfs:
         logging.info('Writing receptive fields')
         extract_rfs(
-            manifest_fpath = args.manifest_path,
+            manifest_fpath = args.manifest_fpath,
             exp_dir = args.exp_dir, 
             write_dir = args.save_dir
         )
