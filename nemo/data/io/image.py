@@ -1,5 +1,6 @@
 import os
 
+from allensdk.brain_observatory.stimulus_info import BrainObservatoryMonitor
 import cv2
 import numpy as np
 
@@ -60,3 +61,54 @@ def read_frames(dir, return_type = 'array', gray = False):
         return np.array(frames)
     elif return_type == 'list':
         return frames
+
+
+def write_AIBO_natural_stimuli(template, save_dir, stimulus):
+    '''
+    Takes the natural_movie_* or natural_scenes stimulus template, and 
+    writes the images/frames as they would appear on the monitor. 
+    '''
+
+    monitor = BrainObservatoryMonitor()
+
+    os.makedirs(save_dir, exist_ok = True)
+    fnames = [fname + '.png' for fname in get_img_frame_names(template.shape[0])]
+
+    for image, fname in zip(template, fnames):
+        if 'natural_movie' in stimulus:
+            image = monitor.natural_movie_image_to_screen(image, origin = 'upper')
+        elif stimulus == 'natural_scenes':
+            image = monitor.natural_scene_image_to_screen(image, origin = 'upper')
+
+        cv2.imwrite(
+            os.path.join(save_dir, fname), 
+            monitor.warp_image(image)
+        )
+
+
+def write_AIBO_static_grating_stimuli(stim_table, save_dir):
+    '''
+    Obtains and writes the static grating stimuli from the AIBO database.
+    '''
+
+    monitor = BrainObservatoryMonitor()
+    os.makedirs(save_dir, exist_ok = True)
+    
+    for orient in stim_table['orientation'].unique():
+        for freq in stim_table['spatial_frequency'].unique():
+            for phase in stim_table['phase'].unique():
+                if np.isnan(orient) or np.isnan(freq) or np.isnan(phase):
+                    continue
+                    
+                fname = '{}_{}_{}.png'.format(orient, freq, phase)
+                if fname not in os.listdir(save_dir):
+                    cv2.imwrite(
+                        os.path.join(save_dir, fname), 
+                        monitor.warp_image(
+                            monitor.grating_to_screen(
+                                phase = phase, 
+                                spatial_frequency = freq, 
+                                orientation = orient
+                            )
+                        )
+                    )
