@@ -200,7 +200,7 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir, keep_no_eye_tracking = Fal
                 save_dir = os.path.join(stimuli_dir, stimulus)
             )
         elif 'natural' in stimulus:
-            if stimulus not in stimuli_dir:
+            if stimulus not in os.listdir(stimuli_dir):
                 write_AIBO_natural_stimuli(
                     template = dataset.get_stimulus_template(stimulus),
                     save_dir = os.path.join(stimuli_dir, stimulus),
