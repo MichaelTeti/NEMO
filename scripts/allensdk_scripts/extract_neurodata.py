@@ -38,8 +38,6 @@ def write_natural_movie_data(write_dir, df, data, session_type, stimulus):
     df['session_type'] = [session_type] * len(inds)
     df['stimulus'] = [stimulus] * len(inds)
     df['dff_ts'] = data['dff_ts'][inds]
-    df['run_ts'] = data['run_ts'][inds]
-    df['pupil_ts'] = data['pupil_ts'][inds]
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = df.copy()
@@ -79,8 +77,6 @@ def write_static_image_data(write_dir, df, data, session_type):
     better_df['pupil_size'] = data['pupil_size'][inds]
     better_df['run_speed'] = data['run_speed'][inds]
     better_df['dff_ts'] = data['dff_ts'][inds]
-    better_df['run_ts'] = data['run_ts'][inds]
-    better_df['pupil_ts'] = data['pupil_ts'][inds]
     better_df['session_type'] = [session_type] * len(inds)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
@@ -103,13 +99,12 @@ def get_eye_tracking_data(dataset, missing_data_fill_size):
     '''
 
     try:
-        pupil_ts, pupil_loc = dataset.get_pupil_location(as_spherical = False)
+        _, pupil_loc = dataset.get_pupil_location(as_spherical = False)
         _, pupil_size = dataset.get_pupil_size()
 
     except NoEyeTrackingException:
         pupil_loc = np.full([missing_data_fill_size, 2], np.nan)
         pupil_size = np.full([missing_data_fill_size], np.nan)
-        pupil_ts = np.full([missing_data_fill_size], np.nan)
 
     finally:
         pupil_x = pupil_loc[:, 0]
@@ -119,8 +114,7 @@ def get_eye_tracking_data(dataset, missing_data_fill_size):
     return {
         'pupil_x': pupil_x,
         'pupil_y': pupil_y,
-        'pupil_size': pupil_size,
-        'pupil_ts': pupil_ts
+        'pupil_size': pupil_size
     }
 
 
@@ -144,16 +138,15 @@ def get_AIBO_data(dataset):
     data.update(eye_data) 
 
     # get the running speed 
-    run_ts, run_speed = dataset.get_running_speed()
-    data['run_ts'], data['run_speed'] = run_ts, run_speed
+    data['run_speed'] = dataset.get_running_speed()[1]
 
-    if run_speed.shape[0] != dff.shape[0] or dff.shape[0] != eye_data['pupil_x'].shape[0]:
+    if data['run_speed'].shape[0] != dff.shape[0] or dff.shape[0] != eye_data['pupil_x'].shape[0]:
         raise ValueError
 
     return data
 
 
-def extract_exp_data(dataset, trace_dir, stimuli_dir):
+def write_exp_data(dataset, trace_dir, stimuli_dir):
 
     os.makedirs(stimuli_dir, exist_ok = True)
     os.makedirs(trace_dir, exist_ok = True)
@@ -217,18 +210,12 @@ def extract_exp_data(dataset, trace_dir, stimuli_dir):
                 )
 
 
-        del stim_frame_table 
-
-    del aibo_data, stim_epoch_table
-
-
-
 def loop_exps(manifest_fpath, exp_dir, save_dir):
     boc = BrainObservatoryCache(manifest_file = manifest_fpath)
     exp_ids = [int(os.path.splitext(exp)[0]) for exp in os.listdir(exp_dir)]
 
     for exp_id in ProgressBar()(exp_ids):
-        extract_exp_data(
+        write_exp_data(
             dataset = boc.get_ophys_experiment_data(exp_id),
             trace_dir = os.path.join(save_dir, 'trace_data'),
             stimuli_dir = os.path.join(save_dir, 'stimuli')
