@@ -10,7 +10,6 @@ from allensdk.brain_observatory.brain_observatory_exceptions import (
 from allensdk.brain_observatory.locally_sparse_noise import LocallySparseNoise
 import allensdk.brain_observatory.stimulus_info as si
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
-import cv2
 import h5py
 import numpy as np
 import pandas as pd
@@ -235,8 +234,6 @@ def write_rfs(manifest_fpath, exp_dir, write_dir):
     boc = BrainObservatoryCache(manifest_file = manifest_fpath)
     exps = os.listdir(exp_dir)
     exp_ids = [int(os.path.splitext(exp)[0]) for exp in exps]
-
-    monitor = si.BrainObservatoryMonitor()
     
     for exp_id in ProgressBar()(exp_ids):
         dataset = boc.get_ophys_experiment_data(exp_id)
@@ -249,21 +246,16 @@ def write_rfs(manifest_fpath, exp_dir, write_dir):
             
             for ind, cell_id in enumerate(cell_ids):
                 rf = rfs[:, :, ind, :]
-                rf = max_min_scale(rf) * 255 
-                rf[rf == 0] = 127
                 on, off = rf.transpose([2, 0, 1])
 
-                on = monitor.warp_image(monitor.lsn_image_to_screen(on))
-                off = monitor.warp_image(monitor.lsn_image_to_screen(off))
-
-                on = cv2.resize(on, (64, 40))
-                off = cv2.resize(off, (64, 40))
+                on = max_min_scale(on) * 255
+                off = max_min_scale(off) * 255
                 
                 with h5py.File(write_fpath, 'a') as h5file:
                     if str(cell_id) not in list(h5file.keys()):
                         h5file.create_dataset(
                             str(cell_id), 
-                            data = np.concatenate((on[..., None], off[..., None]), 2)
+                            data = np.concatenate((on[None, ...], off[None, ...]), 0)
                         )
 
 
