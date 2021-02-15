@@ -15,11 +15,6 @@ parser.add_argument(
     help = 'Path to the receptive lsn_rfs.h5 file.'
 )
 parser.add_argument(
-    'write_dir',
-    type = str,
-    help = 'Directory to save the rf images in.'
-)
-parser.add_argument(
     '--height',
     type = int,
     default = 64,
@@ -33,8 +28,8 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-on_dir = os.path.join(args.write_dir, 'on')
-off_dir = os.path.join(args.write_dir, 'off')
+on_dir = os.path.join(os.path.split(args.rf_fpath)[0], 'images', 'on')
+off_dir = os.path.join(os.path.split(args.rf_fpath)[0], 'images', 'off')
 os.makedirs(on_dir, exist_ok = True)
 os.makedirs(off_dir, exist_ok = True)
 
@@ -44,9 +39,7 @@ with h5py.File(args.rf_fpath, 'r') as h5file:
     for cell_id in cell_ids:
         rf = h5file[cell_id][()]
         rf[np.isnan(rf)] = 0
-        
-        on = np.uint8(max_min_scale(rf[..., 0]) * 255)
-        off = np.uint8(max_min_scale(rf[..., 1]) * 255)
+        on, off = rf
         
         on = cv2.resize(on, (args.width, args.height))
         off = cv2.resize(off, (args.width, args.height))
