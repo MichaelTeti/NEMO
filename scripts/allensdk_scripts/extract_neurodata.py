@@ -17,6 +17,7 @@ import pandas as pd
 from progressbar import ProgressBar
 
 from nemo.data.io.image import write_AIBO_natural_stimuli, write_AIBO_static_grating_stimuli
+from nemo.data.preprocess.image import max_min_scale
 from nemo.data.preprocess.trace import normalize_traces
 from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
 
@@ -222,7 +223,7 @@ def loop_exps(manifest_fpath, exp_dir, save_dir):
         )
 
 
-def extract_rfs(manifest_fpath, exp_dir, write_dir):
+def write_rfs(manifest_fpath, exp_dir, write_dir):
     '''
     https://allensdk.readthedocs.io/en/latest/_static/examples/nb/brain_observatory_analysis.html
     '''
@@ -234,6 +235,8 @@ def extract_rfs(manifest_fpath, exp_dir, write_dir):
     boc = BrainObservatoryCache(manifest_file = manifest_fpath)
     exps = os.listdir(exp_dir)
     exp_ids = [int(os.path.splitext(exp)[0]) for exp in exps]
+
+    monitor = si.BrainObservatoryMonitor()
     
     for exp_id in ProgressBar()(exp_ids):
         dataset = boc.get_ophys_experiment_data(exp_id)
@@ -246,10 +249,22 @@ def extract_rfs(manifest_fpath, exp_dir, write_dir):
             
             for ind, cell_id in enumerate(cell_ids):
                 rf = rfs[:, :, ind, :]
+                rf = max_min_scale(rf) * 255 
+                rf[rf == 0] = 127
+                on, off = rf.transpose([2, 0, 1])
+
+                on = monitor.warp_image(monitor.lsn_image_to_screen(on))
+                off = monitor.warp_image(monitor.lsn_image_to_screen(off))
+
+                on = cv2.resize(on, (64, 40))
+                off = cv2.resize(off, (64, 40))
                 
                 with h5py.File(write_fpath, 'a') as h5file:
                     if str(cell_id) not in list(h5file.keys()):
-                        h5file.create_dataset(str(cell_id), data = rf)
+                        h5file.create_dataset(
+                            str(cell_id), 
+                            data = np.concatenate((on[..., None], off[..., None]), 2)
+                        )
 
 
 
@@ -282,6 +297,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
+
     logging.basicConfig(
         format='%(asctime)s -- %(message)s', 
         datefmt='%m/%d/%Y %I:%M:%S %p', 
@@ -299,7 +315,7 @@ if __name__ == '__main__':
 
     if not args.no_rfs:
         logging.info('Writing receptive fields')
-        extract_rfs(
+        write_rfs(
             manifest_fpath = args.manifest_fpath,
             exp_dir = args.exp_dir, 
             write_dir = args.save_dir
