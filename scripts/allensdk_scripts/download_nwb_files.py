@@ -77,9 +77,6 @@ parser.add_argument(
     '--min_imaging_depth',
     type = int,
     help = 'Minimum desired imaging depth.'
-    # http://www.nibb.ac.jp/brish/Gallery/cortexE.html
-    # https://www.jneurosci.org/content/35/18/7287
-    # https://sci-hub.se/10.3791/60600 250-450um
 )
 parser.add_argument(
     '--max_imaging_depth',
