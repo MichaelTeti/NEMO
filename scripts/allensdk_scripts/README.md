@@ -83,7 +83,7 @@ to cells in multiple cortical layers, we use the ```--min_imaging_depth``` and `
 Now that the experiment containers were downloaded, we want to extract and write the relevant data inside of them using the 
 [extract_neurodata.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/extract_neurodata.py) script. 
 This script will extract and write the following (as well as a few other things):
-  * Stimuli templates
+  * Stimuli templates for natural movies, natural scenes, and static gratings (working on drifting gratings)
   * each cell's df/f
   * the animal's running speed
   * the animal's eye tracking data
