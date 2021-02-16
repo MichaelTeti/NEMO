@@ -77,7 +77,7 @@ Essentially, we search for all cre and reporter lines that correspond to layer 4
 For the ```--targeted_structures``` argument, we use ```"VISp"```
 to indicate that we only want cells in the primary visual cortex. The different structures available can be found 
 [here](http://observatory.brain-map.org/visualcoding) and in the argument choices for the script. Since most of the transgenic lines we pulled out correspond
-to cells in multiple cortical layers, we use the ```--min_imaging_depth``` and ```--max_imaging_depth``` arguments to specify a cortical depth range that roughly corresponds to the [depth spanned by layer 4 in the cortex](http://www.nibb.ac.jp/brish/Gallery/cortexE.html) (also mentioned in [this paper](https://sci-hub.se/10.3791/60600).
+to cells in multiple cortical layers, we use the ```--min_imaging_depth``` and ```--max_imaging_depth``` arguments to specify a cortical depth range that roughly corresponds to the [depth spanned by layer 4 in the cortex](http://www.nibb.ac.jp/brish/Gallery/cortexE.html) (also mentioned in [this paper](https://sci-hub.se/10.3791/60600)).
 
 # Extract the Data
 Now that the experiment containers were downloaded, we want to extract and write the relevant data inside of them using the 
