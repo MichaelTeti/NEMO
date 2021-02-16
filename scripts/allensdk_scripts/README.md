@@ -77,7 +77,7 @@ Essentially, we search for all cre and reporter lines that correspond to layer 4
 For the ```--targeted_structures``` argument, we use ```"VISp"```
 to indicate that we only want cells in the primary visual cortex. The different structures available can be found 
 [here](http://observatory.brain-map.org/visualcoding) and in the argument choices for the script. Since most of the transgenic lines we pulled out correspond
-to cells in multiple cortical layers, we use the ```--min_imaging_depth``` and ```--max_imaging_depth``` arguments to specify a cortical depth range that roughly corresponds to the area spanned by layer 4 in the cortex.
+to cells in multiple cortical layers, we use the ```--min_imaging_depth``` and ```--max_imaging_depth``` arguments to specify a cortical depth range that roughly corresponds to the [depth spanned by layer 4 in the cortex](http://www.nibb.ac.jp/brish/Gallery/cortexE.html).
 
 # Extract the Data
 Now that the experiment containers were downloaded, we want to extract and write the relevant data inside of them using the 
@@ -118,4 +118,4 @@ python3 extract_neurodata.py \
     ../../data/AIBO/VISp/L4/ExtractedData/
 ```
 
-The first three arguments are required. The first one is the path to the directory of .nwb dataset files which were downloaded. The second is the path to the manifest.json file. The final argument is the folder where we will write all the extracted data. Inside of this folder, the stimuli templates will be written in a subdirectory called stimuli, whereas the behavioral / trace data will be written in a subdirectory called trace_data, and the receptive fields will be written in a subdirectory called receptive_fields. The last two arguments allow you to forego writing either the receptive fields or stimuli and behavioral / df/f data. 
+The first three arguments are required. The first one is the path to the directory of .nwb dataset files which were downloaded. The second is the path to the manifest.json file. The final argument is the folder where we will write all the extracted data. Inside of this folder, the stimuli templates will be written in a subdirectory called stimuli, whereas the behavioral / trace data will be written in a subdirectory called trace_data, and the receptive fields will be written in a subdirectory called receptive_fields. The last two arguments allow you to forego writing either the receptive fields or stimuli and behavioral / df/f data. For each stimulus type (i.e. natural movies, natural scenes, static gratings) / cell ID combination, there will be a single .csv file written with the cell's behavioral and trace data. The stimuli frames will be warped as they were presented on the monitor to the mouse, and will be written as 1920 x 1200 pixel images. To resize these, you can use the [preprocess_imgs.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/image_scripts/preprocess_imgs.py) script.
