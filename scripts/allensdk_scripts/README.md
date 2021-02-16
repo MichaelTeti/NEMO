@@ -72,9 +72,13 @@ a file that has different information about the containers and files. The ```--n
 many experiment datasets will be downloaded at once. The ```--cre_lines``` and ```--reporter_lines``` arguments take in the desired cre lines you
 want based on what cells you are trying to isolate. We use these cre and reporter lines because they 
 isolate mostly excitatory cells in layer IV. The characteristics of the different cre lines and reporter lines can be found
-[here](http://help.brain-map.org/download/attachments/10616846/VisualCoding_TransgenicCharacterization.pdf?version=4&modificationDate=1538067045225&api=v2). Finally, we use the ```--targeted_structures``` argument
-here to indicate that we only want cells in the primary visual cortex, but the different structures available can be found 
-[here](http://observatory.brain-map.org/visualcoding).
+[here](http://help.brain-map.org/download/attachments/10616846/VisualCoding_TransgenicCharacterization.pdf?version=4&modificationDate=1538067045225&api=v2).
+Essentially, we pull out all cre and reporter lines that correspond to layer 4 excitatory cells. 
+  ![](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/figures/transgenic_lines.png)
+  
+For the ```--targeted_structures``` argument, we use ```"VISp"```
+to indicate that we only want cells in the primary visual cortex, but the different structures available can be found 
+[here](http://observatory.brain-map.org/visualcoding) and in the argument choices for the script.
 
 # Extract the Data
 Now that the experiment containers were downloaded, we want to extract the relevant data inside of them using the 
