@@ -1,30 +1,78 @@
-The scripts here are designed to download ophys experiment data given desired criteria, 
-extract the data into a more friendly format, and plot the extracted data. Described below
+The scripts here are designed to download ophys experiment data given desired criteria and 
+extract the data into a more friendly format. Described below
 are the steps used to obtain allensdk data in these experiments, as well as the general usage
 of the different scripts. In each of the examples below, the arguments are the ones used in the 
-current experiment. For the full list of arguments for each script, you can use the command
-```python3 script.py --help```.
+current experiment.
   
 # Download the Data  
 First, download the experiment containers based on your criteria with the 
 [download_nwb_files.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/download_nwb_files.py)
 script. This script takes in a number of arguments, many of which are optional and allow the user to filter out 
-containers which do not contain certain desired criteria, such as imaging depth, targeted structure, cre lines, etc. 
-For this experiment the following command and arguments were used:  
+experiments which do not contain certain desired criteria, such as imaging depth, targeted structure, cre lines, etc. 
+The arguments for this script are the following:
+
+```
+python3 download_nwb_files.py --help
+usage: download_nwb_files.py [-h] [--manifest_save_dir MANIFEST_SAVE_DIR]
+                             [--n_workers N_WORKERS]
+                             [--n_experiments N_EXPERIMENTS]
+                             [--targeted_structures {VISp,VISl,VISal,VISrl,VISam,VISpm} [{VISp,VISl,VISal,VISrl,VISam,VISpm} ...]]
+                             [--cre_lines {Cux2-CreERT2,Emx1-IRES-Cre,Fezf2-CreER,Nr5a1-Cre,Ntsr1-Cre_GN220,Pvalb-IRES-Cre,Rbp4-Cre_KL100,Rorb-IRES2-Cre,Scnn1a-Tg3-Cre,Slc17a7-IRES2-Cre,Sst-IRES-Cre,Tlx3-Cre_PL56,Vip-IRES-Cre} [{Cux2-CreERT2,Emx1-IRES-Cre,Fezf2-CreER,Nr5a1-Cre,Ntsr1-Cre_GN220,Pvalb-IRES-Cre,Rbp4-Cre_KL100,Rorb-IRES2-Cre,Scnn1a-Tg3-Cre,Slc17a7-IRES2-Cre,Sst-IRES-Cre,Tlx3-Cre_PL56,Vip-IRES-Cre} ...]]
+                             [--reporter_lines {Ai148TIT2L-GC6f-ICL-tTA2),Ai162(TIT2L-GC6s-ICL-tTA2),Ai93(TITL-GCaMP6f),Ai93(TITL-GCaMP6f)-hyg,Ai94(TITL-GCaMP6s)} [{Ai148(TIT2L-GC6f-ICL-tTA2),Ai162(TIT2L-GC6s-ICL-tTA2),Ai93(TITL-GCaMP6f),Ai93(TITL-GCaMP6f)-hyg,Ai94(TITL-GCaMP6s} ...]]
+                             [--min_imaging_depth MIN_IMAGING_DEPTH]
+                             [--max_imaging_depth MAX_IMAGING_DEPTH]
+                             [--session_type {three_session_A,three_session_B,three_session_C,three_session_C2} [{three_session_A,three_session_B,three_session_C,three_session_C2} ...]]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --manifest_save_dir MANIFEST_SAVE_DIR
+                        Where to save the manifest file. Default is in the
+                        current directory.
+  --n_workers N_WORKERS
+                        Number of CPUs to use when downloading NWB files.
+                        Default is 1.
+  --n_experiments N_EXPERIMENTS
+                        Number of experiments to download. Default is all of
+                        them.
+  --targeted_structures {VISp,VISl,VISal,VISrl,VISam,VISpm} [{VISp,VISl,VISal,VISrl,VISam,VISpm} ...]
+                        Targeted structures. Default is all of them.
+  --cre_lines {Cux2-CreERT2,Emx1-IRES-Cre,Fezf2-CreER,Nr5a1-Cre,Ntsr1-Cre_GN220,Pvalb-IRES-Cre,Rbp4-Cre_KL100,Rorb-IRES2-Cre,Scnn1a-Tg3-Cre,Slc17a7-IRES2-Cre,Sst-IRES-Cre,Tlx3-Cre_PL56,Vip-IRES-Cre} [{Cux2-CreERT2,Emx1-IRES-Cre,Fezf2-CreER,Nr5a1-Cre,Ntsr1-Cre_GN220,Pvalb-IRES-Cre,Rbp4-Cre_KL100,Rorb-IRES2-Cre,Scnn1a-Tg3-Cre,Slc17a7-IRES2-Cre,Sst-IRES-Cre,Tlx3-Cre_PL56,Vip-IRES-Cre} ...]
+                        Desired Cre lines. Default is all of them.
+  --reporter_lines {Ai148(TIT2L-GC6f-ICL-tTA2),Ai162(TIT2L-GC6s-ICL-tTA2),Ai93(TITL-GCaMP6f),Ai93(TITL-GCaMP6f)-hyg,Ai94(TITL-GCaMP6s)} [{Ai148(TIT2L-GC6f-ICL-tTA2),Ai162(TIT2L-GC6s-ICL-tTA2),Ai93(TITL-GCaMP6f),Ai93(TITL-GCaMP6f)-hyg,Ai94(TITL-GCaMP6s)} ...]
+                        Desired reporter lines. Default is all of them.
+  --min_imaging_depth MIN_IMAGING_DEPTH
+                        Minimum desired imaging depth.
+  --max_imaging_depth MAX_IMAGING_DEPTH
+                        Maximium desired imaging depth.
+  --session_type {three_session_A,three_session_B,three_session_C,three_session_C2} [{three_session_A,three_session_B,three_session_C,three_session_C2} ...]
+                        Choose a specific session type to pull if desired.
+```
+
+For this experiment the following command was used to download experiments with V1 simple cell data:  
 ```
 python3 download_nwb_files.py \
-    --manifest_save_dir ../../data/BrainObservatoryData \
+    --manifest_save_dir ../../data/AIBO/VISp/L4 \
     --n_workers 4 \
-    --cre_lines "Rorb-IRES2-Cre" "Scnn1a-Tg3-Cre" "Nr5a1-Cre" \
-    --reporter_lines "Ai93(TITL-GCaMP6f)" \
-    --targeted_structures "VISp"
+    --cre_lines \
+        "Rorb-IRES2-Cre" \
+        "Scnn1a-Tg3-Cre" \
+        "Nr5a1-Cre" \
+        "Cux2-CreERT2" \
+        "Emx1-IRES-Cre" \
+        "Slc17a7-IRES2-Cre" \
+    --reporter_lines \
+        "Ai93(TITL-GCaMP6f)" \
+        "Ai94(TITL-GCaMP6s)" \
+    --targeted_structures "VISp" \
+    --min_imaging_depth 275 \
+    --max_imaging_depth 450
 ```  
 The ```--manifest_save_dir``` argument specifies where the manifest file will be saved. The manifest file is basically
-a file that contains the metadata for all the experiments. The ```--n_workers``` argument in this script specifies how
-many experiment containers will be downloaded at once. The ```--cre_lines``` and ```--reporter_lines``` arguments take in the desired cre lines you
-want based on what cells you are trying to isolate. Here, we use the three cre lines above with the one reporter line because they 
+a file that has different information about the containers and files. The ```--n_workers``` argument in this script specifies how
+many experiment datasets will be downloaded at once. The ```--cre_lines``` and ```--reporter_lines``` arguments take in the desired cre lines you
+want based on what cells you are trying to isolate. We use these cre and reporter lines because they 
 isolate mostly excitatory cells in layer IV. The characteristics of the different cre lines and reporter lines can be found
-[here](http://observatory.brain-map.org/visualcoding/transgenic). Finally, we use the ```--targeted_structures``` argument
+[here](http://help.brain-map.org/download/attachments/10616846/VisualCoding_TransgenicCharacterization.pdf?version=4&modificationDate=1538067045225&api=v2). Finally, we use the ```--targeted_structures``` argument
 here to indicate that we only want cells in the primary visual cortex, but the different structures available can be found 
 [here](http://observatory.brain-map.org/visualcoding).
 
