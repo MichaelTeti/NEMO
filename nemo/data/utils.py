@@ -221,3 +221,50 @@ def read_csv(fpath, remove_header = False, remove_footer = False, mode = 'r',):
             pass
 
     return data
+
+
+def monitor_coord_to_image_ind(x_cm, y_cm, monitor_w_cm = 51.91, monitor_h_cm = 32.44):
+    '''
+    Takes in the monitor coordinates in centimeters returned by 
+    dataset.get_pupil_location(as_spherical = False),
+    where (0, 0) is the center of the monitor, and turns those into proportions 
+    where (0, 0) is the top left corner of the monitor and (1, 1) is the bottom
+    right corner.
+    
+    Args:
+        x_cm (np.ndarray, float): Horizontal location on monitor in cm. 
+        y_cm (np.ndarray, float): Vertical location on monitor in cm.
+        monitor_w_cm (float): Width of monitor in cm.
+        monitor_h_cm (float): Height of monitor in cm.
+
+    Returns:
+        x_img: Horizontal location on monitor as proportion of monitor width.
+            0 is the left of the monitor, and 1 is the right.
+        y_img: Vertical location on monitor as proportion of monitor height.
+            0 is the top of the monitor and 1 is the bottom.
+    '''
+    
+    if type(x_cm) not in [np.ndarray, float, int]:
+        raise TypeError
+    if type(y_cm) not in [np.ndarray, float, int]:
+        raise TypeError
+
+    y_cm *= -1 
+    x_img = np.round(((monitor_w_cm / 2) + x_cm) / monitor_w_cm, 5)
+    y_img = np.round(((monitor_h_cm / 2) + y_cm) / monitor_h_cm, 5)
+    
+    if type(x_img) == np.ndarray:
+        if np.amin(x_img) < 0 or np.amax(x_img) >= 1:
+            raise ValueError
+    else:
+        if x_img < 0 or x_img >= 1:
+            raise ValueError
+        
+    if type(y_img) == np.ndarray:
+        if np.amin(y_img) < 0 or np.amax(y_img) >= 1:
+            raise ValueError
+    else:
+        if y_img < 0 or y_img >= 1:
+            raise ValueError
+    
+    return x_img, y_img

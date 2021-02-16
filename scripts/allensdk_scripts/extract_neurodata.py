@@ -1,328 +1,314 @@
 from argparse import ArgumentParser
-import os, sys
+import logging
+import os
 
-from allensdk.brain_observatory.receptive_field_analysis.receptive_field import \
-    compute_receptive_field_with_postprocessing as get_rf
+import allensdk
+from allensdk.brain_observatory.brain_observatory_exceptions import (
+    EpochSeparationException,
+    NoEyeTrackingException
+)
+from allensdk.brain_observatory.locally_sparse_noise import LocallySparseNoise
+import allensdk.brain_observatory.stimulus_info as si
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
-from cv2 import imwrite
+import h5py
 import numpy as np
 import pandas as pd
+from progressbar import ProgressBar
 
-from nemo.data.io import save_vid_array_as_frames, write_csv
-from nemo.data.preprocess import max_min_scale, normalize_traces
-from nemo.data.utils import get_img_frame_names, multiproc
+from nemo.data.io.image import write_AIBO_natural_stimuli, write_AIBO_static_grating_stimuli
+from nemo.data.preprocess.image import max_min_scale
+from nemo.data.preprocess.trace import normalize_traces
+from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
 
 
-def save_natural_video_stimuli(cell_data_list, save_dir, n_workers, stimuli):
-    print('[INFO] SAVING STIMULI TEMPLATES NOW.')
 
-    # Save these in a subdir called Stimuli
-    save_dir = os.path.join(save_dir, 'Stimuli')
-    os.makedirs(save_dir, exist_ok = True)
+def write_natural_movie_data(write_dir, df, data, session_type, stimulus):
 
-    vids_and_fpaths = []
-    saved_stimuli = []
-
-    for stimulus in stimuli:
-        for dataset, _, _, _, _ in cell_data_list:
-            if stimulus in saved_stimuli: continue
-
-            try:
-                vid = dataset.get_stimulus_template(stimulus)  # get stimulus template from dataset
-            except KeyError:
-                continue
-
-            save_dir_stimulus = os.path.join(save_dir, stimulus)
-            os.makedirs(save_dir_stimulus, exist_ok = True)
-            vid = np.uint8(max_min_scale(vid) * 255) # scale the video frames to the range [0, 255]
-            vids_and_fpaths.append([vid, save_dir_stimulus])
-            saved_stimuli.append(stimulus)
-
-    if vids_and_fpaths != []:
-        multiproc(
-            func = save_vid_array_as_frames,
-            iterator_key = 'vid_arrays_and_save_dirs',
-            n_workers = n_workers,
-            vid_arrays_and_save_dirs = vids_and_fpaths
+    '''
+    Writes response and behavioral data to file for natural movie stimuli.
+    '''
+    
+    os.makedirs(write_dir, exist_ok = True)
+    
+    inds = list(df['end'])
+    df['pupil_x'] = data['pupil_x'][inds]
+    df['pupil_y'] = data['pupil_y'][inds]
+    df['pupil_size'] = data['pupil_size'][inds]
+    df['run_speed'] = data['run_speed'][inds]
+    df['session_type'] = [session_type] * len(inds)
+    df['stimulus'] = [stimulus] * len(inds)
+    df['dff_ts'] = data['dff_ts'][inds]
+    
+    for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
+        df_write = df.copy()
+        df_write['dff'] = cell_traces[inds]
+        
+        fname = '{}.xz'.format(cell_id)
+        df_write.to_csv(
+            os.path.join(write_dir, fname), 
+            index = False, 
+            mode = 'a',
+            header = False if fname in os.listdir(write_dir) else True,
+            na_rep = np.nan
         )
 
 
-def save_natural_video_neurodata(cell_data_list, save_dir, missing_pupil_coords_thresh, stimuli):
-    print('[INFO] SAVING TRACES AND PUPIL COORDS NOW.')
+def write_static_image_data(write_dir, df, data, session_type):
 
-    if missing_pupil_coords_thresh:
-        assert((missing_pupil_coords_thresh > 0 and missing_pupil_coords_thresh < 1)), \
-            'missing_pupil_coords_thresh should be > 0 and < 1.'
+    '''
+    Writes response and behavioral data to file for static image data.
+    '''
+    
+    os.makedirs(write_dir, exist_ok = True)
+    
+    list_add = []
+    for row_num in range(len(df)):
+        row = df.iloc[row_num].to_list()
+        start, end = row[-2:]
+        
+        for ind in range(int(start), int(end)):
+            list_add.append(row[:-2] + [ind, ind + 1])
+            
+    better_df = pd.DataFrame(list_add, columns = list(df.columns)[:-2] + ['start', 'end'])
+    
+    inds = list(better_df['end'])
+    better_df['pupil_x'] = data['pupil_x'][inds]
+    better_df['pupil_y'] = data['pupil_y'][inds]
+    better_df['pupil_size'] = data['pupil_size'][inds]
+    better_df['run_speed'] = data['run_speed'][inds]
+    better_df['dff_ts'] = data['dff_ts'][inds]
+    better_df['session_type'] = [session_type] * len(inds)
+    
+    for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
+        df_write = better_df.copy()
+        df_write['dff'] = cell_traces[inds]
+        
+        fname = '{}.xz'.format(cell_id)
+        df_write.to_csv(
+            os.path.join(write_dir, fname), 
+            index = False, 
+            mode = 'a',
+            header = False if fname in os.listdir(write_dir) else True,
+            na_rep = np.nan
+        )
 
-    # create dirs to save traces and pupil coords
-    save_dir_traces = os.path.join(save_dir, 'Traces')
-    save_dir_pupil = os.path.join(save_dir, 'PupilLocs')
-    save_dir_run = os.path.join(save_dir, 'RunningSpeed')
-    os.makedirs(save_dir_traces, exist_ok = True)
-    os.makedirs(save_dir_pupil, exist_ok = True)
-    os.makedirs(save_dir_run, exist_ok = True)
 
-    for i_stimulus, stimulus in enumerate(stimuli):
-        for dataset, container, experiment, cell_id, cell_ind in cell_data_list:
-            if stimulus in dataset.list_stimuli():
-                # get the stimulus presentation table for that stimulus
-                stim_table = dataset.get_stimulus_table(stimulus_name = stimulus)
+def get_eye_tracking_data(dataset, missing_data_fill_size):
+    '''
+    Gets the eye tracking data from the AIBO dataset.
+    '''
 
-                # get the session type
-                session_type = dataset.get_session_type()
+    try:
+        _, pupil_loc = dataset.get_pupil_location(as_spherical = False)
+        _, pupil_size = dataset.get_pupil_size()
 
-                # get number of times the stimulus was repeated and number of frames
-                n_trials = stim_table['repeat'].max() + 1
-                n_frames = stim_table.iloc[-1]['frame'] + 1
+    except NoEyeTrackingException:
+        pupil_loc = np.full([missing_data_fill_size, 2], np.nan)
+        pupil_size = np.full([missing_data_fill_size], np.nan)
 
-                # get the corrected fluorescence traces for the current cell
-                # and scale them over all stimuli
-                trace_ts, traces = dataset.get_corrected_fluorescence_traces(cell_specimen_ids = [cell_id])
-                traces = normalize_traces(traces)
+    finally:
+        pupil_x = pupil_loc[:, 0]
+        pupil_y = pupil_loc[:, 1]
+        pupil_x, pupil_y = monitor_coord_to_image_ind(pupil_x, pupil_y)
 
-                # get pupil coordinates, but put nan if they aren't available
-                try:
-                    pupil_loc_ts, pupil_locs = dataset.get_pupil_location()
-                except:
-                    pupil_loc_ts = trace_ts
-                    pupil_locs = np.zeros([trace_ts.size, 2])
-                    pupil_locs[:, :] = np.nan
+    return {
+        'pupil_x': pupil_x,
+        'pupil_y': pupil_y,
+        'pupil_size': pupil_size
+    }
 
-                # get running speed
-                run_speed_ts, run_speed = dataset.get_running_speed()
 
-                # create lists to append data to
-                traces_agg = []
-                pupil_agg = []
-                run_agg = []
+def get_AIBO_data(dataset):
+    data = {}
 
-                # create a header for this stimulus to make dataframe later
-                header = [
-                    'container',
-                    'experiment',
-                    'cell_id',
-                    'cell_ind',
-                    'trial',
-                    'stimulus',
-                    'session_type'
-                ]
-                header += [frame_name + '.png' for frame_name in get_img_frame_names(n_frames)]
+    # get the cell IDs in the dataset 
+    data['cell_ids'] = dataset.get_cell_specimen_ids()
 
-                # loop through each trial
-                for i_trial in range(n_trials):
-                    # find out where to index the traces and pupil locations
-                    stim_table_trial = stim_table[stim_table['repeat'] == i_trial]
-                    start_ind = stim_table_trial.iloc[0]['end']
-                    end_ind = start_ind + n_frames
+    # get df/f  for all cells in this experiment
+    # after these lines, traces is of shape # acquisition frames x # cells
+    dff_ts, dff = dataset.get_dff_traces(cell_specimen_ids = data['cell_ids'])
+    dff = normalize_traces(dff.transpose())
+    data['dff'], data['dff_ts'] = dff, dff_ts
 
-                    # index the pupil locations, traces, and running speed based on the trial
-                    pupil_locs_trial = pupil_locs[start_ind:end_ind, :]
-                    traces_trial = traces[0, start_ind:end_ind]
-                    run_speed_trial = run_speed[start_ind:end_ind]
+    # get eye tracking info for the animal in this experiment
+    eye_data = get_eye_tracking_data(
+        dataset, 
+        missing_data_fill_size = dff.shape[0]
+    )
+    data.update(eye_data) 
 
-                    # filter out data with missing eye locations at a proportion greater than missing_pupil_coords_thresh
-                    missing_prop_pupil = np.mean(np.isnan(pupil_locs_trial[:, 0]))
-                    if missing_pupil_coords_thresh and (missing_prop_pupil > missing_pupil_coords_thresh):
-                        traces_trial[:] = np.nan
-                        pupil_locs_trial[:, :] = np.nan
+    # get the running speed 
+    data['run_speed'] = dataset.get_running_speed()[1]
 
-                    # change the pupil locations to fractions between 0 and 1 so resizing the image won't change it
-                    pupil_locs_trial[:, 0] = (pupil_locs_trial[:, 0] + 608 // 2) / 608
-                    pupil_locs_trial[:, 1] = (pupil_locs_trial[:, 1] + 304 // 2) / 304
+    if data['run_speed'].shape[0] != dff.shape[0] or dff.shape[0] != eye_data['pupil_x'].shape[0]:
+        raise ValueError
 
-                    # add cell metadata to things to write
-                    cell_metadata = [container, experiment, cell_id, cell_ind, i_trial, stimulus, session_type]
-                    traces_cell = cell_metadata.copy()
-                    pupil_coords_cell = cell_metadata.copy()
-                    run_cell = cell_metadata.copy()
+    return data
 
-                    # add the data from this trial to the data for that cell
-                    traces_cell += [round(float(trace), 2) for trace in traces_trial]
-                    pupil_coords_cell += ['{}/{}'.format(round(float(x), 2), round(float(y), 2)) for x,y in pupil_locs_trial]
-                    run_cell += [run_speed for run_speed in run_speed_trial]
 
-                    # add to the lists for this stimuli and experiment
-                    traces_agg.append(traces_cell)
-                    pupil_agg.append(pupil_coords_cell)
-                    run_agg.append(run_cell)
+def write_exp_data(dataset, trace_dir, stimuli_dir):
 
-                # create pandas dataframes
-                df_traces = pd.DataFrame(traces_agg, columns = header)
-                df_pupil = pd.DataFrame(pupil_agg, columns = header)
-                df_run = pd.DataFrame(run_agg, columns = header)
+    os.makedirs(stimuli_dir, exist_ok = True)
+    os.makedirs(trace_dir, exist_ok = True)
 
-                # figure out where to save the responses
-                save_fpath_traces = os.path.join(
-                    save_dir_traces,
-                    '{}'.format(stimulus),
-                    '{}'.format(session_type)
+
+    try:
+        stim_epoch_table = dataset.get_stimulus_epoch_table()
+    except EpochSeparationException:
+        # this only happens a few cases, so not really worth it to try to fix this
+        return
+    
+
+    # get the data
+    aibo_data = get_AIBO_data(dataset)
+
+
+    # write out data by stimulus
+    for stimulus in dataset.list_stimuli():
+
+        # stim_frame_table tells you how to index the trace, run, pupil, 
+        # etc. data
+        stim_frame_table = dataset.get_stimulus_table(stimulus)
+
+
+        # writing traces, pupil coords, etc.
+        if 'natural_movie' in stimulus:
+
+            write_natural_movie_data(
+                write_dir = os.path.join(trace_dir, 'natural_movies'),
+                df = stim_frame_table,
+                data = aibo_data,
+                session_type = dataset.get_session_type(),
+                stimulus = stimulus
+            )
+
+        elif stimulus in ['natural_scenes', 'static_gratings']:
+
+            write_static_image_data(
+                write_dir = os.path.join(trace_dir, stimulus),
+                df = stim_frame_table,
+                data = aibo_data,
+                session_type = dataset.get_session_type(),
+            )
+            
+            
+        # writing the stimuli
+        if stimulus == 'static_gratings':
+
+            write_AIBO_static_grating_stimuli(
+                stim_table = stim_frame_table,
+                save_dir = os.path.join(stimuli_dir, stimulus)
+            )
+
+        elif 'natural' in stimulus:
+
+            if stimulus not in os.listdir(stimuli_dir):
+                write_AIBO_natural_stimuli(
+                    template = dataset.get_stimulus_template(stimulus),
+                    save_dir = os.path.join(stimuli_dir, stimulus),
+                    stimulus = stimulus
                 )
-                save_fpath_pupil = os.path.join(
-                    save_dir_pupil,
-                    '{}'.format(stimulus),
-                    '{}'.format(session_type)
-                )
-                save_fpath_run = os.path.join(
-                    save_dir_run,
-                    '{}'.format(stimulus),
-                    '{}'.format(session_type)
-                )
-                os.makedirs(save_fpath_traces, exist_ok = True)
-                os.makedirs(save_fpath_pupil, exist_ok = True)
-                os.makedirs(save_fpath_run, exist_ok = True)
-
-                # write out data
-                df_traces.to_csv(
-                    path_or_buf = os.path.join(save_fpath_traces, 'cellID_{}.txt'.format(cell_id)),
-                    mode = 'w',
-                    header = True,
-                    index = False
-                )
-                df_pupil.to_csv(
-                    path_or_buf = os.path.join(save_fpath_pupil, 'cellID_{}.txt'.format(cell_id)),
-                    mode = 'w',
-                    header = True,
-                    index = False
-                )
-                df_run.to_csv(
-                    path_or_buf = os.path.join(save_fpath_run, 'cellID_{}.txt'.format(cell_id)),
-                    mode = 'w',
-                    header = True,
-                    index = False
-                )
 
 
+def loop_exps(manifest_fpath, exp_dir, save_dir):
+    boc = BrainObservatoryCache(manifest_file = manifest_fpath)
+    exp_ids = [int(os.path.splitext(exp)[0]) for exp in os.listdir(exp_dir)]
 
-def save_receptive_fields(cell_data_list, alpha, save_dir, sig_chi_only):
-    print('[INFO] SAVING RECEPTIVE FIELDS.')
+    for exp_id in ProgressBar()(exp_ids):
+        write_exp_data(
+            dataset = boc.get_ophys_experiment_data(exp_id),
+            trace_dir = os.path.join(save_dir, 'trace_data'),
+            stimuli_dir = os.path.join(save_dir, 'stimuli')
+        )
 
-    save_dir = os.path.join(save_dir, 'ReceptiveFieldImages')
-    os.makedirs(save_dir, exist_ok = True)
 
-    for i_cell, (dataset, container, experiment, cell_id, cell_ind) in enumerate(cell_data_list):
+def write_rfs(manifest_fpath, exp_dir, write_dir):
+    '''
+    https://allensdk.readthedocs.io/en/latest/_static/examples/nb/brain_observatory_analysis.html
+    '''
+
+    write_dir = os.path.join(write_dir, 'receptive_fields')
+    write_fpath = os.path.join(write_dir, 'lsn_rfs.h5')
+    os.makedirs(write_dir, exist_ok = True)
+    
+    boc = BrainObservatoryCache(manifest_file = manifest_fpath)
+    exps = os.listdir(exp_dir)
+    exp_ids = [int(os.path.splitext(exp)[0]) for exp in exps]
+    
+    for exp_id in ProgressBar()(exp_ids):
+        dataset = boc.get_ophys_experiment_data(exp_id)
+        cell_ids = dataset.get_cell_specimen_ids()
+        
         if 'locally_sparse_noise' in dataset.list_stimuli():
-            stimulus = 'locally_sparse_noise'
-        elif 'locally_sparse_noise_4deg' in dataset.list_stimuli():
-            stimulus = 'locally_sparse_noise_4deg'
-        else:
-            continue
+            lsn = LocallySparseNoise(dataset)
+            rfs = lsn.receptive_field
+            rfs[np.isnan(rfs)] = 0
+            
+            for ind, cell_id in enumerate(cell_ids):
+                rf = rfs[:, :, ind, :]
+                on, off = rf.transpose([2, 0, 1])
 
-        rf_data = get_rf(dataset, cell_ind, stimulus, alpha = alpha, number_of_shuffles = 10000)
+                on = max_min_scale(on) * 255
+                off = max_min_scale(off) * 255
+                
+                with h5py.File(write_fpath, 'a') as h5file:
+                    if str(cell_id) not in list(h5file.keys()):
+                        h5file.create_dataset(
+                            str(cell_id), 
+                            data = np.concatenate((on[None, ...], off[None, ...]), 0)
+                        )
 
-        # only save significant ones if sig_chi_only is specified
-        if sig_chi_only and not rf_data['chi_squared_analysis']['attrs']['significant']: continue
-        chi_squared = 1.0 - rf_data['chi_squared_analysis']['pvalues']['data']
-        chi_squared = chi_squared * np.float32(chi_squared  > 1.0 - alpha)
-        on, off = 1.0 - rf_data['on']['pvalues']['data'], 1.0 - rf_data['off']['pvalues']['data']
-        on, off = on * np.float32(on > 1.0 - alpha), off * np.float32(off > 1.0 - alpha)
-
-        imwrite(os.path.join(save_dir, '{}_on.png'.format(cell_id)), np.uint8(max_min_scale(on) * 255))
-        imwrite(os.path.join(save_dir, '{}_off.png'.format(cell_id)), np.uint8(max_min_scale(off) * 255))
-        imwrite(os.path.join(save_dir, '{}_chi_squared.png'.format(cell_id)), np.uint8(max_min_scale(chi_squared) * 255))
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument(
-        'manifest_path',
+        'exp_dir',
         type = str,
-        help = 'Path to the manifest file.'
+        help = 'Directory containing the .nwb experiment files.'
     )
     parser.add_argument(
-        'experiment_dir',
+        'manifest_fpath',
         type = str,
-        help = 'Path to the folder called ophys_experiment_data.'
+        help = 'Path to the manifest.json file.'
     )
     parser.add_argument(
         'save_dir',
         type = str,
-        help = 'Directory to put the extracted data.'
+        help = 'Where to save all extracted data.'
     )
     parser.add_argument(
-        '--stimuli',
-        type = str,
-        nargs = '+',
-        choices = [
-            'natural_movie_one',
-            'natural_movie_two',
-            'natural_movie_three',
-        ],
-        help = 'Stimuli to save templates and responses for if save_stimuli specified.'
-    )
-    parser.add_argument(
-        '--n_workers',
-        type = int,
-        default = 4,
-        help = 'Number of workers to use. Default = 4'
-    )
-    parser.add_argument(
-        '--save_stimuli',
+        '--no_stim_or_trace_data',
         action = 'store_true',
-        help = 'If specified, will save stimuli.'
+        help = 'If specified, will not write out stimuli or trace data.'
     )
     parser.add_argument(
-        '--save_traces_and_pupil_coords',
+        '--no_rfs',
         action = 'store_true',
-        help = 'If specified, will save fluorescence traces and eye tracking data.'
+        help = 'If specified, will not write out receptive fields.'
     )
-    parser.add_argument(
-        '--save_rfs',
-        action = 'store_true',
-        help = 'If specified, will save RFs.'
-    )
-    parser.add_argument('--missing_pupil_coords_thresh',
-        type = float,
-        help = 'Will not save data files if the fraction of missing pupil coords is \
-            above this value. Should be in the range (0, 1).')
-    parser.add_argument('--rf_alpha',
-        type = float,
-        default = 0.05,
-        help = 'The alpha level to use in the receptive field estimation. Default is 0.05.')
-    parser.add_argument('--sig_chi_only',
-        action = 'store_true',
-        help = 'If specified, only the receptive fields with significant chi squared results will be saved.')
     args = parser.parse_args()
 
-    os.makedirs(args.save_dir, exist_ok = True)
 
-    exp_ids = [int(f.split('.')[0]) for f in os.listdir(args.experiment_dir)]
-    boc = BrainObservatoryCache(manifest_file = args.manifest_path)
+    logging.basicConfig(
+        format='%(asctime)s -- %(message)s', 
+        datefmt='%m/%d/%Y %I:%M:%S %p', 
+        level = logging.INFO
+    )
 
-    # get experiment data
-    datasets = [boc.get_ophys_experiment_data(exp_id) for exp_id in exp_ids]
 
-    # get cells in the experiment, along with the container id and experiment id
-    data = []
-    for dataset in datasets:
-        cont = dataset.get_metadata()['experiment_container_id']
-        exp = dataset.get_metadata()['ophys_experiment_id']
-        cell_ids = list(dataset.get_cell_specimen_ids())
-        cell_inds = dataset.get_cell_specimen_indices(cell_ids)
-        data += [[dataset, cont, exp, cell_id, cell_ind] for cell_id, cell_ind in zip(cell_ids, cell_inds)]
-
-    if args.save_stimuli:
-        save_natural_video_stimuli(
-            cell_data_list = data,
-            save_dir = args.save_dir,
-            n_workers = args.n_workers,
-            stimuli = args.stimuli
+    if not args.no_stim_or_trace_data:
+        logging.info('Writing stimuli, traces, and behavioral data')
+        loop_exps(
+            manifest_fpath = args.manifest_fpath,
+            exp_dir = args.exp_dir,
+            save_dir = args.save_dir
         )
 
-    if args.save_traces_and_pupil_coords:
-        save_natural_video_neurodata(
-            cell_data_list = data,
-            save_dir = args.save_dir,
-            missing_pupil_coords_thresh = args.missing_pupil_coords_thresh,
-            stimuli = args.stimuli
-        )
-
-    if args.save_rfs:
-        multiproc(
-            func = save_receptive_fields,
-            iterator_key = 'cell_data_list',
-            n_workers = args.n_workers,
-            cell_data_list = data,
-            alpha = args.rf_alpha,
-            save_dir = args.save_dir,
-            sig_chi_only = args.sig_chi_only
+    if not args.no_rfs:
+        logging.info('Writing receptive fields')
+        write_rfs(
+            manifest_fpath = args.manifest_fpath,
+            exp_dir = args.exp_dir, 
+            write_dir = args.save_dir
         )
