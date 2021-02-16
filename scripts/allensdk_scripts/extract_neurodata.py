@@ -131,16 +131,17 @@ def get_AIBO_data(dataset):
     data['dff'], data['dff_ts'] = dff, dff_ts
 
     # get eye tracking info for the animal in this experiment
-    eye_data = get_eye_tracking_data(
-        dataset, 
-        missing_data_fill_size = dff.shape[0]
-    )
-    data.update(eye_data) 
+    data.update(
+        get_eye_tracking_data(
+            dataset,
+            missing_data_fill_size = dff.shape[0]
+        )
+    ) 
 
     # get the running speed 
     data['run_speed'] = dataset.get_running_speed()[1]
 
-    if data['run_speed'].shape[0] != dff.shape[0] or dff.shape[0] != eye_data['pupil_x'].shape[0]:
+    if data['run_speed'].shape[0] != dff.shape[0] or dff.shape[0] != data['pupil_x'].shape[0]:
         raise ValueError
 
     return data
