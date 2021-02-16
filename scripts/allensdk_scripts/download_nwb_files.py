@@ -90,8 +90,13 @@ parser.add_argument(
     '--session_type',
     type = str,
     nargs = '+',
-    help = 'Choose a specific session type to pull. Session types include \
-        session_three_A, session_three_B, session_three_C, session_three_C2.'
+    choices = [
+        'three_session_A',
+        'three_session_B',
+        'three_session_C',
+        'three_session_C2'
+    ],
+    help = 'Choose a specific session type to pull if desired.'
 )
 args = parser.parse_args()
 
