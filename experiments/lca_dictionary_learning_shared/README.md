@@ -32,7 +32,7 @@ The [analysis.py](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_
   * The sparsity over training 
   * The reconstructions and inputs
 
-The arguments to this script are as follows:
+The arguments to this script are below. The only arguments that are needed to get most of the analyses are ```ckpt_dir```, ```save_dir```, ```--activity_fpath```, ```--sparse_activity_fpath```, and ```--probe_dir```. 
 
 ```
 python analysis.py --help
