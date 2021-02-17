@@ -1,22 +1,39 @@
-Here are various scripts and functions that are used in the LCA experiments, mostly for 
-analysis and visualization of the LCA model during training. 
+Here are scripts that are used in the LCA pipeline (mostly when using PetaVision to do LCA).
 
-# Creating File Path Lists for Training 
-First, it is necessary to create .txt files with the file paths of the video frames the LCA model will be 
-trained on in order. To do this, we use the 
-[make_image_fpath_list.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/lca_scripts/make_image_fpath_list.py) 
-script. The command we use here is as follows.
+## complex2simple.py   
+This [complex2simple.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/lca_scripts/complex2simple.py) script takes in the shared features from the convolutional LCA model and replicates each one across space to simulate simple cell features. 
+The arguments are as follows:
+
 ```
-python3 make_image_fpath_list.py \
-    ../../data/ILSVRC2015/Data/VID/train/ \
-    ../../experiments/lca_dictionary_learning_shared/ \
-    --key _resized \
-    --n_frames_in_time 9
-```
-The first two arguments are required. The first one is the directory to start at when recursing down through the file
-structure looking for images, and the second one is the directory where the .txt files containing the file paths 
-will be saved. The third argument is optional and indicates the filter used when determining which sub-directories 
-located in ```../../data/ILSVRC2015/Data/VID/train/``` and containing video frames should be included in the .txt files. 
-The last argument determines the number of consecutive frames that will be used as a single input, which also determines 
-how many .txt files are written out. It is possible to just write all the frames in order on a single .txt file, 
-and read in 9 consecutive frames in at a time from it, but there may be some drastic changes from one video to the next within a single input in that case. Here, we make sure that every single input contains only video frames from one video. 
+python complex2simple.py --help
+usage: complex2simple.py [-h] [--stride_x STRIDE_X] [--stride_y STRIDE_Y]
+                         [--weight_file_key WEIGHT_FILE_KEY]
+                         [--save_dir SAVE_DIR]
+                         [--n_features_keep N_FEATURES_KEEP]
+                         [--act_fpath ACT_FPATH] [--openpv_path OPENPV_PATH]
+                         lca_ckpt_dir input_h input_w
+
+positional arguments:
+  lca_ckpt_dir          The path to the LCA checkpoint directory where the
+                        weights are.
+  input_h               Height of the input video frames / images.
+  input_w               Width of the input video frames / images.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --stride_x STRIDE_X   Stride of the original patches inside the input in the
+                        x dim.
+  --stride_y STRIDE_Y   Stride of the original patches inside the input in the
+                        y dim.
+  --weight_file_key WEIGHT_FILE_KEY
+                        A key to help select out the desired weight files in
+                        the ckpt_dir.
+  --save_dir SAVE_DIR   The directory to save the outputs of this script in.
+  --n_features_keep N_FEATURES_KEEP
+                        How many features to keep.
+  --act_fpath ACT_FPATH
+                        Path to the <model_layer>_A.pvp file in the ckpt_dir
+                        (only needed if n_features_keep is specified).
+  --openpv_path OPENPV_PATH
+                        Path to the OpenPv/mlab/util directory.
+```  
