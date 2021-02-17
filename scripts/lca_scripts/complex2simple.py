@@ -77,6 +77,9 @@ logging.basicConfig(
 # make save_dir if doesn't exist
 os.makedirs(args.save_dir, exist_ok = True)
 
+# add path to OpenPV octave utils
+octave.addpath(args.openpv_path)
+
 # get a list of the filepaths
 weight_fpaths = glob(os.path.join(args.lca_ckpt_dir, args.weight_file_key))
 weight_fpaths.sort()
