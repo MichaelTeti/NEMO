@@ -62,6 +62,6 @@ There are three required arguments. The first, ```lca_ckpt_dir``` indicates the 
 ![simple_grid.png](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_nonshared/figures/feature27.gif)
 
 ## Running the Model
-The model parameters are described in the [learn_imagenet_dict.lua](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_nonshared/learn_imagenet_dict.lua) script. 
+The model parameters are described in the [learn_imagenet_dict.lua](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_nonshared/learn_imagenet_dict.lua) script. The input layer is 32 x 64, which is determined by ```inputHeight``` and ```inputWidth```. The features are the same size as the inputs (as determined by ```patchSizeX``` and ```patchSizeY```, so we can learn simple cell features. The parameters ```strideX``` and ```strideY``` are set to 64 and 32, respectively, which means that the features will be convolved with the inputs only at the center pixel.
 
 # Analysis
