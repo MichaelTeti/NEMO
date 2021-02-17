@@ -10,7 +10,7 @@ bash download_imagenet_vid.sh
 # Resize the Images
 After downloading the images, we first resize them to the appropriate size (32 x 64). To do this, we use the [preprocess_imgs.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/image_scripts/preprocess_imgs.py) script. The command is as follows:
 ```
-python3 preprocess_imgs.py \
+python preprocess_imgs.py \
     ../../data/ILSVRC2015/Data/VID/train/ \
     resize \
     --resize_h 32 \
