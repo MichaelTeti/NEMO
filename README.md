@@ -1,7 +1,7 @@
 # NEMO (Neural Encoding Models for Ophys Data)
 ## Setup
 ### System Specifications
-Experiments were run on a system with the following specifications:
+Experiments were run on systems with the following specifications:
 * CentOS 7.8 / Ubuntu 18.04
 * NVIDIA Cuda Toolkit 10.2
 * NVIDIA CUDNN 7
