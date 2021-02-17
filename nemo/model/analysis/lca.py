@@ -273,7 +273,7 @@ def get_mean_sparsity(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/ml
     acts = read_activity_file(model_activity_fpath, openpv_path = openpv_path)
     
     # calculate mean sparsity and sort
-    mean_sparsity = np.mean(acts == 0.0, (0, 1, 2))
+    mean_sparsity = np.mean(acts != 0.0, (0, 1, 2))
     inds = list(range(mean_sparsity.size))
     sorted_inds = [ind for _,ind in sorted(zip(mean_sparsity, inds), reverse = True)]
     sorted_mean_sparsity = mean_sparsity[sorted_inds]
