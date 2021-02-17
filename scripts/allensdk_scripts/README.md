@@ -11,7 +11,7 @@ experiments based on certain desired criteria, such as imaging depth, targeted s
 The full range of arguments for this script are the following:
 
 ```
-python3 download_nwb_files.py --help
+python download_nwb_files.py --help
 usage: download_nwb_files.py [-h] [--manifest_save_dir MANIFEST_SAVE_DIR]
                              [--n_workers N_WORKERS]
                              [--n_experiments N_EXPERIMENTS]
@@ -49,7 +49,7 @@ optional arguments:
 
 For this experiment the following command was used to download experiments with V1 simple cell data:  
 ```
-python3 download_nwb_files.py \
+python download_nwb_files.py \
     --manifest_save_dir ../../data/AIBO/VISp/L4 \
     --n_workers 4 \
     --cre_lines \
@@ -92,7 +92,7 @@ This script will extract and write the following (as well as a few other things)
 The script takes in the following arguments:
 
 ```
-python3 extract_neurodata.py --help
+python extract_neurodata.py --help
 usage: extract_neurodata.py [-h] [--no_stim_or_trace_data] [--no_rfs]
                             exp_dir manifest_fpath save_dir
 
@@ -112,7 +112,7 @@ optional arguments:
 To extract the data downloaded in the previous step, we use the following command:
 
 ```
-python3 extract_neurodata.py \
+python extract_neurodata.py \
     ../../data/AIBO/VISp/L4/ophys_experiment_data/ \
     ../../data/AIBO/VISp/L4/manifest.json \
     ../../data/AIBO/VISp/L4/ExtractedData/
