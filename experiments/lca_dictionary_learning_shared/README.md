@@ -7,7 +7,7 @@ trained on in order. To do this, we use the
 [make_image_fpath_list.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/lca_scripts/make_image_fpath_list.py) 
 script. First, move to the [lca_scripts](https://github.com/MichaelTeti/NEMO/tree/main/scripts/lca_scripts) directory (```cd ../../scripts/lca_scripts/```), then use the following command:
 ```
-python3 make_image_fpath_list.py \
+python make_image_fpath_list.py \
     ../../data/ILSVRC2015/Data/VID/train/ \
     ../../experiments/lca_dictionary_learning_shared/ \
     --key _resized \
@@ -35,7 +35,7 @@ The [analysis.py](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_
 The arguments to this script are as follows:
 
 ```
-python3 analysis.py --help
+python analysis.py --help
 usage: analysis.py [-h] [--openpv_path OPENPV_PATH] [--no_features]
                    [--no_recons] [--no_probes] [--no_activity]
                    [--weight_fpath_key WEIGHT_FPATH_KEY]
