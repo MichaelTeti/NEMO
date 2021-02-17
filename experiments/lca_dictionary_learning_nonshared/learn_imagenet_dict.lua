@@ -13,7 +13,7 @@ local inputHeight               = 32;
 local inputPathPrefix           = "filenames_frame";
 local inputPathExt              = ".txt";
 local inputWidth                = 64;
-local nbatch                    = 256;
+local nbatch                    = 128;
 local numImages                 = 762246;
 
 
