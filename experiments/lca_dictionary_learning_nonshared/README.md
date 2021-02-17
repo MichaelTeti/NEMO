@@ -22,7 +22,7 @@ how many .txt files are written out. It is possible to just write all the frames
 and read in 9 consecutive frames in at a time from it, but there may be some drastic changes from one video to the next within a single input in that case. Here, we make sure that every single input contains only video frames from one video.   
 
 ## Making Nonshared Features
-Since we want to model V1 simple cells, each neuron needs to have its own feature (i.e. no shared weights between neurons), and the feature needs to span the entire input image. A reasonable thing to do is to take the features learned in the [lca_dictionary_learning_shared](https://github.com/MichaelTeti/NEMO/tree/main/experiments/lca_dictionary_learning_shared) and replicate those. To do this, we use the [complex2simple.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/lca_scripts/complex2simple.py) script. This script will read in each weight file, perform this replication, and write a new weight file.   
+Since we want to model V1 simple cells, each neuron needs to have its own feature (i.e. no shared features between neurons), and the feature needs to span the entire input image. A reasonable thing to do is to take the features learned in the [lca_dictionary_learning_shared](https://github.com/MichaelTeti/NEMO/tree/main/experiments/lca_dictionary_learning_shared) and replicate those. To do this, we use the [complex2simple.py](https://github.com/MichaelTeti/NEMO/blob/main/scripts/lca_scripts/complex2simple.py) script. This script will read in each weight file, perform this replication, and write a new weight file.   
 
 ```
 python complex2simple.py --help
