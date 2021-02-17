@@ -58,7 +58,20 @@ optional arguments:
                         Path to the OpenPv/mlab/util directory.
 ```
 
-There are three required arguments. The first, ```lca_ckpt_dir``` indicates the path to the dir containing the weight files. The ```input_h``` and ```input_w``` arguements specify the height and width of the input video frames, respectively. The following image is an example of one of the convolutional features being replicated across spatial dimensions. Each feature in the image has a shape of 32 x 64 pixels, which is exactly the same as the input frames. Since the original features that were replicated were 17 x 17 pixels, we embed them into the larger, image-sized features in different positions. Each of these features will now be updated independently of the others.   
+There are three required arguments. The first one, ```lca_ckpt_dir```, indicates the path to the dir containing the weight files. The ```input_h``` and ```input_w``` arguments specify the height and width of the input video frames, respectively. The ```--stride_x``` and ```--stride_y``` arguments allow you to change the stride between replications. If specified, ```--n_features_keep``` determines how many of the original convolutional features are kept. If this is specified, then ```--act_fpath``` must be given because the features will be kept based on their descending mean activations. The specific command used is below (run from this directory):   
+
+```
+python ../../scripts/lca_scripts/complex2simple.py \
+    ../lca_dictionary_learning_shared/runs/run25_LCA/Checkpoints/Checkpoint00174000/ \
+    32 \
+    64 \
+    --stride_x 2 \
+    --stride_y 2 \
+    --weight_file_key "S1ToFrame*ReconError_W.pvp" \
+    --save_dir "NonsharedWeights"
+```   
+   
+Below is an example of one of the features that was replicated using the command above. Each feature is now the same size as the image, and it will be updated independently of the others. 
   
 ![simple_grid.png](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_nonshared/figures/feature27.gif)
 
