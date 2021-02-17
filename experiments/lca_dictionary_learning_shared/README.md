@@ -1,4 +1,4 @@
-Here, we use LCA to learn a dictionary of features with convolutional sparse coding. 
+Here, we use LCA to learn a dictionary of convolutional features. 
 
 # Training 
 ## Creating Input Filepath Lists
