@@ -58,9 +58,10 @@ optional arguments:
                         Path to the OpenPv/mlab/util directory.
 ```
 
-There are three required arguments. The first, ```lca_ckpt_dir``` indicates the path to the dir containing the weight files. The ```input_h``` and ```input_w``` arguements specify the height and width of the input video frames, respectively. 
+There are three required arguments. The first, ```lca_ckpt_dir``` indicates the path to the dir containing the weight files. The ```input_h``` and ```input_w``` arguements specify the height and width of the input video frames, respectively. The following image is an example of one of the convolutional features being replicated across spatial dimensions.   
+![simple_grid.png](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_nonshared/figures/feature25.gif)
 
 ## Running the Model
-The model parameters are described in the [learn_imagenet_dict.lua](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_shared/learn_imagenet_dict.lua) script. The model is convolutional, as indicated by the line ```local sharedWeights = true;```, with a stride of 1 (```strideX``` and ```strideY``` are set to 1). The features are 17 x 17, as determined by ```patchSizeY``` and ```patchSizeX```), and the images are of shape 32 x 64 as described by ```inputHeight``` and ```inputWidth```, respectively. The batch size, indicated by ```nbatch```, is set to 256, and the line ```temporalPatchSize = 9``` means that each of the 256 mini-batch samples are composed of 9 consecutive video frames. We use a soft threshold with lambda equal to 0.1 (which is increased during training). The [train_lca.sh](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_shared/train_lca.sh) script is used to run the model in an HPC setting. 
+The model parameters are described in the [learn_imagenet_dict.lua](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_nonshared/learn_imagenet_dict.lua) script. 
 
 # Analysis
