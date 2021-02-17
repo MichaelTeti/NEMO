@@ -41,4 +41,8 @@ The script takes one positional argument, which is the directory you wish to ins
 
 ### Downloading and Processing the Data
 1. Download and pre-process the ImageNet video dataset (directions [here](https://github.com/MichaelTeti/NEMO/tree/main/scripts/image_scripts))
-2. Download and extract the neurodata and stimuli (directions [here](https://github.com/MichaelTeti/NEMO/tree/main/scripts/allensdk_scripts))
+2. Download and extract the neurodata and stimuli (directions [here](https://github.com/MichaelTeti/NEMO/tree/main/scripts/allensdk_scripts))  
+  
+## Experiments
+  1. [LCA Convolutional Dictionary Learning on Video](https://github.com/MichaelTeti/NEMO/tree/main/experiments/lca_dictionary_learning_shared)
+  2. [LCA Simple Cell Feature Learning on Video](https://github.com/MichaelTeti/NEMO/tree/main/experiments/lca_dictionary_learning_nonshared)
