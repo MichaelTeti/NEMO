@@ -58,7 +58,7 @@ optional arguments:
                         Path to the OpenPv/mlab/util directory.
 ```
 
-There are three required arguments. The first, ```lca_ckpt_dir``` indicates the path to the dir containing the weight files. The ```input_h``` and ```input_w``` arguements specify the height and width of the input video frames, respectively. The following image is an example of one of the convolutional features being replicated across spatial dimensions. Each feature in the image has a shape of 32 x 64 pixels, which is exactly the same as the input frames. Since the original features that were replicated were 17 x 17 pixels, we embed them into the larger, image-sized features in different positions.   
+There are three required arguments. The first, ```lca_ckpt_dir``` indicates the path to the dir containing the weight files. The ```input_h``` and ```input_w``` arguements specify the height and width of the input video frames, respectively. The following image is an example of one of the convolutional features being replicated across spatial dimensions. Each feature in the image has a shape of 32 x 64 pixels, which is exactly the same as the input frames. Since the original features that were replicated were 17 x 17 pixels, we embed them into the larger, image-sized features in different positions. Each of these features will now be updated independently of the others. 
 ![simple_grid.png](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_nonshared/figures/feature27.gif)
 
 ## Running the Model
