@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os
 
 import matplotlib.pyplot as plt
@@ -170,8 +171,15 @@ args = parser.parse_args()
 # make the save directory
 os.makedirs(args.save_dir, exist_ok = True)
 
+logging.basicConfig(
+    format='%(asctime)s -- %(message)s', 
+    datefmt='%m/%d/%Y %I:%M:%S %p', 
+    level = logging.INFO
+)
+
+
 if not args.no_features:
-    print('[INFO] WRITING FEATURES...')
+    logging.info('WRITING FEATURES')
     view_complex_cell_strfs(
         ckpt_dir = args.ckpt_dir,
         write_fpath = os.path.join(args.save_dir, 'features.gif'),
@@ -181,7 +189,7 @@ if not args.no_features:
     )
 
 if not args.no_recons:
-    print('[INFO] WRITING INPUTS AND RECONSTRUCTIONS...')
+    logging.info('WRITING INPUTS AND RECONSTRUCTIONS')
     view_reconstructions(
         ckpt_dir = args.ckpt_dir,
         save_dir = os.path.join(args.save_dir, 'Inputs_and_Recons'),
@@ -192,7 +200,7 @@ if not args.no_recons:
 
 # plotting probes below
 if not args.no_probes:
-    print('[INFO] PLOTTING PROBES...')
+    logging.info('WRITING PROBES')
     plot_objective_probes(
         probe_dir = args.probe_dir, 
         save_dir = os.path.join(args.save_dir, 'EnergyProbe'), 
@@ -230,6 +238,7 @@ if not args.no_probes:
     )
 
 if not args.no_activity:
+    logging.info('PLOTTING ACTIVATIONS')
     # mean acts, mean sparsity, and number active
     mean, se, _ = get_mean_activations(args.activity_fpath, openpv_path = args.openpv_path)
     plt.errorbar(x = list(range(mean.size)), y = mean, yerr = se)
