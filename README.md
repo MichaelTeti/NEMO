@@ -45,4 +45,4 @@ The script takes one positional argument, which is the directory you wish to ins
   
 ## Experiments
   1. [LCA Convolutional Dictionary Learning on Video](https://github.com/MichaelTeti/NEMO/tree/main/experiments/lca_dictionary_learning_shared)
-  2. [LCA Simple Cell Feature Learning on Video](https://github.com/MichaelTeti/NEMO/tree/main/experiments/lca_dictionary_learning_nonshared)
+  2. [LCA Simple Cell Dictionary Learning on Video](https://github.com/MichaelTeti/NEMO/tree/main/experiments/lca_dictionary_learning_nonshared)
