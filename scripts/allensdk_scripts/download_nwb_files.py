@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os, sys
 
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
@@ -97,6 +98,11 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+logging.basicConfig(
+    format='%(asctime)s -- %(message)s', 
+    datefmt='%m/%d/%Y %I:%M:%S %p', 
+    level = logging.INFO
+)
 
 manifest_path = 'manifest.json' if not args.manifest_save_dir else os.path.join(args.manifest_save_dir, 'manifest.json')
 boc = BrainObservatoryCache(manifest_file = manifest_path)
@@ -132,7 +138,7 @@ if args.n_experiments: exps = exps[:args.n_experiments]
 if args.session_type:
     exps = [exp for exp in exps if exp['session_type'] in args.session_type]
 
-print('[INFO] FOUND {} EXPERIMENTS'.format(len(exps)))
+logging.info('FOUND {} EXPERIMENTS'.format(len(exps)))
 
 # download experiment data based on id
 exp_ids = [exp['id'] for exp in exps]
