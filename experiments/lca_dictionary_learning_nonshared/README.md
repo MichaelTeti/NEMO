@@ -59,7 +59,7 @@ optional arguments:
 ```
 
 There are three required arguments. The first, ```lca_ckpt_dir``` indicates the path to the dir containing the weight files. The ```input_h``` and ```input_w``` arguements specify the height and width of the input video frames, respectively. The following image is an example of one of the convolutional features being replicated across spatial dimensions.   
-![simple_grid.png](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_nonshared/figures/feature25.gif)
+![simple_grid.png](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_nonshared/figures/feature27.gif)
 
 ## Running the Model
 The model parameters are described in the [learn_imagenet_dict.lua](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_nonshared/learn_imagenet_dict.lua) script. 
