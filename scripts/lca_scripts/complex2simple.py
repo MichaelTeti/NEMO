@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from glob import glob
+import logging
 import os
 
 import numpy as np
@@ -67,6 +68,12 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+logging.basicConfig(
+    format='%(asctime)s -- %(message)s', 
+    datefmt='%m/%d/%Y %I:%M:%S %p', 
+    level = logging.INFO
+)
+
 # make save_dir if doesn't exist
 os.makedirs(args.save_dir, exist_ok = True)
 
@@ -111,7 +118,7 @@ for frame_num, fpath in ProgressBar()(enumerate(weight_fpaths)):
     octave.push(['write_fpath', 'feat_data'], [write_fpath, feat_data])
     octave.eval('writepvpsharedweightfile(write_fpath, feat_data)')
     
-print('[INFO] NONSHARED GRID SIZE IS {}x{}x{}.'.format(
+logging.info('NONSHARED GRID SIZE IS {}x{}x{}.'.format(
     ny // args.stride_y, 
     nx // args.stride_x, 
     w_out
