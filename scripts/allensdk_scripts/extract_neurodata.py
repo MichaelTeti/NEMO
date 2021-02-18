@@ -22,7 +22,7 @@ from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
 
 
 
-def write_natural_movie_data(write_dir, df, data, session_type, stimulus):
+def write_natural_movie_data(write_dir, df, data, stimulus):
 
     '''
     Writes response and behavioral data to file for natural movie stimuli.
@@ -35,9 +35,10 @@ def write_natural_movie_data(write_dir, df, data, session_type, stimulus):
     df['pupil_y'] = data['pupil_y'][inds]
     df['pupil_size'] = data['pupil_size'][inds]
     df['run_speed'] = data['run_speed'][inds]
-    df['session_type'] = [session_type] * len(inds)
+    df['session_type'] = [data['session_type']] * len(inds)
     df['stimulus'] = [stimulus] * len(inds)
     df['dff_ts'] = data['dff_ts'][inds]
+    df['exp_id'] = [data['exp_id']] * len(inds)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = df.copy()
@@ -53,7 +54,7 @@ def write_natural_movie_data(write_dir, df, data, session_type, stimulus):
         )
 
 
-def write_static_image_data(write_dir, df, data, session_type):
+def write_static_image_data(write_dir, df, data):
 
     '''
     Writes response and behavioral data to file for static image data.
@@ -77,7 +78,8 @@ def write_static_image_data(write_dir, df, data, session_type):
     better_df['pupil_size'] = data['pupil_size'][inds]
     better_df['run_speed'] = data['run_speed'][inds]
     better_df['dff_ts'] = data['dff_ts'][inds]
-    better_df['session_type'] = [session_type] * len(inds)
+    better_df['session_type'] = [data['session_type']] * len(inds)
+    better_df['exp_id'] = [data['exp_id']] * len(inds)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = better_df.copy()
@@ -123,6 +125,12 @@ def get_AIBO_data(dataset):
 
     # get the cell IDs in the dataset 
     data['cell_ids'] = dataset.get_cell_specimen_ids()
+
+    # get exp_id
+    data['exp_id'] = dataset.get_metadata()['ophys_experiment_id']
+
+    # get session type 
+    data['session_type'] = dataset.get_session_type()
 
     # get df/f  for all cells in this experiment
     # after these lines, traces is of shape # acquisition frames x # cells
@@ -179,7 +187,6 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
                 write_dir = os.path.join(trace_dir, 'natural_movies'),
                 df = stim_frame_table,
                 data = aibo_data,
-                session_type = dataset.get_session_type(),
                 stimulus = stimulus
             )
 
@@ -189,7 +196,6 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
                 write_dir = os.path.join(trace_dir, stimulus),
                 df = stim_frame_table,
                 data = aibo_data,
-                session_type = dataset.get_session_type(),
             )
             
             
