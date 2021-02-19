@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from nemo.model.analysis.lca import (
     get_mean_activations,
     get_mean_sparsity,
-    view_complex_cell_strfs,
+    view_simple_cell_strfs,
     get_percent_neurons_active,
     plot_objective_probes,
     plot_adaptive_timescale_probes,
@@ -180,11 +180,12 @@ logging.basicConfig(
 
 if not args.no_features:
     logging.info('WRITING FEATURES')
-    view_complex_cell_strfs(
+    view_simple_cell_strfs(
         ckpt_dir = args.ckpt_dir,
-        write_fpath = os.path.join(args.save_dir, 'features.gif'),
+        save_dir = os.path.join(args.save_dir, 'Features'),
+        n_features_y = 8,
+        n_features_x = 24,
         weight_file_key = args.weight_fpath_key,
-        activity_fpath = args.activity_fpath,
         openpv_path = args.openpv_path
     )
 
