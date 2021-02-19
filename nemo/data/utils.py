@@ -6,7 +6,7 @@ import h5py
 import numpy as np
 
 
-def multiproc(func, iterator_keys, n_workers = 4, **kwargs):
+def multiproc(func, iterator_keys, n_workers = 4, return_list = False, **kwargs):
     '''
     A general function to use multiprocessing to perform other functions that do not return anything.
 
@@ -15,6 +15,8 @@ def multiproc(func, iterator_keys, n_workers = 4, **kwargs):
         iterator_keys (str): A list of keys in kwargs whose values are the lists to divide up
             among n_workers in separate calls to func.
         n_workers (int): The number of processes to use. Be careful with this.
+        return_list (bool): If True and a worker has a list of length 1, then it will keep the item
+            in the list. Otherwise, it will take the item outside of the list.
         kwargs: keyword arguments to func. The items specified by iterator_keys should be lists.
 
     Returns:
@@ -40,7 +42,7 @@ def multiproc(func, iterator_keys, n_workers = 4, **kwargs):
         for key in iterator_keys:
             kwarg_inputs[key] = kwarg_inputs[key][start_ind:end_ind]
 
-            if len(kwarg_inputs[key]) == 1:
+            if len(kwarg_inputs[key]) == 1 and not return_list:
                 kwarg_inputs[key] = kwarg_inputs[key][0]
 
         process = Process(target = func, kwargs = kwarg_inputs)
