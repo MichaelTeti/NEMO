@@ -128,23 +128,29 @@ probes:
 Below are some examples of the things the analysis script writes out.
 
 ### Model Features
-The analysis script writes a .gif of the model's features in ```save_dir```. For example, the features of the model trained here can be viewed below.   
+The analysis script writes a .gif of the model's features in ```save_dir```. For example, the features of the model trained here can be viewed below.  
+   
 ![features.gif](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_shared/figures/features.gif)  
 
 ### Inputs and Reconstructions
 We can also visualize the reconstruction performance of the model by viewing the inputs and reconstructions. The top row is the input. The second row is the reconstruction, and the third row is the difference between the two.   
+   
 ![inputs_and_recons.gif](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_shared/figures/inputs_and_recons.gif)   
 
 ### Model Activity
 Here, we can visualize the mean activations across spatial and batch dimensions for each neuron in the model. They are sorted from highest to lowest.   
+   
 ![mean_acts.png](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_shared/figures/mean_activations.png)   
    
 ### Objective Function
 The plot below shows the objective function during one of the runs.   
+   
 ![objective.png](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_shared/figures/minimum_energy.png)   
    
-We can also observe just the L2 reconstruction error over ther run. 
+We can also observe just the L2 reconstruction error over ther run.  
+   
 ![reconstruction.png](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_shared/figures/minimum_l2.png)   
    
 And finally the L1 sparsity penalty term over the run.   
+   
 ![sparsity.png](https://github.com/MichaelTeti/NEMO/blob/main/experiments/lca_dictionary_learning_shared/figures/minimum_firm_thresh.png)
