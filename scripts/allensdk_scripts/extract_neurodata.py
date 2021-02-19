@@ -175,7 +175,6 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
 
     # write out data by stimulus
     for stimulus in dataset.list_stimuli():
-
         # stim_frame_table tells you how to index the trace, run, pupil, 
         # etc. data
         stim_frame_table = dataset.get_stimulus_table(stimulus)
@@ -183,7 +182,6 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
 
         # writing traces, pupil coords, etc.
         if 'natural_movie' in stimulus:
-
             write_natural_movie_data(
                 write_dir = os.path.join(trace_dir, 'natural_movies'),
                 df = stim_frame_table,
@@ -192,7 +190,6 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
             )
 
         elif stimulus in ['natural_scenes', 'static_gratings']:
-
             write_static_image_data(
                 write_dir = os.path.join(trace_dir, stimulus),
                 df = stim_frame_table,
@@ -202,14 +199,12 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
             
         # writing the stimuli
         if stimulus == 'static_gratings':
-
             write_AIBO_static_grating_stimuli(
                 stim_table = stim_frame_table,
                 save_dir = os.path.join(stimuli_dir, stimulus)
             )
 
         elif 'natural' in stimulus:
-
             if stimulus not in os.listdir(stimuli_dir):
                 write_AIBO_natural_stimuli(
                     template = dataset.get_stimulus_template(stimulus),
@@ -219,10 +214,8 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
 
 
 def loop_datasets(datasets_by_cont, save_dir):
-
     for cont_of_datasets in datasets_by_cont:
         for dataset in cont_of_datasets:
-            
             logging.info('WRITING DATA FOR EXPERIMENT {}'.format(
                 dataset.get_metadata()['ophys_experiment_id']
             ))
@@ -280,7 +273,6 @@ def main(args):
 
 
     if not args.no_stim_or_trace_data:
-
         # keep datasets from same container together, bc this means that a single process will
         # loop through all datasets from a single container and we don't have to worry about 
         # writing to the same cell's .csv file for different datasets at the same time
@@ -300,7 +292,6 @@ def main(args):
 
 
     if not args.no_rfs:
-
         multiproc(
             func = write_rfs,
             iterator_keys = ['datasets'],
