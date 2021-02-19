@@ -10,6 +10,7 @@ from allensdk.brain_observatory.brain_observatory_exceptions import (
 from allensdk.brain_observatory.locally_sparse_noise import LocallySparseNoise
 import allensdk.brain_observatory.stimulus_info as si
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
+import cv2
 import h5py
 import numpy as np
 import pandas as pd
@@ -18,11 +19,11 @@ from progressbar import ProgressBar
 from nemo.data.io.image import write_AIBO_natural_stimuli, write_AIBO_static_grating_stimuli
 from nemo.data.preprocess.image import max_min_scale
 from nemo.data.preprocess.trace import normalize_traces
-from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
+from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind, multiproc
 
 
 
-def write_natural_movie_data(write_dir, df, data, session_type, stimulus):
+def write_natural_movie_data(write_dir, df, data, stimulus):
 
     '''
     Writes response and behavioral data to file for natural movie stimuli.
@@ -35,9 +36,10 @@ def write_natural_movie_data(write_dir, df, data, session_type, stimulus):
     df['pupil_y'] = data['pupil_y'][inds]
     df['pupil_size'] = data['pupil_size'][inds]
     df['run_speed'] = data['run_speed'][inds]
-    df['session_type'] = [session_type] * len(inds)
+    df['session_type'] = [data['session_type']] * len(inds)
     df['stimulus'] = [stimulus] * len(inds)
     df['dff_ts'] = data['dff_ts'][inds]
+    df['exp_id'] = [data['exp_id']] * len(inds)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = df.copy()
@@ -53,7 +55,7 @@ def write_natural_movie_data(write_dir, df, data, session_type, stimulus):
         )
 
 
-def write_static_image_data(write_dir, df, data, session_type):
+def write_static_image_data(write_dir, df, data):
 
     '''
     Writes response and behavioral data to file for static image data.
@@ -77,7 +79,8 @@ def write_static_image_data(write_dir, df, data, session_type):
     better_df['pupil_size'] = data['pupil_size'][inds]
     better_df['run_speed'] = data['run_speed'][inds]
     better_df['dff_ts'] = data['dff_ts'][inds]
-    better_df['session_type'] = [session_type] * len(inds)
+    better_df['session_type'] = [data['session_type']] * len(inds)
+    better_df['exp_id'] = [data['exp_id']] * len(inds)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = better_df.copy()
@@ -124,6 +127,12 @@ def get_AIBO_data(dataset):
     # get the cell IDs in the dataset 
     data['cell_ids'] = dataset.get_cell_specimen_ids()
 
+    # get exp_id
+    data['exp_id'] = dataset.get_metadata()['ophys_experiment_id']
+
+    # get session type 
+    data['session_type'] = dataset.get_session_type()
+
     # get df/f  for all cells in this experiment
     # after these lines, traces is of shape # acquisition frames x # cells
     dff_ts, dff = dataset.get_dff_traces(cell_specimen_ids = data['cell_ids'])
@@ -166,7 +175,6 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
 
     # write out data by stimulus
     for stimulus in dataset.list_stimuli():
-
         # stim_frame_table tells you how to index the trace, run, pupil, 
         # etc. data
         stim_frame_table = dataset.get_stimulus_table(stimulus)
@@ -174,35 +182,29 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
 
         # writing traces, pupil coords, etc.
         if 'natural_movie' in stimulus:
-
             write_natural_movie_data(
                 write_dir = os.path.join(trace_dir, 'natural_movies'),
                 df = stim_frame_table,
                 data = aibo_data,
-                session_type = dataset.get_session_type(),
                 stimulus = stimulus
             )
 
         elif stimulus in ['natural_scenes', 'static_gratings']:
-
             write_static_image_data(
                 write_dir = os.path.join(trace_dir, stimulus),
                 df = stim_frame_table,
                 data = aibo_data,
-                session_type = dataset.get_session_type(),
             )
             
             
         # writing the stimuli
         if stimulus == 'static_gratings':
-
             write_AIBO_static_grating_stimuli(
                 stim_table = stim_frame_table,
                 save_dir = os.path.join(stimuli_dir, stimulus)
             )
 
         elif 'natural' in stimulus:
-
             if stimulus not in os.listdir(stimuli_dir):
                 write_AIBO_natural_stimuli(
                     template = dataset.get_stimulus_template(stimulus),
@@ -211,53 +213,92 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
                 )
 
 
-def loop_exps(manifest_fpath, exp_dir, save_dir):
-    boc = BrainObservatoryCache(manifest_file = manifest_fpath)
-    exp_ids = [int(os.path.splitext(exp)[0]) for exp in os.listdir(exp_dir)]
+def loop_datasets(datasets_by_cont, save_dir):
+    for cont_of_datasets in datasets_by_cont:
+        for dataset in cont_of_datasets:
+            logging.info('WRITING DATA FOR EXPERIMENT {}'.format(
+                dataset.get_metadata()['ophys_experiment_id']
+            ))
+            write_exp_data(
+                dataset = dataset,
+                trace_dir = os.path.join(save_dir, 'trace_data'),
+                stimuli_dir = os.path.join(save_dir, 'stimuli')
+            )
 
-    for exp_id in ProgressBar()(exp_ids):
-        write_exp_data(
-            dataset = boc.get_ophys_experiment_data(exp_id),
-            trace_dir = os.path.join(save_dir, 'trace_data'),
-            stimuli_dir = os.path.join(save_dir, 'stimuli')
-        )
 
-
-def write_rfs(manifest_fpath, exp_dir, write_dir):
+def write_rfs(datasets, write_dir):
     '''
     https://allensdk.readthedocs.io/en/latest/_static/examples/nb/brain_observatory_analysis.html
     '''
-
-    write_dir = os.path.join(write_dir, 'receptive_fields')
-    write_fpath = os.path.join(write_dir, 'lsn_rfs.h5')
-    os.makedirs(write_dir, exist_ok = True)
     
-    boc = BrainObservatoryCache(manifest_file = manifest_fpath)
-    exps = os.listdir(exp_dir)
-    exp_ids = [int(os.path.splitext(exp)[0]) for exp in exps]
-    
-    for exp_id in ProgressBar()(exp_ids):
-        dataset = boc.get_ophys_experiment_data(exp_id)
+    for dataset in datasets:
         cell_ids = dataset.get_cell_specimen_ids()
+        session_type = dataset.get_session_type()
         
         if 'locally_sparse_noise' in dataset.list_stimuli():
+            logging.info('WRITING RECEPTIVE FIELDS FOR EXPERIMENT {}'.format(
+                dataset.get_metadata()['ophys_experiment_id'])
+            )
+
+            on_dir = os.path.join(write_dir, 'receptive_fields', 'on', session_type)
+            off_dir = os.path.join(write_dir, 'receptive_fields', 'off', session_type)
+            os.makedirs(on_dir, exist_ok = True)
+            os.makedirs(off_dir, exist_ok = True)
+
             lsn = LocallySparseNoise(dataset)
             rfs = lsn.receptive_field
             rfs[np.isnan(rfs)] = 0
             
             for ind, cell_id in enumerate(cell_ids):
                 rf = rfs[:, :, ind, :]
+                rf = max_min_scale(rf) * 255
                 on, off = rf.transpose([2, 0, 1])
+                fname = str(cell_id) + '.png'
 
-                on = max_min_scale(on) * 255
-                off = max_min_scale(off) * 255
-                
-                with h5py.File(write_fpath, 'a') as h5file:
-                    if str(cell_id) not in list(h5file.keys()):
-                        h5file.create_dataset(
-                            str(cell_id), 
-                            data = np.concatenate((on[None, ...], off[None, ...]), 0)
-                        )
+                cv2.imwrite(os.path.join(on_dir, fname), on)
+                cv2.imwrite(os.path.join(off_dir, fname), off)
+
+
+def main(args):
+
+    logging.basicConfig(
+        format='%(asctime)s -- %(message)s', 
+        datefmt='%m/%d/%Y %I:%M:%S %p', 
+        level = logging.INFO
+    )
+    
+    boc = BrainObservatoryCache(manifest_file = args.manifest_fpath)
+    exp_ids = [int(os.path.splitext(exp)[0]) for exp in os.listdir(args.exp_dir)]
+    datasets = [boc.get_ophys_experiment_data(exp_id) for exp_id in exp_ids]
+
+
+    if not args.no_stim_or_trace_data:
+        # keep datasets from same container together, bc this means that a single process will
+        # loop through all datasets from a single container and we don't have to worry about 
+        # writing to the same cell's .csv file for different datasets at the same time
+        cont_ids = list(set([dataset.get_metadata()['experiment_container_id'] for dataset in datasets]))
+        datasets_by_cont = [
+            [dataset for dataset in datasets if dataset.get_metadata()['experiment_container_id'] == cont_id] 
+            for cont_id in cont_ids
+        ]
+
+        multiproc(
+            func = loop_datasets,
+            iterator_keys = ['datasets_by_cont'],
+            n_workers = args.n_workers,
+            datasets_by_cont = datasets_by_cont,
+            save_dir = args.save_dir
+        )
+
+
+    if not args.no_rfs:
+        multiproc(
+            func = write_rfs,
+            iterator_keys = ['datasets'],
+            n_workers = args.n_workers,
+            datasets = datasets,
+            write_dir = args.save_dir
+        )
 
 
 
@@ -288,28 +329,12 @@ if __name__ == '__main__':
         action = 'store_true',
         help = 'If specified, will not write out receptive fields.'
     )
+    parser.add_argument(
+        '--n_workers',
+        type = int,
+        default = 4,
+        help = 'Number of datasets to write in parallel.'
+    )
     args = parser.parse_args()
 
-
-    logging.basicConfig(
-        format='%(asctime)s -- %(message)s', 
-        datefmt='%m/%d/%Y %I:%M:%S %p', 
-        level = logging.INFO
-    )
-
-
-    if not args.no_stim_or_trace_data:
-        logging.info('Writing stimuli, traces, and behavioral data')
-        loop_exps(
-            manifest_fpath = args.manifest_fpath,
-            exp_dir = args.exp_dir,
-            save_dir = args.save_dir
-        )
-
-    if not args.no_rfs:
-        logging.info('Writing receptive fields')
-        write_rfs(
-            manifest_fpath = args.manifest_fpath,
-            exp_dir = args.exp_dir, 
-            write_dir = args.save_dir
-        )
+    main(args)
