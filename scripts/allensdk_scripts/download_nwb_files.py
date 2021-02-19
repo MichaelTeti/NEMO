@@ -146,7 +146,7 @@ multiproc(
     func = download_experiment_data,
     iterator_keys = ['ids'],
     n_workers = args.n_workers,
-    return_list = True,
+    keep_list = True,
     ids = exp_ids,
     boc = boc
 )
