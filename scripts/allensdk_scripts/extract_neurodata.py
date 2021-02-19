@@ -286,6 +286,7 @@ def main(args):
             func = loop_datasets,
             iterator_keys = ['datasets_by_cont'],
             n_workers = args.n_workers,
+            keep_list = True,
             datasets_by_cont = datasets_by_cont,
             save_dir = args.save_dir
         )
@@ -296,6 +297,7 @@ def main(args):
             func = write_rfs,
             iterator_keys = ['datasets'],
             n_workers = args.n_workers,
+            keep_list = True,
             datasets = datasets,
             write_dir = args.save_dir
         )
