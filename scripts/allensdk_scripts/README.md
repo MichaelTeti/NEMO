@@ -94,6 +94,7 @@ The script takes in the following arguments:
 ```
 python extract_neurodata.py --help
 usage: extract_neurodata.py [-h] [--no_stim_or_trace_data] [--no_rfs]
+                            [--n_workers N_WORKERS]
                             exp_dir manifest_fpath save_dir
 
 positional arguments:
@@ -107,6 +108,8 @@ optional arguments:
                         If specified, will not write out stimuli or trace
                         data.
   --no_rfs              If specified, will not write out receptive fields.
+  --n_workers N_WORKERS
+                        Number of datasets to write in parallel.
 ```
 
 To extract the data downloaded in the previous step, we use the following command:
@@ -115,8 +118,10 @@ To extract the data downloaded in the previous step, we use the following comman
 python extract_neurodata.py \
     ../../data/AIBO/VISp/L4/ophys_experiment_data/ \
     ../../data/AIBO/VISp/L4/manifest.json \
-    ../../data/AIBO/VISp/L4/ExtractedData/
+    ../../data/AIBO/VISp/L4/ExtractedData/ \
+    --n_workers 20
 ```
 
-The first three arguments are required. The first one is the path to the directory of .nwb dataset files which were downloaded. The second is the path to the manifest.json file. The final argument is the folder where we will write all the extracted data. Inside of this folder, the stimuli templates will be written in a subdirectory called stimuli, whereas the behavioral / trace data will be written in a subdirectory called trace_data, and the receptive fields will be written in a subdirectory called receptive_fields. The last two arguments allow you to forego writing either the receptive fields or stimuli and behavioral / df/f data. For each stimulus type (i.e. natural movies, natural scenes, static gratings) / cell ID combination, there will be a single .csv file written with the cell's behavioral and trace data. The stimuli frames will be warped as they were presented on the monitor to the mouse (information on this can be found [here](http://help.brain-map.org/download/attachments/10616846/VisualCoding_VisualStimuli.pdf?version=3&modificationDate=1497305590322&api=v2)), and will be written as 1920 x 1200 pixel images. Below is an example of the warping that is done to the stimuli with a frame from the natural scenes stimulus.   
+The first three arguments are required. The first one is the path to the directory of .nwb dataset files which were downloaded. The second is the path to the manifest.json file. The final argument is the folder where we will write all the extracted data. Inside of this folder, the stimuli templates will be written in a subdirectory called stimuli, whereas the behavioral / trace data will be written in a subdirectory called trace_data, and the receptive fields will be written in a subdirectory called receptive_fields. The last two arguments allow you to forego writing either the receptive fields or stimuli and behavioral / df/f data. The ```--n_workers``` argument specifies how many datasets to write in parallel, and depends on your system's specifications. For each stimulus type (i.e. natural movies, natural scenes, static gratings) / cell ID combination, there will be a single .csv file written with the cell's behavioral and trace data. The stimuli frames will be warped as they were presented on the monitor to the mouse (information on this can be found [here](http://help.brain-map.org/download/attachments/10616846/VisualCoding_VisualStimuli.pdf?version=3&modificationDate=1497305590322&api=v2)), and will be written as 1920 x 1200 pixel images. Below is an example of the warping that is done to the stimuli with a frame from the natural scenes stimulus.  
+   
 ![](https://github.com/MichaelTeti/NEMO/blob/main/scripts/allensdk_scripts/figures/082.png)
