@@ -24,14 +24,14 @@ local dictionarySize            = 8*24*256;
 local displayMultiple           = 1;
 local displayPeriod             = 3000;
 local errorLayerPhase           = 2;
-local growthFactor              = 0.0075;
+local growthFactor              = 0.005;
 local initFromCkpt              = false;
 local initFromCkptPath          = nil;
 local initFromFile              = true;
 local initFromFilePath          = "NonsharedWeights";
 local initFromFilePrefix        = "S1";
 local inputLayerPhase           = 1;
-local learningRate              = 0.05;
+local learningRate              = 0.01;
 local modelType                 = "LCA";
 local modelLayerPhase           = 3;
 local momentumTau               = 100;
@@ -51,7 +51,7 @@ local temporalPatchSize         = 9;
 local threshType                = "soft";
 local timeConstantTau           = 3000;
 local useGPU                    = true;
-local VThresh                   = 0.1;
+local VThresh                   = 0.125;
 
 
 --Probes and Checkpointing
