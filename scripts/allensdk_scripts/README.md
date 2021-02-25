@@ -50,7 +50,7 @@ optional arguments:
 For this experiment the following command was used to download experiments with V1 simple cell data:  
 ```
 python download_nwb_files.py \
-    --manifest_save_dir ../../data/AIBO/VISp/L4 \
+    --manifest_save_dir ../../data/AIBO/VISp/L4/Exc \
     --n_workers 4 \
     --cre_lines \
         "Rorb-IRES2-Cre" \
@@ -116,9 +116,9 @@ To extract the data downloaded in the previous step, we use the following comman
 
 ```
 python extract_neurodata.py \
-    ../../data/AIBO/VISp/L4/ophys_experiment_data/ \
-    ../../data/AIBO/VISp/L4/manifest.json \
-    ../../data/AIBO/VISp/L4/ExtractedData/ \
+    ../../data/AIBO/VISp/L4/Exc/ophys_experiment_data/ \
+    ../../data/AIBO/VISp/L4/Exc/manifest.json \
+    ../../data/AIBO/VISp/L4/Exc/ExtractedData/ \
     --n_workers 20
 ```
 
