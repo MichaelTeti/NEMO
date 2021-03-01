@@ -22,7 +22,7 @@ def lifetime_sparsity(feat_maps, eps = 1e-12):
     sum_square = np.sum(feat_maps, 0) ** 2
     square_sum = np.sum(feat_maps ** 2, 0)
 
-    return (1 - (1 / B) * sum_square / (square_sum + eps)) / (1 - 1 / B)
+    return (1 - (1 / B) * (sum_square + eps) / (square_sum + eps)) / (1 - 1 / B)
 
 
 def population_sparsity(feat_maps, eps = 1e-12):
@@ -46,4 +46,4 @@ def population_sparsity(feat_maps, eps = 1e-12):
     sum_square = np.sum(feat_maps, 1) ** 2 
     square_sum = np.sum(feat_maps ** 2, 1)
 
-    return (1 - (1 / n_neurons) * sum_square / (square_sum + eps)) / (1 - 1 / n_neurons)
+    return (1 - (1 / n_neurons) * (sum_square + eps) / (square_sum + eps)) / (1 - 1 / n_neurons)
