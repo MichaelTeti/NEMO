@@ -3,16 +3,20 @@ import logging
 import os
 
 import matplotlib.pyplot as plt
+import seaborn
 
 from nemo.model.analysis.lca import (
     get_mean_activations,
-    get_mean_sparsity,
     view_complex_cell_strfs,
     get_percent_neurons_active,
     plot_objective_probes,
     plot_adaptive_timescale_probes,
     view_reconstructions,
     read_activity_file
+)
+from nemo.model.analysis.metrics import (
+    lifetime_sparsity, 
+    population_sparsity
 )
 
 
@@ -98,18 +102,6 @@ mean_act_args.add_argument(
     required = True,
     type = str,
     help = 'The path to the <model_layer_name>_A.pvp file.'
-)
-
-# plotting the number of neurons active at once
-n_active_args = parser.add_argument_group(
-    'number active',
-    description = 'The arguments for the plot_num_neurons_active function.'
-)
-n_active_args.add_argument(
-    '--sparse_activity_fpath',
-    required = True,
-    type = str,
-    help = 'Path to the <model_layer_name>.pvp file.'
 )
 
 # probe arguments 
@@ -244,26 +236,44 @@ if not args.no_activity:
     plt.errorbar(x = list(range(mean.size)), y = mean, yerr = se)
     plt.xlabel('Neuron Index')
     plt.ylabel('Mean Activation +/- 1 SE')
-    plt.savefig(os.path.join(args.save_dir, 'mean_activations.png'), bbox_inches = 'tight')
+    plt.savefig(os.path.join(args.save_dir, 'mean_activations_line.png'), bbox_inches = 'tight')
     plt.close()
 
-    mean_sparsity, _ = get_mean_sparsity(args.activity_fpath, openpv_path = args.openpv_path)
-    plt.plot(mean_sparsity)
+    seaborn.boxplot(y = mean)
+    plt.ylabel('Mean Activation')
+    plt.savefig(os.path.join(args.save_dir, 'mean_activations_box.png'), bbox_inches = 'tight')
+    plt.close()
+
+
+    acts = read_activity_file(args.activity_fpath, openpv_path = args.openpv_path)
+    
+    logging.info('PLOTTING LIFETIME SPARSITY')
+    lifetime = lifetime_sparsity(acts)
+    lifetime.sort()
+
+    plt.plot(lifetime[::-1])
     plt.xlabel('Neuron Index')
-    plt.ylabel('Mean Sparsity')
-    plt.savefig(os.path.join(args.save_dir, 'mean_sparsity.png'), bbox_inches = 'tight')
+    plt.ylabel('Lifetime Sparsity')
+    plt.savefig(os.path.join(args.save_dir, 'lifetime_sparsity_line.png'), bbox_inches = 'tight')
     plt.close()
 
-    _, feat_map_h, feat_map_w, n_neurons = read_activity_file(args.activity_fpath).shape
-    mean_active, se_active = get_percent_neurons_active(
-        args.sparse_activity_fpath, 
-        n_neurons,
-        feat_map_h,
-        feat_map_w,
-        openpv_path = args.openpv_path
-    )
-    plt.errorbar(x = list(range(mean_active.size)), y = mean_active, yerr = se_active)
-    plt.xlabel('Display Period Number')
-    plt.ylabel('Mean Percent Active Over Batch +/- 1 SE')
-    plt.savefig(os.path.join(args.save_dir, 'mean_percent_active.png'), bbox_inches = 'tight')
+    seaborn.boxplot(y = lifetime)
+    plt.ylabel('Lifetime Sparsity')
+    plt.savefig(os.path.join(args.save_dir, 'lifetime_sparsity_box.png'), bbox_inches = 'tight')
+    plt.close()
+
+
+    logging.info('PLOTTING POPULATION SPARSITY')
+    population = population_sparsity(acts)
+    population.sort()
+
+    plt.plot(population[::-1])
+    plt.xlabel('Stimulus Index')
+    plt.ylabel('Population Sparsity')
+    plt.savefig(os.path.join(args.save_dir, 'population_sparsity_line.png'), bbox_inches = 'tight')
+    plt.close()
+
+    seaborn.boxplot(y = population)
+    plt.ylabel('Population Sparsity')
+    plt.savefig(os.path.join(args.save_dir, 'population_sparsity_box.png'), bbox_inches = 'tight')
     plt.close()
