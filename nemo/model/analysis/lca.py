@@ -12,6 +12,7 @@ from torchvision.utils import make_grid
 
 from nemo.data.preprocess.image import max_min_scale
 from nemo.data.utils import read_csv
+from nemo.model.openpv_utils import read_activity_file
 
 
 
