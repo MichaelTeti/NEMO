@@ -15,7 +15,7 @@ import numpy as np
 from nemo.data.utils import (
     add_string_to_fpaths,
     change_file_exts,
-    get_fpaths_in_dir,
+    search_files,
     monitor_coord_to_image_ind,
     multiproc,
     read_h5_as_array,
@@ -130,7 +130,7 @@ class TestDataUtils(unittest.TestCase):
             self.assertEqual(ext_png, '.png')
 
 
-    def test_get_fpaths_in_dir(self):
+    def test_search_files(self):
         imgs = np.zeros([10 * 10 * 10, 32, 64])
 
         with TemporaryDirectory() as tmp_dir:
@@ -145,13 +145,13 @@ class TestDataUtils(unittest.TestCase):
                 os.makedirs(os.path.split(fpath)[0], exist_ok = True)
                 cv2.imwrite(fpath, img)
 
-            fpaths_found = get_fpaths_in_dir(tmp_dir)
+            fpaths_found = search_files(tmp_dir)
             
             for fpath_found in fpaths_found:
                 self.assertTrue(fpath_found in fpaths)
 
 
-    def test_get_fpaths_in_dir_key(self):
+    def test_search_files_key(self):
         with TemporaryDirectory() as tmp_dir:
 
             n_find = 0
@@ -170,7 +170,7 @@ class TestDataUtils(unittest.TestCase):
                     os.makedirs(os.path.split(fpath)[0], exist_ok = True)
                     cv2.imwrite(fpath, np.random.randn(32, 64))
 
-            fpaths_found = get_fpaths_in_dir(tmp_dir, key = 'find')
+            fpaths_found = search_files(tmp_dir, key = 'find')
             
             for fpath_found in fpaths_found:
                 self.assertTrue(fpath_found in fpaths)

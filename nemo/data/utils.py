@@ -75,14 +75,14 @@ def change_file_exts(fpaths, desired_ext = '.png'):
     return fpaths_new
 
 
-def get_fpaths_in_dir(dir, key = None):
+def search_files(dir, key = None):
     '''
     Walk down a directory structure and return a list of all fpaths.
 
     Args:
         dir (str): The directory to start at and traverse down.
         key (str): An optional key. If given, will only return fpaths if key is
-                   either in one of the parent dirs or the fname itself.
+                   somewhere in the full path. 
 
     Returns:
         fpaths (list): List of fpaths.
