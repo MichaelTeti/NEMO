@@ -50,8 +50,7 @@ def get_mean_activations(model_activity_fpath, openpv_path = '/home/mteti/OpenPV
     return sorted_mean_acts, sorted_se_acts, sorted_inds
 
 
-def write_complex_cell_strfs(weight_tensors, write_fpath = 'features.gif', sort_inds = None, 
-                            openpv_path = '/home/mteti/OpenPV/mlab/util'):
+def write_complex_cell_strfs(weight_tensors, write_fpath = 'features.gif', sort_inds = None):
     '''
     View complex cell (spatially-shared weights) strfs in a grid.
     
@@ -106,8 +105,7 @@ def write_complex_cell_strfs(weight_tensors, write_fpath = 'features.gif', sort_
     )
     
     
-def view_simple_cell_strfs(ckpt_dir, save_dir, n_features_y, n_features_x, 
-        weight_file_key = None, openpv_path = '/home/mteti/OpenPV/mlab/util'):
+def write_simple_cell_strfs(weight_tensors, save_dir):
     '''
     View simple cell (no spatial sharing of weights) strfs in a grid.
     
@@ -133,32 +131,14 @@ def view_simple_cell_strfs(ckpt_dir, save_dir, n_features_y, n_features_x,
     # make sure save_dir exists or create it
     os.makedirs(save_dir, exist_ok = True)
 
-    # add OpenPV matlab utility directory to octave path
-    octave.addpath(openpv_path)
+    n_frames = len(weight_tensors)
 
-    # get the weight files
-    if weight_file_key:
-        weight_fpaths = glob(os.path.join(ckpt_dir, weight_file_key))
-    else:
-        weight_fpaths = glob(os.path.join(ckpt_dir, '*_W.pvp'))
+    for frame_num, weights in enumerate(weight_tensors): 
+        w_y, w_x, w_in, n_neurons, n_features_y, n_features_x = weights.shape
 
-    weight_fpaths.sort()
-    n_frames = len(weight_fpaths)
-
-    for frame_num, weight_fpath in enumerate(weight_fpaths):
-        # read in the features and get the shape of each dimension 
-        weights = octave.readpvpfile(weight_fpath)[0]['values'][0]
-        w_x, w_y, w_in, w_out = weights.shape
-        n_feats = w_out // n_features_x // n_features_y
-        
-        # reshape to the original shape of the unshared weight tensor 
-        # and reverse the x and y dims for image writing
-        weights = weights.reshape([w_x, w_y, w_in, n_feats, n_features_x, n_features_y])
-        weights = weights.transpose([1, 0, 2, 3, 5, 4]) 
-        
-        for feat_num in range(n_feats):
+        for neuron_num in range(n_neurons):
             # reshape to use make_grid due to python ordering
-            weights_feat = weights[:, :, :, feat_num, :, :]
+            weights_feat = weights[:, :, :, neuron_num, :, :]
             weights_feat = weights_feat.reshape([w_y, w_x, w_in, -1])
             weights_feat = weights_feat.transpose([3, 2, 0, 1])
             
@@ -173,10 +153,10 @@ def view_simple_cell_strfs(ckpt_dir, save_dir, n_features_y, n_features_x,
             grid = grid.numpy().transpose([1, 2, 0])
             
             # aggregate grids in grid (and make placeholder for grids if first frame)
-            if frame_num == 0 and feat_num == 0:
-                grids = np.zeros([n_feats, n_frames] + list(grid.shape))
+            if frame_num == 0 and neuron_num == 0:
+                grids = np.zeros([n_neurons, n_frames] + list(grid.shape))
                 
-            grids[feat_num, frame_num] = grid
+            grids[neuron_num, frame_num] = grid
             
     # scale all values to [0, 255]
     grids = np.uint8(max_min_scale(grids) * 255)
@@ -186,10 +166,10 @@ def view_simple_cell_strfs(ckpt_dir, save_dir, n_features_y, n_features_x,
     grids[:, :, :, ::w_x, :] = 0.0
     
     # save the grids per feature
-    for feat_num in range(n_feats):
+    for neuron_num in range(n_neurons):
         imageio.mimwrite(
-           os.path.join(save_dir, 'feature{}.gif'.format(feat_num)),
-           [grids[feat_num, frame_num] for frame_num in range(n_frames)]
+           os.path.join(save_dir, 'feature{}.gif'.format(neuron_num)),
+           [grids[neuron_num, frame_num] for frame_num in range(n_frames)]
         )
         
 

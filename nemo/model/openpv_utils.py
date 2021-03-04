@@ -57,3 +57,23 @@ def read_complex_cell_weight_files(fpaths, openpv_path = '/home/mteti/OpenPV/mla
         weights_agg.append(weights)
 
     return weights_agg
+
+
+def read_simple_cell_weight_files(fpaths, n_features_x, n_features_y, 
+                                  openpv_path = '/home/mteti/OpenPV/mlab/util'):
+
+    octave.addpath(openpv_path)
+
+    weights_agg = []
+    for fpath in fpaths:
+        weights = octave.readpvpfile(fpath)[0]['values'][0]
+        w_x, w_y, w_in, w_out = weights.shape
+        n_neurons = w_out // n_features_x // n_features_y
+        
+        # reshape to the original shape of the unshared weight tensor 
+        # and reverse the x and y dims for image writing
+        weights = weights.reshape([w_x, w_y, w_in, n_neurons, n_features_x, n_features_y])
+        weights = weights.transpose([1, 0, 2, 3, 5, 4])
+        weights_agg.append(weights)
+
+    return weights_agg

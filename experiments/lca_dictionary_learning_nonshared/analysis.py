@@ -7,16 +7,20 @@ import seaborn
 
 from nemo.model.analysis.lca import (
     get_mean_activations,
-    view_simple_cell_strfs,
+    write_simple_cell_strfs,
     get_percent_neurons_active,
     plot_objective_probes,
     plot_adaptive_timescale_probes,
-    view_reconstructions,
-    read_activity_file
+    view_reconstructions
 )
 from nemo.model.analysis.metrics import (
     lifetime_sparsity, 
     population_sparsity
+)
+from nemo.model.openpv_utils import (
+    get_pvp_weight_fpaths,
+    read_activity_file,
+    read_simple_cell_weight_files
 )
 
 
@@ -67,9 +71,22 @@ feat_args = parser.add_argument_group(
 feat_args.add_argument(
     '--weight_fpath_key',
     type = str,
+    default = '*_W.pvp',
     help = 'A key to help find the desired _W.pvp files in the ckpt \
         directory, since there may be multiple in the same one for \
         some models.'
+)
+feat_args.add_argument(
+    '--n_features_x',
+    type = int,
+    default = 24,
+    help = 'Number of features across x-dim in a grid of simple cells.'
+)
+feat_args.add_argument(
+    '--n_features_y',
+    type = int,
+    default = 8,
+    help = 'Number of features across y-dim in a grid of simple cells.'
 )
 
 # visualize reconstructions
@@ -172,13 +189,16 @@ logging.basicConfig(
 
 if not args.no_features:
     logging.info('WRITING FEATURES')
-    view_simple_cell_strfs(
-        ckpt_dir = args.ckpt_dir,
-        save_dir = os.path.join(args.save_dir, 'Features'),
-        n_features_y = 8,
-        n_features_x = 24,
-        weight_file_key = args.weight_fpath_key,
+    weight_fpaths = get_pvp_weight_fpaths(args.ckpt_dir, fname_key = args.weight_fpath_key)
+    weight_tensors = read_simple_cell_weight_files(
+        fpaths = weight_fpaths,
+        n_features_x = args.n_features_x,
+        n_features_y = args.n_features_y,
         openpv_path = args.openpv_path
+    )
+    write_simple_cell_strfs(
+        weight_tensors = weight_tensors,
+        save_dir = os.path.join(args.save_dir, 'Features')
     )
 
 if not args.no_recons:
