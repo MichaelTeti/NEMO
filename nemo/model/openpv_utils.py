@@ -5,12 +5,6 @@ import numpy as np
 from oct2py import octave
 
 
-def get_pvp_weight_fpaths(ckpt_dir, fname_key = '*_W.pvp'):
-    fpaths = glob(os.path.join(ckpt_dir, fname_key))
-    fpaths.sort()
-
-    return fpaths
-
 
 def read_activity_file(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/mlab/util'):
     '''
