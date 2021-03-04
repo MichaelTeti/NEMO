@@ -182,6 +182,7 @@ if not args.no_features:
     _, _, sorted_inds_by_act = get_mean_activations(args.activity_fpath, openpv_path = args.openpv_path)
     write_complex_cell_strfs(
         weight_tensors = weight_tensors,
+        write_fpath = os.path.join(args.save_dir, 'features.gif'),
         sort_inds = sorted_inds_by_act,
         openpv_path = args.openpv_path
     )
