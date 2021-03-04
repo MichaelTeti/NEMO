@@ -18,7 +18,7 @@ from nemo.model.analysis.metrics import (
     population_sparsity
 )
 from nemo.model.openpv_utils import (
-    get_pvp_weight_fpaths,
+    get_fpaths_in_dir,
     read_activity_file,
     read_simple_cell_weight_files
 )
@@ -189,7 +189,7 @@ logging.basicConfig(
 
 if not args.no_features:
     logging.info('WRITING FEATURES')
-    weight_fpaths = get_pvp_weight_fpaths(args.ckpt_dir, fname_key = args.weight_fpath_key)
+    weight_fpaths = get_fpaths_in_dir(args.ckpt_dir, fname_key = args.weight_fpath_key)
     weight_tensors = read_simple_cell_weight_files(
         fpaths = weight_fpaths,
         n_features_x = args.n_features_x,

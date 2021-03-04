@@ -19,7 +19,7 @@ from nemo.model.analysis.metrics import (
 )
 from nemo.model.openpv_utils import (
     read_activity_file,
-    get_pvp_weight_fpaths,
+    get_fpaths_in_dir,
     read_complex_cell_weight_files
 )
 
@@ -177,7 +177,7 @@ logging.basicConfig(
 
 if not args.no_features:
     logging.info('WRITING FEATURES')
-    weight_fpaths = get_pvp_weight_fpaths(args.ckpt_dir, fname_key = args.weight_fpath_key)
+    weight_fpaths = get_fpaths_in_dir(args.ckpt_dir, fname_key = args.weight_fpath_key)
     weight_tensors = read_complex_cell_weight_files(weight_fpaths, openpv_path = args.openpv_path)
     _, _, sorted_inds_by_act = get_mean_activations(args.activity_fpath, openpv_path = args.openpv_path)
     write_complex_cell_strfs(
