@@ -46,6 +46,17 @@ def read_activity_file(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/m
 
 
 def read_complex_cell_weight_files(fpaths, openpv_path = '/home/mteti/OpenPV/mlab/util'):
+    '''
+    Reads in .pvp shared weights files with convolutional features. 
+
+    Args:
+        fpaths (list): List of file paths corresponding to the .pvp weight files to read.
+        openpv_path (str): Path to */OpenPV/mlab/util. 
+
+    Returns: 
+        weights_agg (list): List of len(fpaths) arrays of shape n_neurons x in_c x kh x kw.
+    '''
+
     octave.addpath(openpv_path)
 
     weights_agg = []
@@ -61,6 +72,20 @@ def read_complex_cell_weight_files(fpaths, openpv_path = '/home/mteti/OpenPV/mla
 
 def read_simple_cell_weight_files(fpaths, n_features_x, n_features_y, 
                                   openpv_path = '/home/mteti/OpenPV/mlab/util'):
+    '''
+    Reads in .pvp shared weight files, where the features are the same size as the inputs,
+    and stride_x and stride_y equal the input width and height, respectively. 
+
+    Args:
+        fpaths (list): List of file paths corresponding to the .pvp weight files to read.
+        n_features_x (int): Number of simple cell features to display along grid width.
+        n_features_y (int): Number of simple cell features to display down grid height. 
+        openpv_path (str): Path to */OpenPV/mlab/util. 
+
+    Returns:
+        weights_agg (list): List of len(fpaths) arrays of shape kh x kw x in_c x n_neurons x 
+            n_features_y x n_features_x. 
+    '''
 
     octave.addpath(openpv_path)
 
