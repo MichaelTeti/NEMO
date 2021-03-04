@@ -14,38 +14,6 @@ from nemo.data.preprocess.image import max_min_scale
 from nemo.data.utils import read_csv
 
 
-def read_activity_file(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/mlab/util'):
-    '''
-    Read in the <model_layer_name>_A.pvp file containing the activations / feature maps of each neuron.
-    
-    Args:
-        model_activity_fpath (str): Path to the <model_layer_name>_A.pvp where the
-            activations of each neuron are contained in.
-        openpv_path (str): Path to the openpv matlab utility directory (*/OpenPV/mlab/util).
-        
-    Returns:
-        acts (np.ndarray): A B x H x W x C array of feature maps. 
-    '''
-    
-    # add OpenPV matlab utility dir to octave path
-    octave.addpath(openpv_path)
-    
-    # Read in the activity file and get the number of batch samples
-    # Should be a list of length batch size, where each item in the list is an array 
-    # of shape (input_width / stride x) x (input height / stride y) x # Neurons
-    # with the activations for that particular batch sample
-    act_data = octave.readpvpfile(model_activity_fpath)
-    n_batch = len(act_data)
-    
-    # concatenate across batch samples to produce a single array of shape 
-    # batch size x (input width / stride x) x (input height / stride y) x # Neurons
-    acts = np.concatenate([act_data[b]['values'][None, ...] for b in range(n_batch)], 0)
-    
-    # transpose the 2nd and third dimensions to make it B x H x W x # Neurons
-    acts = acts.transpose([0, 2, 1, 3])
-    
-    return acts
-
 
 def get_mean_activations(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/mlab/util'):
     '''
@@ -81,59 +49,31 @@ def get_mean_activations(model_activity_fpath, openpv_path = '/home/mteti/OpenPV
     return sorted_mean_acts, sorted_se_acts, sorted_inds
 
 
-def view_complex_cell_strfs(ckpt_dir, write_fpath, weight_file_key = None, 
-        activity_fpath = None, openpv_path = '/home/mteti/OpenPV/mlab/util'):
+def write_complex_cell_strfs(weight_tensors, write_fpath = 'features.gif', sort_inds = None, 
+                            openpv_path = '/home/mteti/OpenPV/mlab/util'):
     '''
     View complex cell (spatially-shared weights) strfs in a grid.
     
     Args:
-        ckpt_dir (str): The path to the Petavision checkpoint directory containing
-            the *_W.pvp files with the weights in them.
+        weight_tensors (list): A list of np.ndarrays of shape out_c x in_c x kh x kw.
         write_fpath (str): The file path to save the resulting .gif as. The parent
             directory should already exist.
-        weight_file_key (str): A str that helps this function find and isolate the 
-            weight files in the ckpt_dir without including other files (since there
-            will be multiple weight files, one for each input video frame, and
-            depending on your model, there might be multiple connection types that end
-            in _W.pvp. Keeping this argument set to None will usually work for most 
-            one-layer sparse coding models.
-        activity_fpath (str): The path to the <model_layer_name>_A.pvp file in the 
-            ckpt_dir. If this is given, the features will be sorted descending based
-            on their mean activity spatially and across the batch samples. 
+        sort_inds (list): List of indices of length out_c to sort the features by in the grid.
         openpv_path (str): Path to the openpv matlab utility directory (*/OpenPV/mlab/util).
         
     Returns:
         None
     '''
     
-    # add OpenPV matlab utility dir to octave path
-    octave.addpath(openpv_path)
-    
-    # get the paths to all of the weight files and sort ascending based on 
-    # video frame number 
-    if weight_file_key:
-        weight_fpaths = glob(os.path.join(ckpt_dir, weight_file_key))
-    else:
-        weight_fpaths = glob(os.path.join(ckpt_dir, '*_W.pvp'))
-        
-    weight_fpaths.sort()
-    n_frames = len(weight_fpaths) # number of video frames in the input
-    
-    # get descending indices each neuron's activation over the last batch 
-    if activity_fpath:
-        _, _, inds = get_mean_activations(activity_fpath, openpv_path = openpv_path)
+    n_frames = len(weight_tensors) # number of video frames in the input
         
     # loop through each weight file, extract the weights, and aggregate them
-    for frame_num, weight_fpath in enumerate(weight_fpaths):
-        # original shape: patch width x patch height x in channels x out channels
-        # reshape to: out_channels x in channels x patch height x patch width
-        weights = octave.readpvpfile(weight_fpath)[0]['values'][0]
-        weights = weights.transpose([3, 2, 1, 0])
+    for frame_num, weights in enumerate(weight_tensors):
         n_neurons, in_c, patch_height, patch_width = weights.shape
         
         # sort the features based on the activation indices if given
-        if activity_fpath:
-            weights = weights[inds]
+        if sort_inds:
+            weights = weights[sort_inds]
         
         # make the grid for the features corresponding to this video frame
         grid = make_grid(
