@@ -5,6 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import seaborn
 
+from nemo.data.utils import get_fpaths_in_dir
 from nemo.model.analysis.lca import (
     get_mean_activations,
     write_simple_cell_strfs,
@@ -18,7 +19,6 @@ from nemo.model.analysis.metrics import (
     population_sparsity
 )
 from nemo.model.openpv_utils import (
-    get_fpaths_in_dir,
     read_activity_file,
     read_simple_cell_weight_files
 )

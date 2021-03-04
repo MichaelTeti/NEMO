@@ -5,6 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import seaborn
 
+from nemo.data.utils import get_fpaths_in_dir
 from nemo.model.analysis.lca import (
     get_mean_activations,
     write_complex_cell_strfs,
@@ -19,7 +20,6 @@ from nemo.model.analysis.metrics import (
 )
 from nemo.model.openpv_utils import (
     read_activity_file,
-    get_fpaths_in_dir,
     read_complex_cell_weight_files
 )
 
