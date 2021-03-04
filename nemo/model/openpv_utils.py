@@ -42,7 +42,7 @@ def read_activity_file(model_activity_fpath, openpv_path = '/home/mteti/OpenPV/m
     return acts
 
 
-def read_complex_cell_weight_file(fpaths, openpv_path = '/home/mteti/OpenPV/mlab/util'):
+def read_complex_cell_weight_files(fpaths, openpv_path = '/home/mteti/OpenPV/mlab/util'):
     octave.addpath(openpv_path)
 
     weights_agg = []

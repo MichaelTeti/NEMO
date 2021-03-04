@@ -7,16 +7,20 @@ import seaborn
 
 from nemo.model.analysis.lca import (
     get_mean_activations,
-    view_complex_cell_strfs,
+    write_complex_cell_strfs,
     get_percent_neurons_active,
     plot_objective_probes,
     plot_adaptive_timescale_probes,
-    view_reconstructions,
-    read_activity_file
+    view_reconstructions
 )
 from nemo.model.analysis.metrics import (
     lifetime_sparsity, 
     population_sparsity
+)
+from nemo.model.openpv_utils import (
+    read_activity_file,
+    get_pvp_weight_fpaths,
+    read_complex_cell_weight_files
 )
 
 
@@ -67,6 +71,7 @@ feat_args = parser.add_argument_group(
 feat_args.add_argument(
     '--weight_fpath_key',
     type = str,
+    default = '*_W.pvp',
     help = 'A key to help find the desired _W.pvp files in the ckpt \
         directory, since there may be multiple in the same one for \
         some models.'
@@ -172,11 +177,12 @@ logging.basicConfig(
 
 if not args.no_features:
     logging.info('WRITING FEATURES')
-    view_complex_cell_strfs(
-        ckpt_dir = args.ckpt_dir,
-        write_fpath = os.path.join(args.save_dir, 'features.gif'),
-        weight_file_key = args.weight_fpath_key,
-        activity_fpath = args.activity_fpath,
+    weight_fpaths = get_pvp_weight_fpaths(args.ckpt_dir, fname_key = args.weight_fpath_key)
+    weight_tensors = read_complex_cell_weight_files(weight_fpaths, openpv_path = args.openpv_path)
+    _, _, sorted_inds_by_act = get_mean_activations(args.activity_fpath, openpv_path = args.openpv_path)
+    write_complex_cell_strfs(
+        weight_tensors = weight_tensors,
+        sort_inds = sorted_inds_by_act,
         openpv_path = args.openpv_path
     )
 
