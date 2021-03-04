@@ -110,19 +110,10 @@ def write_simple_cell_strfs(weight_tensors, save_dir):
     View simple cell (no spatial sharing of weights) strfs in a grid.
     
     Args:
-        ckpt_dir (str): The path to the Petavision checkpoint directory containing
-            the *_W.pvp files with the weights in them.
+        weight_tensors (list): List of np.ndarrays of shape n_neurons x in_c x 
+            n_features_y x n_features_x x kh x kw.
         save_dir (str): The directory to save the feature grids in, since there will
             be multiple grids.
-        n_features_y (int): The number of features stacked vertically per grid.
-        n_features_x (int): The number of features stacked horizontally per grid.
-        weight_file_key (str): weight_file_key (str): A str that helps this function find and isolate the 
-            weight files in the ckpt_dir without including other files (since there
-            will be multiple weight files, one for each input video frame, and
-            depending on your model, there might be multiple connection types that end
-            in _W.pvp. Keeping this argument set to None will usually work for most 
-            one-layer sparse coding models.
-        openpv_path (str): Path to the openpv matlab utility directory (*/OpenPV/mlab/util).
         
     Returns:
         None
@@ -134,13 +125,12 @@ def write_simple_cell_strfs(weight_tensors, save_dir):
     n_frames = len(weight_tensors)
 
     for frame_num, weights in enumerate(weight_tensors): 
-        w_y, w_x, w_in, n_neurons, n_features_y, n_features_x = weights.shape
+        n_neurons, w_in, n_features_y, n_features_x, w_y, w_x = weights.shape
 
-        for neuron_num in range(n_neurons):
-            # reshape to use make_grid due to python ordering
-            weights_feat = weights[:, :, :, neuron_num, :, :]
-            weights_feat = weights_feat.reshape([w_y, w_x, w_in, -1])
-            weights_feat = weights_feat.transpose([3, 2, 0, 1])
+        for neuron_num, weights_feat in enumerate(weights):
+            # reshape to n_features_x * n_features_y x in_c x kh x kw
+            weights_feat = weights_feat.transpose([1, 2, 0, 3, 4])
+            weights_feat = weights_feat.reshape([-1, w_in, w_y, w_x])
             
             # make an image grid
             grid = make_grid(

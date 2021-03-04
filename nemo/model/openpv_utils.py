@@ -83,8 +83,8 @@ def read_simple_cell_weight_files(fpaths, n_features_x, n_features_y,
         openpv_path (str): Path to */OpenPV/mlab/util. 
 
     Returns:
-        weights_agg (list): List of len(fpaths) arrays of shape kh x kw x in_c x n_neurons x 
-            n_features_y x n_features_x. 
+        weights_agg (list): List of len(fpaths) arrays of shape n_neurons x in_c x 
+            n_features_y x n_features_x x kh x kw. 
     '''
 
     octave.addpath(openpv_path)
@@ -98,7 +98,7 @@ def read_simple_cell_weight_files(fpaths, n_features_x, n_features_y,
         # reshape to the original shape of the unshared weight tensor 
         # and reverse the x and y dims for image writing
         weights = weights.reshape([w_x, w_y, w_in, n_neurons, n_features_x, n_features_y])
-        weights = weights.transpose([1, 0, 2, 3, 5, 4])
+        weights = weights.transpose([3, 2, 5, 4, 1, 0])
         weights_agg.append(weights)
 
     return weights_agg
