@@ -78,7 +78,8 @@ def change_file_exts(fpaths, desired_ext = '.png'):
 
 def search_filepaths(dir, key = None):
     '''
-    Walk down a directory structure and return a list of all fpaths.
+    Walk down a directory structure and return a list of all fpaths, matching
+    key if given.
 
     Args:
         dir (str): The directory to start at and traverse down.
@@ -280,7 +281,8 @@ def get_fpaths_in_dir(directory, fname_key = '*', sort = True):
     Args:
         directory (str): Directory to search in.
         fname_key (str): An expression that can be used by glob. If not given,
-            this function behaves the same as os.listdir(). 
+            this function behaves the same as os.listdir() except the full
+            filepaths are returned as opposed to just the filenames. 
 
     Returns:
         fpaths (list): A list of fpaths found in directory with fname_key. 
