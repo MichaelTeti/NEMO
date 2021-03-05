@@ -64,6 +64,28 @@ def read_complex_cell_weight_files(fpaths, openpv_path = '/home/mteti/OpenPV/mla
     return weights_agg
 
 
+def read_input_and_recon_files(fpaths, openpv_path = '/home/mteti/OpenPV/mlab/util'):
+    '''
+    Reads inputs and recons from .pvp files. 
+
+    Args:
+        fpaths (list): List of filepaths to read data from.
+        openpv_path (str): Path to */OpenPV/mlab/util.
+
+    Returns:
+        data_agg (np.ndarray): Array of shape B x F x H x W, where F is len(fpaths).
+    '''
+
+    octave.addpath(openpv_path)
+
+    data_agg = []
+    for fpath_num, fpath in enumerate(fpaths):
+        batch = [sample['values'] for sample in octave.readpvpfile(fpath)]
+        data_agg.append(batch)
+
+    return np.asarray(data_agg).transpose([1, 0, 3, 2])
+
+
 def read_simple_cell_weight_files(fpaths, n_features_x, n_features_y, 
                                   openpv_path = '/home/mteti/OpenPV/mlab/util'):
     '''
