@@ -8,13 +8,13 @@ from nemo.data.preprocess.image import max_min_scale
 from nemo.data.utils import get_img_frame_names
 
 
-def save_vid_array(vid_array, save_dir, scale_method = None):
+def write_vid_array(vid_array, save_dir, scale_method = None):
     '''
     Save a video represented as an array as individual image files.
 
     Args:
-        array (np.ndarray) Array of shape B x H x W x C to write.
-        dir (str): Directory tow write the frames in.
+        array (np.ndarray) Array of shape B x H x W x C or B x H x W to write.
+        dir (str): Directory to write the frames in.
         scale_method (None, "video", "frame"): If none, no pixel value scaling will be
             performed. Otherwise, "video" will scale every frame by the video's max and 
             min, and "frame" will scale every frame by the frame's max and min.
