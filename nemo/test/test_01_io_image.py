@@ -13,7 +13,7 @@ import pandas as pd
 
 from nemo.data.io.image import (
     read_frames,
-    write_vid_array,
+    write_vid_frames,
     write_AIBO_natural_stimuli,
     write_AIBO_static_grating_stimuli
 )
@@ -21,12 +21,12 @@ from nemo.data.io.image import (
 
 class TestIOImage(unittest.TestCase):
 
-    def test_write_vid_array(self):
+    def test_write_vid_frames(self):
         write = np.random.uniform(0, 255, size = (10, 32, 64))
         write = np.uint8(write)
 
         with TemporaryDirectory() as tmp_dir:
-            write_vid_array(write, tmp_dir)
+            write_vid_frames(write, tmp_dir)
             files = os.listdir(tmp_dir)
             files.sort()
             read = np.zeros([10, 32, 64])

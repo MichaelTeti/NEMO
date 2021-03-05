@@ -8,7 +8,7 @@ from nemo.data.preprocess.image import max_min_scale
 from nemo.data.utils import get_img_frame_names
 
 
-def write_vid_array(vid_array, save_dir, scale_method = None):
+def write_vid_frames(vid_array, save_dir, scale_method = None):
     '''
     Save a video represented as an array as individual image files.
 
