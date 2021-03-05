@@ -2,6 +2,7 @@ import os
 
 from allensdk.brain_observatory.stimulus_info import BrainObservatoryMonitor
 import cv2
+import imageio
 import numpy as np
 
 from nemo.data.preprocess.image import max_min_scale
@@ -10,10 +11,10 @@ from nemo.data.utils import get_img_frame_names
 
 def write_vid_frames(vid_array, save_dir, scale_method = None):
     '''
-    Save a video represented as an array as individual image files.
+    Write a video represented as an array as individual image files.
 
     Args:
-        array (np.ndarray) Array of shape B x H x W x C or B x H x W to write.
+        array (np.ndarray) Array of shape N x H x W x C or N x H x W to write.
         dir (str): Directory to write the frames in.
         scale_method (None, "video", "frame"): If none, no pixel value scaling will be
             performed. Otherwise, "video" will scale every frame by the video's max and 
@@ -24,17 +25,44 @@ def write_vid_frames(vid_array, save_dir, scale_method = None):
     '''
 
     os.makedirs(save_dir, exist_ok = True)
-    n_frames = vid_array.shape[0]
-    fpaths = [os.path.join(save_dir, fname + '.png') for fname in get_img_frame_names(n_frames)]
     
     if scale_method and scale_method == 'video':
         vid_array = max_min_scale(vid_array) * 255
     
-    for i_frame, (frame, fpath) in enumerate(zip(vid_array, fpaths)):
+    for i_frame, frame in enumerate(vid_array):
         if scale_method and scale_method == 'frame':
             frame = max_min_scale(frame) * 255
 
-        cv2.imwrite(fpath, np.uint8(frame))
+        cv2.imwrite(
+            os.path.join(save_dir, '{}.png'.format(i_frame)), 
+            np.uint8(frame)
+        )
+
+
+def write_gifs(array, save_dir, scale = False):
+    '''
+    Write a batch of video frame sequences as .gifs.
+
+    Args:
+        array (np.ndarray) Array of shape N x F x H x W x C or N x F x H x W to write, 
+            where F is the number of consecutive frames to write in each gif.
+        dir (str): Directory to write the frames in.
+        scale (bool): If True, will scale each gif linearly to [0, 255].
+
+    Returns:
+        None
+    '''
+
+    os.makedirs(save_dir, exist_ok = True)
+
+    for i_gif, gif in enumerate(array):
+        if scale:
+            gif = max_min_scale(gif) * 255 
+        
+        imageio.mimwrite(
+            os.path.join(save_dir, '{}.gif'.format(i_gif)),
+            [np.uint8(frame) for frame in gif]
+        )
 
 
 def read_frames(dir, return_type = 'array', gray = False):

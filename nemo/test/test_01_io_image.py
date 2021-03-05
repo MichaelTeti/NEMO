@@ -8,11 +8,13 @@ from tempfile import TemporaryDirectory
 import unittest 
 
 import cv2
+import imageio
 import numpy as np
 import pandas as pd
 
 from nemo.data.io.image import (
     read_frames,
+    write_gifs,
     write_vid_frames,
     write_AIBO_natural_stimuli,
     write_AIBO_static_grating_stimuli
@@ -136,6 +138,21 @@ class TestIOImage(unittest.TestCase):
                 image = cv2.imread(fpath)
                 self.assertCountEqual(image.shape[:2], [1200, 1920])
 
+
+    def test_write_gifs(self):
+        write = np.random.uniform(0, 255, size = (10, 5, 32, 64))
+        write = np.uint8(write)
+
+        with TemporaryDirectory() as tmp_dir:
+            write_gifs(write, tmp_dir)
+            files = os.listdir(tmp_dir)
+            files.sort()
+            read = np.zeros([10, 5, 32, 64])
+
+            for i, fname in enumerate(files):
+                read[i] = np.array(imageio.mimread(os.path.join(tmp_dir, fname)))
+
+            self.assertEqual(np.sum(read - write), 0.0)
 
 
 if __name__ == '__main__':
