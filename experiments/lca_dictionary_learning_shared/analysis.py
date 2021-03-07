@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 import seaborn
 
 from nemo.data.utils import get_fpaths_in_dir
+from nemo.data.io.image import write_gifs
 from nemo.model.analysis.lca import (
     get_mean_activations,
     write_complex_cell_strfs,
     get_percent_neurons_active,
     plot_objective_probes,
-    plot_adaptive_timescale_probes,
-    view_reconstructions
+    plot_adaptive_timescale_probes
 )
 from nemo.model.analysis.metrics import (
     lifetime_sparsity, 
@@ -20,7 +20,8 @@ from nemo.model.analysis.metrics import (
 )
 from nemo.model.openpv_utils import (
     read_activity_file,
-    read_complex_cell_weight_files
+    read_complex_cell_weight_files,
+    read_input_and_recon_files
 )
 
 
@@ -189,12 +190,24 @@ if not args.no_features:
 
 if not args.no_recons:
     logging.info('WRITING INPUTS AND RECONSTRUCTIONS')
-    view_reconstructions(
-        ckpt_dir = args.ckpt_dir,
-        save_dir = os.path.join(args.save_dir, 'Inputs_and_Recons'),
-        recon_layer_key = args.rec_layer_key,
-        input_layer_key = args.input_layer_key,
-        openpv_path = args.openpv_path
+    input_fpaths = get_fpaths_in_dir(args.ckpt_dir, args.input_layer_key)
+    recon_fpaths = get_fpaths_in_dir(args.ckpt_dir, args.rec_layer_key)
+    inputs = read_input_and_recon_files(input_fpaths)
+    recons = read_input_and_recon_files(recon_fpaths)
+    write_gifs(
+        inputs, 
+        os.path.join(args.save_dir, 'Inputs_and_Recons', 'Inputs'),
+        scale = True
+    )
+    write_gifs(
+        recons, 
+        os.path.join(args.save_dir, 'Inputs_and_Recons', 'Recons'),
+        scale = True
+    )
+    write_gifs(
+        inputs - recons, 
+        os.path.join(args.save_dir, 'Inputs_and_Recons', 'Diffs'),
+        scale = True    
     )
 
 # plotting probes below
