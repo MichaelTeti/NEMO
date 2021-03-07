@@ -175,7 +175,7 @@ logging.basicConfig(
 
 # need this for features and activity
 acts = read_activity_file(args.activity_fpath, openpv_path = args.openpv_path)
-mean_acts, se_acts, sorted_inds_by_act = mean_activations(args.activity_fpath, openpv_path = args.openpv_path)
+mean_acts, se_acts, sorted_inds_by_act = mean_activations(acts)
 
 
 if not args.no_features:
