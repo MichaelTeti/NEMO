@@ -7,18 +7,15 @@ import seaborn
 
 from nemo.data.utils import get_fpaths_in_dir
 from nemo.data.io.image import write_gifs
-from nemo.model.analysis.lca import (
-    get_mean_activations,
-    write_complex_cell_strfs,
-    get_percent_neurons_active,
-    plot_objective_probes,
-    plot_adaptive_timescale_probes
-)
+from nemo.model.analysis.feature_visualization import write_complex_cell_strfs
 from nemo.model.analysis.metrics import (
     lifetime_sparsity, 
+    mean_activations,
     population_sparsity
 )
-from nemo.model.openpv_utils import (
+from nemo.model.analysis.openpv_utils import (
+    plot_adaptive_timescale_probes,
+    plot_objective_probes,
     read_activity_file,
     read_complex_cell_weight_files,
     read_input_and_recon_files
@@ -251,8 +248,10 @@ if not args.no_probes:
 
 if not args.no_activity:
     logging.info('PLOTTING ACTIVATIONS')
+    acts = read_activity_file(args.activity_fpath, openpv_path = args.openpv_path)
+
     # mean acts, mean sparsity, and number active
-    mean, se, _ = get_mean_activations(args.activity_fpath, openpv_path = args.openpv_path)
+    mean, se, _ = mean_activations(acts)
     plt.errorbar(x = list(range(mean.size)), y = mean, yerr = se)
     plt.xlabel('Neuron Index')
     plt.ylabel('Mean Activation +/- 1 SE')
@@ -264,8 +263,6 @@ if not args.no_activity:
     plt.savefig(os.path.join(args.save_dir, 'mean_activations_box.png'), bbox_inches = 'tight')
     plt.close()
 
-
-    acts = read_activity_file(args.activity_fpath, openpv_path = args.openpv_path)
     
     logging.info('PLOTTING LIFETIME SPARSITY')
     lifetime = lifetime_sparsity(acts)
