@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from torchvision.utils import make_grid
 
+from nemo.data.preprocess.image import max_min_scale
 
 
 def write_complex_cell_strfs(weight_tensors, write_fpath, sort_inds = None):
