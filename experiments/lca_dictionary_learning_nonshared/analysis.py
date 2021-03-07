@@ -208,9 +208,21 @@ if not args.no_recons:
     recon_fpaths = get_fpaths_in_dir(args.ckpt_dir, args.rec_layer_key)
     inputs = read_input_and_recon_files(input_fpaths)
     recons = read_input_and_recon_files(recon_fpaths)
-    write_gifs(inputs, os.path.join(args.save_dir, 'Inputs_and_Recons', 'Inputs'))
-    write_gifs(recons, os.path.join(args.save_dir, 'Inputs_and_Recons', 'Recons'))
-    write_gifs(inputs - recons, os.path.join(args.save_dir, 'Inputs_and_Recons', 'Diffs'))
+    write_gifs(
+        inputs, 
+        os.path.join(args.save_dir, 'Inputs_and_Recons', 'Inputs'),
+        scale = True
+    )
+    write_gifs(
+        recons, 
+        os.path.join(args.save_dir, 'Inputs_and_Recons', 'Recons'),
+        scale = True
+    )
+    write_gifs(
+        inputs - recons, 
+        os.path.join(args.save_dir, 'Inputs_and_Recons', 'Diffs'),
+        scale = True    
+    )
 
 # plotting probes below
 if not args.no_probes:
