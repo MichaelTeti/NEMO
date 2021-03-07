@@ -13,7 +13,7 @@ from nemo.model.analysis.metrics import (
     mean_activations,
     population_sparsity
 )
-from nemo.model.analysis.openpv_utils import (
+from nemo.model.openpv_utils import (
     plot_adaptive_timescale_probes,
     plot_objective_probes,
     read_activity_file,

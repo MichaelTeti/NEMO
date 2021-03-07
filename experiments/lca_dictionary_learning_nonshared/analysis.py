@@ -8,17 +8,17 @@ import seaborn
 from nemo.data.io.image import write_gifs
 from nemo.data.utils import get_fpaths_in_dir
 from nemo.model.analysis.feature_visualization import write_simple_cell_strfs
-from nemo.model.analysis.openpv_utils import (
+from nemo.model.analysis.metrics import (
+    lifetime_sparsity, 
+    mean_activations,
+    population_sparsity
+)
+from nemo.model.openpv_utils import (
     plot_objective_probes,
     plot_adaptive_timescale_probes,
     read_activity_file,
     read_input_and_recon_files,
     read_simple_cell_weight_files
-)
-from nemo.model.analysis.metrics import (
-    lifetime_sparsity, 
-    mean_activations,
-    population_sparsity
 )
 
 
