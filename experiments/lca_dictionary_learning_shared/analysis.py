@@ -173,11 +173,15 @@ logging.basicConfig(
 )
 
 
+# need this for features and activity
+acts = read_activity_file(args.activity_fpath, openpv_path = args.openpv_path)
+mean_acts, se_acts, sorted_inds_by_act = mean_activations(args.activity_fpath, openpv_path = args.openpv_path)
+
+
 if not args.no_features:
     logging.info('WRITING FEATURES')
     weight_fpaths = get_fpaths_in_dir(args.ckpt_dir, fname_key = args.weight_fpath_key)
     weight_tensors = read_complex_cell_weight_files(weight_fpaths, openpv_path = args.openpv_path)
-    _, _, sorted_inds_by_act = get_mean_activations(args.activity_fpath, openpv_path = args.openpv_path)
     write_complex_cell_strfs(
         weight_tensors = weight_tensors,
         write_fpath = os.path.join(args.save_dir, 'features.gif'),
@@ -248,17 +252,15 @@ if not args.no_probes:
 
 if not args.no_activity:
     logging.info('PLOTTING ACTIVATIONS')
-    acts = read_activity_file(args.activity_fpath, openpv_path = args.openpv_path)
 
     # mean acts, mean sparsity, and number active
-    mean, se, _ = mean_activations(acts)
-    plt.errorbar(x = list(range(mean.size)), y = mean, yerr = se)
+    plt.errorbar(x = list(range(mean_acts.size)), y = mean_acts, yerr = se_acts)
     plt.xlabel('Neuron Index')
     plt.ylabel('Mean Activation +/- 1 SE')
     plt.savefig(os.path.join(args.save_dir, 'mean_activations_line.png'), bbox_inches = 'tight')
     plt.close()
 
-    seaborn.boxplot(y = mean)
+    seaborn.boxplot(y = mean_acts)
     plt.ylabel('Mean Activation')
     plt.savefig(os.path.join(args.save_dir, 'mean_activations_box.png'), bbox_inches = 'tight')
     plt.close()
