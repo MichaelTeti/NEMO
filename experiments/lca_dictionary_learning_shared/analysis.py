@@ -185,8 +185,7 @@ if not args.no_features:
     write_complex_cell_strfs(
         weight_tensors = weight_tensors,
         write_fpath = os.path.join(args.save_dir, 'features.gif'),
-        sort_inds = sorted_inds_by_act,
-        openpv_path = args.openpv_path
+        sort_inds = sorted_inds_by_act
     )
 
 if not args.no_recons:
