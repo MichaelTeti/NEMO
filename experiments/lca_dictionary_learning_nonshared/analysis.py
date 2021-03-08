@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import seaborn
 
-from nemo.data.io.image import write_gifs, write_vid_frames
+from nemo.data.io.image import write_gifs
 from nemo.data.utils import get_fpaths_in_dir
 from nemo.model.analysis.feature_visualization import write_simple_cell_strfs
 from nemo.model.analysis.metrics import (
@@ -59,11 +59,6 @@ parser.add_argument(
     action = 'store_true',
     help = 'If specified, will not plot mean activations, mean sparsity, \
         or mean activity.'
-)
-parser.add_argument(
-    '--no_feature_maps',
-    action = 'store_true',
-    help = 'If specified, will not write feature maps.'
 )
 
 # visualize features
@@ -266,12 +261,13 @@ if not args.no_probes:
         plot_individual = args.plot_individual_probes
     )
 
+
 if not args.no_activity:
     logging.info('PLOTTING ACTIVATIONS')
     acts = read_activity_file(args.activity_fpath, openpv_path = args.openpv_path)
 
     # mean acts, mean sparsity, and number active
-    mean, se, sorted_inds_by_act = mean_activations(acts)
+    mean, se, _ = mean_activations(acts)
     plt.errorbar(x = list(range(mean.size)), y = mean, yerr = se)
     plt.xlabel('Neuron Index')
     plt.ylabel('Mean Activation +/- 1 SE')
@@ -314,14 +310,3 @@ if not args.no_activity:
     plt.ylabel('Population Sparsity')
     plt.savefig(os.path.join(args.save_dir, 'population_sparsity_box.png'), bbox_inches = 'tight')
     plt.close()
-
-
-if not args.no_feature_maps:
-    logging.info('WRITING FEATURE MAPS')
-    
-    for neuron_num, feat_maps in enumerate(acts.transpose([3, 0, 1, 2])):
-        write_vid_frames(
-            feat_maps, 
-            os.path.join(args.save_dir, 'FeatureMaps', 'Neuron{}'.format(neuron_num)), 
-            scale_method = 'frame'
-        )
