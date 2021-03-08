@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn
 
 from nemo.data.utils import get_fpaths_in_dir
-from nemo.data.io.image import write_gifs
+from nemo.data.io.image import write_gifs, write_vid_frames
 from nemo.model.analysis.feature_visualization import write_complex_cell_strfs
 from nemo.model.analysis.metrics import (
     lifetime_sparsity, 
@@ -59,6 +59,11 @@ parser.add_argument(
     action = 'store_true',
     help = 'If specified, will not plot mean activations, mean sparsity, \
         or mean activity.'
+)
+parser.add_argument(
+    '--no_feature_maps',
+    action = 'store_true',
+    help = 'If specified, will not write feature maps.'
 )
 
 # visualize features
@@ -178,6 +183,17 @@ acts = read_activity_file(args.activity_fpath, openpv_path = args.openpv_path)
 mean_acts, se_acts, sorted_inds_by_act = mean_activations(acts)
 
 
+if not args.no_feature_maps:
+    logging.info('WRITING FEATURE MAPS')
+    acts_sorted = acts[..., sorted_inds_by_act]
+    for neuron_num, feat_maps in enumerate(acts.transpose([3, 0, 1, 2])):
+        write_vid_frames(
+            feat_maps, 
+            os.path.join(args.save_dir, 'FeatureMaps', 'Neuron{}'.format(neuron_num)),
+            scale_method = 'frame'
+        )
+
+
 if not args.no_features:
     logging.info('WRITING FEATURES')
     weight_fpaths = get_fpaths_in_dir(args.ckpt_dir, fname_key = args.weight_fpath_key)
@@ -187,6 +203,7 @@ if not args.no_features:
         write_fpath = os.path.join(args.save_dir, 'features.gif'),
         sort_inds = sorted_inds_by_act
     )
+
 
 if not args.no_recons:
     logging.info('WRITING INPUTS AND RECONSTRUCTIONS')
@@ -210,7 +227,7 @@ if not args.no_recons:
         scale = True    
     )
 
-# plotting probes below
+
 if not args.no_probes:
     logging.info('WRITING PROBES')
     plot_objective_probes(
@@ -248,6 +265,7 @@ if not args.no_probes:
         n_display_periods = args.n_display_periods,
         plot_individual = args.plot_individual_probes
     )
+
 
 if not args.no_activity:
     logging.info('PLOTTING ACTIVATIONS')
