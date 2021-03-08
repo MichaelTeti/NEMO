@@ -2,32 +2,67 @@ import os
 
 from allensdk.brain_observatory.stimulus_info import BrainObservatoryMonitor
 import cv2
+import imageio
 import numpy as np
 
+from nemo.data.preprocess.image import max_min_scale
 from nemo.data.utils import get_img_frame_names
 
 
-def save_vid_array_as_frames(vid_arrays_and_save_dirs):
+def write_vid_frames(vid_array, save_dir, scale_method = None):
     '''
-    Save a video represented as an array as individual frames.
+    Write a video represented as an array as individual image files.
 
     Args:
-        vid_array_and_save_dir (list): A list of 2-tuples / lists, where each
-            tuple is composed of a NxHxWxC (or NxHxW for grayscale) array and a
-            dir to save the array at.
+        array (np.ndarray) Array of shape N x H x W x C or N x H x W to write.
+        dir (str): Directory to write the frames in.
+        scale_method (None, "video", "frame"): If none, no pixel value scaling will be
+            performed. Otherwise, "video" will scale every frame by the video's max and 
+            min, and "frame" will scale every frame by the frame's max and min.
 
     Returns:
         None
     '''
 
-    for vid_array, save_dir in vid_arrays_and_save_dirs:
-        os.makedirs(save_dir, exist_ok = True)
-        n_frames = vid_array.shape[0]
-        fnames = [fname + '.png' for fname in get_img_frame_names(n_frames)]
-        fpaths = [os.path.join(save_dir, fname) for fname in fnames]
+    os.makedirs(save_dir, exist_ok = True)
+    
+    if scale_method and scale_method == 'video':
+        vid_array = max_min_scale(vid_array) * 255
+    
+    for i_frame, frame in enumerate(vid_array):
+        if scale_method and scale_method == 'frame':
+            frame = max_min_scale(frame) * 255
+
+        cv2.imwrite(
+            os.path.join(save_dir, '{}.png'.format(i_frame)), 
+            np.uint8(frame)
+        )
+
+
+def write_gifs(array, save_dir, scale = False):
+    '''
+    Write a batch of video frame sequences as .gifs.
+
+    Args:
+        array (np.ndarray) Array of shape N x F x H x W x C or N x F x H x W to write, 
+            where F is the number of consecutive frames to write in each gif.
+        dir (str): Directory to write the frames in.
+        scale (bool): If True, will scale each gif linearly to [0, 255].
+
+    Returns:
+        None
+    '''
+
+    os.makedirs(save_dir, exist_ok = True)
+
+    for i_gif, gif in enumerate(array):
+        if scale:
+            gif = max_min_scale(gif) * 255 
         
-        for i_frame, (frame, fpath) in enumerate(zip(vid_array, fpaths)):
-            cv2.imwrite(fpath, np.uint8(frame))
+        imageio.mimwrite(
+            os.path.join(save_dir, '{}.gif'.format(i_gif)),
+            [np.uint8(frame) for frame in gif]
+        )
 
 
 def read_frames(dir, return_type = 'array', gray = False):

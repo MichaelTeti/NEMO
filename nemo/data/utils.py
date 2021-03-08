@@ -1,4 +1,5 @@
 import csv
+from glob import glob
 from multiprocessing import Process, cpu_count
 import os
 
@@ -75,14 +76,15 @@ def change_file_exts(fpaths, desired_ext = '.png'):
     return fpaths_new
 
 
-def get_fpaths_in_dir(dir, key = None):
+def search_filepaths(dir, key = None):
     '''
-    Walk down a directory structure and return a list of all fpaths.
+    Walk down a directory structure and return a list of all fpaths, matching
+    key if given.
 
     Args:
         dir (str): The directory to start at and traverse down.
         key (str): An optional key. If given, will only return fpaths if key is
-                   either in one of the parent dirs or the fname itself.
+                   somewhere in the full path. 
 
     Returns:
         fpaths (list): List of fpaths.
@@ -270,3 +272,26 @@ def monitor_coord_to_image_ind(x_cm, y_cm, monitor_w_cm = 51.91, monitor_h_cm = 
             raise ValueError
     
     return x_img, y_img
+
+
+def get_fpaths_in_dir(directory, fname_key = '*', sort = True):
+    '''
+    Searches for files in directory that satisfy fname_key. 
+
+    Args:
+        directory (str): Directory to search in.
+        fname_key (str): An expression that can be used by glob. If not given,
+            this function behaves the same as os.listdir() except the full
+            filepaths are returned as opposed to just the filenames. 
+
+    Returns:
+        fpaths (list): A list of fpaths found in directory with fname_key. 
+    '''
+
+    if not os.path.isdir(directory):
+        raise ValueError
+
+    fpaths = glob(os.path.join(os.path.abspath(directory), fname_key))
+    if sort: fpaths.sort()
+
+    return fpaths

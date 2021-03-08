@@ -5,18 +5,20 @@ import os
 import matplotlib.pyplot as plt
 import seaborn
 
-from nemo.model.analysis.lca import (
-    get_mean_activations,
-    view_simple_cell_strfs,
-    get_percent_neurons_active,
-    plot_objective_probes,
-    plot_adaptive_timescale_probes,
-    view_reconstructions,
-    read_activity_file
-)
+from nemo.data.io.image import write_gifs
+from nemo.data.utils import get_fpaths_in_dir
+from nemo.model.analysis.feature_visualization import write_simple_cell_strfs
 from nemo.model.analysis.metrics import (
     lifetime_sparsity, 
+    mean_activations,
     population_sparsity
+)
+from nemo.model.openpv_utils import (
+    plot_objective_probes,
+    plot_adaptive_timescale_probes,
+    read_activity_file,
+    read_input_and_recon_files,
+    read_simple_cell_weight_files
 )
 
 
@@ -67,9 +69,22 @@ feat_args = parser.add_argument_group(
 feat_args.add_argument(
     '--weight_fpath_key',
     type = str,
+    default = '*_W.pvp',
     help = 'A key to help find the desired _W.pvp files in the ckpt \
         directory, since there may be multiple in the same one for \
         some models.'
+)
+feat_args.add_argument(
+    '--n_features_x',
+    type = int,
+    default = 24,
+    help = 'Number of features across x-dim in a grid of simple cells.'
+)
+feat_args.add_argument(
+    '--n_features_y',
+    type = int,
+    default = 8,
+    help = 'Number of features across y-dim in a grid of simple cells.'
 )
 
 # visualize reconstructions
@@ -172,26 +187,42 @@ logging.basicConfig(
 
 if not args.no_features:
     logging.info('WRITING FEATURES')
-    view_simple_cell_strfs(
-        ckpt_dir = args.ckpt_dir,
-        save_dir = os.path.join(args.save_dir, 'Features'),
-        n_features_y = 8,
-        n_features_x = 24,
-        weight_file_key = args.weight_fpath_key,
+    weight_fpaths = get_fpaths_in_dir(args.ckpt_dir, fname_key = args.weight_fpath_key)
+    weight_tensors = read_simple_cell_weight_files(
+        fpaths = weight_fpaths,
+        n_features_x = args.n_features_x,
+        n_features_y = args.n_features_y,
         openpv_path = args.openpv_path
     )
+    write_simple_cell_strfs(
+        weight_tensors = weight_tensors,
+        save_dir = os.path.join(args.save_dir, 'Features')
+    )
+
 
 if not args.no_recons:
     logging.info('WRITING INPUTS AND RECONSTRUCTIONS')
-    view_reconstructions(
-        ckpt_dir = args.ckpt_dir,
-        save_dir = os.path.join(args.save_dir, 'Inputs_and_Recons'),
-        recon_layer_key = args.rec_layer_key,
-        input_layer_key = args.input_layer_key,
-        openpv_path = args.openpv_path
+    input_fpaths = get_fpaths_in_dir(args.ckpt_dir, args.input_layer_key)
+    recon_fpaths = get_fpaths_in_dir(args.ckpt_dir, args.rec_layer_key)
+    inputs = read_input_and_recon_files(input_fpaths)
+    recons = read_input_and_recon_files(recon_fpaths)
+    write_gifs(
+        inputs, 
+        os.path.join(args.save_dir, 'Inputs_and_Recons', 'Inputs'),
+        scale = True
+    )
+    write_gifs(
+        recons, 
+        os.path.join(args.save_dir, 'Inputs_and_Recons', 'Recons'),
+        scale = True
+    )
+    write_gifs(
+        inputs - recons, 
+        os.path.join(args.save_dir, 'Inputs_and_Recons', 'Diffs'),
+        scale = True    
     )
 
-# plotting probes below
+
 if not args.no_probes:
     logging.info('WRITING PROBES')
     plot_objective_probes(
@@ -230,10 +261,13 @@ if not args.no_probes:
         plot_individual = args.plot_individual_probes
     )
 
+
 if not args.no_activity:
     logging.info('PLOTTING ACTIVATIONS')
+    acts = read_activity_file(args.activity_fpath, openpv_path = args.openpv_path)
+
     # mean acts, mean sparsity, and number active
-    mean, se, _ = get_mean_activations(args.activity_fpath, openpv_path = args.openpv_path)
+    mean, se, _ = mean_activations(acts)
     plt.errorbar(x = list(range(mean.size)), y = mean, yerr = se)
     plt.xlabel('Neuron Index')
     plt.ylabel('Mean Activation +/- 1 SE')
@@ -245,8 +279,6 @@ if not args.no_activity:
     plt.savefig(os.path.join(args.save_dir, 'mean_activations_box.png'), bbox_inches = 'tight')
     plt.close()
 
-
-    acts = read_activity_file(args.activity_fpath, openpv_path = args.openpv_path)
     
     logging.info('PLOTTING LIFETIME SPARSITY')
     lifetime = lifetime_sparsity(acts)

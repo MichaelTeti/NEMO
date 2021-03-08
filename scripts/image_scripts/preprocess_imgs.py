@@ -12,7 +12,7 @@ from nemo.data.preprocess.image import (
 from nemo.data.utils import (
     add_string_to_fpaths,
     change_file_exts,
-    get_fpaths_in_dir,
+    search_filepaths,
     multiproc
 )
 
@@ -158,7 +158,7 @@ if args.op == 'whiten':
 
 else: 
 
-    fpaths = get_fpaths_in_dir(args.data_dir_parent, key = args.key)
+    fpaths = search_filepaths(args.data_dir_parent, key = args.key)
     save_fpaths = add_string_to_fpaths(fpaths, '_{}'.format(args.op))
     save_fpaths = change_file_exts(save_fpaths, '.png')
     for fpath in save_fpaths: os.makedirs(os.path.split(fpath)[0], exist_ok = True)
