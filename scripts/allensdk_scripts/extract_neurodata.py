@@ -41,6 +41,7 @@ def write_natural_movie_data(write_dir, df, data, stimulus):
     df['dff_ts'] = data['dff_ts'][inds]
     df['exp_id'] = [data['exp_id']] * len(inds)
     df['cont_id'] = [data['cont_id']] * len(inds)
+    df['cre_line'] = [data['cre_line']] * len(inds)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = df.copy()
@@ -83,6 +84,7 @@ def write_static_image_data(write_dir, df, data):
     better_df['session_type'] = [data['session_type']] * len(inds)
     better_df['exp_id'] = [data['exp_id']] * len(inds)
     better_df['cont_id'] = [data['cont_id']] * len(inds)
+    better_df['cre_line'] = [data['cre_line']] * len(inds)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = better_df.copy()
@@ -135,6 +137,9 @@ def get_AIBO_data(dataset):
 
     # get session type 
     data['session_type'] = dataset.get_session_type()
+
+    # get cre line
+    data['cre_line'] = dataset.get_metadata()['cre_line'].split('/')[0]
 
     # get df/f  for all cells in this experiment
     # after these lines, traces is of shape # acquisition frames x # cells
