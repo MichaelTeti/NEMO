@@ -128,8 +128,8 @@ if args.max_imaging_depth:
 # get experiments from the containers
 exps = boc.get_ophys_experiments(experiment_container_ids = [cont['id'] for cont in conts])
 
-# remove the experiments that failed the eye tracking
-exps = [exp for exp in exps if not exp['fail_eye_tracking']]
+# uncomment line below to remove the experiments that failed the eye tracking
+# exps = [exp for exp in exps if not exp['fail_eye_tracking']]
 
 # limit number of experiments to download if specified
 if args.n_experiments: exps = exps[:args.n_experiments]
