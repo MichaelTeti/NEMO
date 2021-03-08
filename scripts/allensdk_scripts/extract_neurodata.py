@@ -40,6 +40,7 @@ def write_natural_movie_data(write_dir, df, data, stimulus):
     df['stimulus'] = [stimulus] * len(inds)
     df['dff_ts'] = data['dff_ts'][inds]
     df['exp_id'] = [data['exp_id']] * len(inds)
+    df['cont_id'] = [data['cont_id']] * len(inds)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = df.copy()
@@ -81,6 +82,7 @@ def write_static_image_data(write_dir, df, data):
     better_df['dff_ts'] = data['dff_ts'][inds]
     better_df['session_type'] = [data['session_type']] * len(inds)
     better_df['exp_id'] = [data['exp_id']] * len(inds)
+    better_df['cont_id'] = [data['cont_id']] * len(inds)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = better_df.copy()
@@ -127,8 +129,9 @@ def get_AIBO_data(dataset):
     # get the cell IDs in the dataset 
     data['cell_ids'] = dataset.get_cell_specimen_ids()
 
-    # get exp_id
+    # get experiment ID and container ID
     data['exp_id'] = dataset.get_metadata()['ophys_experiment_id']
+    data['cont_id'] = dataset.get_metadata()['experiment_container_id']
 
     # get session type 
     data['session_type'] = dataset.get_session_type()
