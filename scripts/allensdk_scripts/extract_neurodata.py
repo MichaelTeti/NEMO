@@ -31,17 +31,19 @@ def write_natural_movie_data(write_dir, df, data, stimulus):
     
     os.makedirs(write_dir, exist_ok = True)
     
+    # get acquisition frame indices
     inds = list(df['end'])
-    df['pupil_x'] = data['pupil_x'][inds]
-    df['pupil_y'] = data['pupil_y'][inds]
-    df['pupil_size'] = data['pupil_size'][inds]
-    df['run_speed'] = data['run_speed'][inds]
-    df['session_type'] = [data['session_type']] * len(inds)
-    df['stimulus'] = [stimulus] * len(inds)
-    df['dff_ts'] = data['dff_ts'][inds]
-    df['exp_id'] = [data['exp_id']] * len(inds)
-    df['cont_id'] = [data['cont_id']] * len(inds)
-    df['cre_line'] = [data['cre_line']] * len(inds)
+
+    # add data to stimulus table 
+    for key, value in data.items():
+        if key in ['cell_ids', 'dff']:
+            continue 
+
+        if type(value) == np.ndarray:
+            df[key] = value[inds]
+        else:
+            df[key] = [value] * len(inds)
+
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = df.copy()
@@ -75,16 +77,19 @@ def write_static_image_data(write_dir, df, data):
             
     better_df = pd.DataFrame(list_add, columns = list(df.columns)[:-2] + ['start', 'end'])
     
+    # get acquisition frame inds
     inds = list(better_df['end'])
-    better_df['pupil_x'] = data['pupil_x'][inds]
-    better_df['pupil_y'] = data['pupil_y'][inds]
-    better_df['pupil_size'] = data['pupil_size'][inds]
-    better_df['run_speed'] = data['run_speed'][inds]
-    better_df['dff_ts'] = data['dff_ts'][inds]
-    better_df['session_type'] = [data['session_type']] * len(inds)
-    better_df['exp_id'] = [data['exp_id']] * len(inds)
-    better_df['cont_id'] = [data['cont_id']] * len(inds)
-    better_df['cre_line'] = [data['cre_line']] * len(inds)
+
+    # add data to stimulus table
+    for key, value in data.items():
+        if key in ['cell_ids', 'dff']:
+            continue 
+
+        if type(value) == np.ndarray:
+            better_df[key] = value[inds]
+        else:
+            better_df[key] = [value] * len(inds)
+
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = better_df.copy()
