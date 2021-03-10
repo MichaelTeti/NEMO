@@ -9,7 +9,8 @@ import numpy as np
 
 def multiproc(func, iterator_keys, n_workers = 4, keep_list = False, **kwargs):
     '''
-    A general function to use multiprocessing to perform other functions that do not return anything.
+    A general function to use multiprocessing. In this repo, it is used with functions 
+    which process and write data where the processing is CPU-bound. 
 
     Args:
         func (function): A previously defined function.
