@@ -35,6 +35,13 @@ def write_natural_movie_data(write_dir, df, data, stimulus):
     inds = list(df['end'])
 
     # add data to stimulus table 
+    df['stimulus'] = [stimulus] * len(inds)
+
+    # make compatible with static gratings
+    df['orientation'] = [np.nan] * len(inds)
+    df['spatial_frequency'] = [np.nan] * len(inds)
+    df['phase'] = [np.nan] * len(inds)
+
     for key, value in data.items():
         if key in ['cell_ids', 'dff']:
             continue 
@@ -44,6 +51,8 @@ def write_natural_movie_data(write_dir, df, data, stimulus):
         else:
             df[key] = [value] * len(inds)
 
+    # need to sort column names now to make sure they line up with image stimuli
+    df.sort_index(axis = 1, inplace = True)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = df.copy()
@@ -59,7 +68,7 @@ def write_natural_movie_data(write_dir, df, data, stimulus):
         )
 
 
-def write_static_image_data(write_dir, df, data):
+def write_static_image_data(write_dir, df, data, stimulus):
 
     '''
     Writes response and behavioral data to file for static image data.
@@ -81,6 +90,18 @@ def write_static_image_data(write_dir, df, data):
     inds = list(better_df['end'])
 
     # add data to stimulus table
+    better_df['stimulus'] = [stimulus] * len(inds)
+
+    # make compatible with natural movies 
+    better_df['repeat'] = [np.nan] * len(inds)
+
+    if stimulus == 'natural_scenes':
+        better_df['orientation'] = [np.nan] * len(inds)
+        better_df['spatial_frequency'] = [np.nan] * len(inds)
+        better_df['phase'] = [np.nan] * len(inds)
+    elif stimulus == 'static_gratings':
+        better_df['frame'] = [np.nan] * len(inds)
+
     for key, value in data.items():
         if key in ['cell_ids', 'dff']:
             continue 
@@ -90,6 +111,8 @@ def write_static_image_data(write_dir, df, data):
         else:
             better_df[key] = [value] * len(inds)
 
+    # need to sort column names now to make sure they line up with video stimuli
+    better_df.sort_index(axis = 1, inplace = True)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
         df_write = better_df.copy()
@@ -196,7 +219,7 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
         # writing traces, pupil coords, etc.
         if 'natural_movie' in stimulus:
             write_natural_movie_data(
-                write_dir = os.path.join(trace_dir, 'natural_movies'),
+                write_dir = trace_dir,
                 df = stim_frame_table,
                 data = aibo_data,
                 stimulus = stimulus
@@ -204,9 +227,10 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
 
         elif stimulus in ['natural_scenes', 'static_gratings']:
             write_static_image_data(
-                write_dir = os.path.join(trace_dir, stimulus),
+                write_dir = trace_dir,
                 df = stim_frame_table,
                 data = aibo_data,
+                stimulus = stimulus
             )
             
             
@@ -234,8 +258,8 @@ def loop_datasets(datasets_by_cont, save_dir):
             ))
             write_exp_data(
                 dataset = dataset,
-                trace_dir = os.path.join(save_dir, 'trace_data'),
-                stimuli_dir = os.path.join(save_dir, 'stimuli')
+                trace_dir = os.path.join(save_dir, 'NeuralData'),
+                stimuli_dir = os.path.join(save_dir, 'Stimuli')
             )
 
 
@@ -253,8 +277,8 @@ def write_rfs(datasets, write_dir):
                 dataset.get_metadata()['ophys_experiment_id'])
             )
 
-            on_dir = os.path.join(write_dir, 'receptive_fields', 'on', session_type)
-            off_dir = os.path.join(write_dir, 'receptive_fields', 'off', session_type)
+            on_dir = os.path.join(write_dir, 'ReceptiveFields', 'on', session_type)
+            off_dir = os.path.join(write_dir, 'ReceptiveFields', 'off', session_type)
             os.makedirs(on_dir, exist_ok = True)
             os.makedirs(off_dir, exist_ok = True)
 
