@@ -12,9 +12,9 @@ from nemo.data.preprocess.image import (
 from nemo.data.utils import (
     add_string_to_fpaths,
     change_file_exts,
-    search_filepaths,
-    multiproc
+    search_filepaths
 )
+from nemo.utils import multiproc
 
 parser = ArgumentParser()
 parser.add_argument(
@@ -166,11 +166,10 @@ else:
     if args.op == 'resize':
         multiproc(
             func = read_resize_write,
-            iterator_keys = ['read_fpaths', 'write_fpaths'],
-            n_workers = args.n_workers,
-            keep_list = True,
-            read_fpaths = fpaths,
-            write_fpaths = save_fpaths,
+            iterator_keys = ['read_fpath', 'write_fpath'],
+            n_procs = args.n_workers,
+            read_fpath = fpaths,
+            write_fpath = save_fpaths,
             desired_height = args.resize_h,
             desired_width = args.resize_w,
             aspect_ratio_tol = args.aspect_ratio_tol
@@ -178,33 +177,30 @@ else:
     elif args.op == 'crop':
         multiproc(
             read_crop_write,
-            iterator_keys = ['read_fpaths', 'write_fpaths'],
-            n_workers = args.n_workers,
-            keep_list = True,
-            read_fpaths = fpaths,
-            write_fpaths = save_fpaths,
+            iterator_keys = ['read_fpath', 'write_fpath'],
+            n_procs = args.n_workers,
+            read_fpath = fpaths,
+            write_fpath = save_fpaths,
             crop_height = args.crop_h,
             crop_width = args.crop_w
         )
     elif args.op == 'downsample':
         multiproc(
             read_downsample_write,
-            iterator_keys = ['read_fpaths', 'write_fpaths'],
-            n_workers = args.n_workers,
-            keep_list = True,
-            read_fpaths = fpaths,
-            write_fpaths = save_fpaths,
+            iterator_keys = ['read_fpath', 'write_fpath'],
+            n_procs = args.n_workers,
+            read_fpath = fpaths,
+            write_fpath = save_fpaths,
             downsample_h = args.downsample_h,
             downsample_w = args.downsample_w
         )
     elif args.op == 'smooth':
         multiproc(
             read_smooth_write,
-            iterator_keys = ['read_fpaths', 'write_fpaths'],
-            n_workers = args.n_workers,
-            keep_list = True,
-            read_fpaths = fpaths,
-            write_fpaths = save_fpaths,
+            iterator_keys = ['read_fpath', 'write_fpath'],
+            n_procs = args.n_workers,
+            read_fpath = fpaths,
+            write_fpath = save_fpaths,
             neighborhood = args.neighborhood,
             sigma_color = args.sigma_color,
             sigma_space = args.sigma_space
