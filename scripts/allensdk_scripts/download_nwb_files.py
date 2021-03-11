@@ -5,7 +5,8 @@ import os, sys
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
 import allensdk.brain_observatory.stimulus_info as stim_info
 
-from nemo.data.utils import multiproc, download_experiment_data
+from nemo.data.utils import download_experiment_data
+from nemo.utils import multiproc
 
 
 parser = ArgumentParser()
@@ -144,9 +145,8 @@ logging.info('FOUND {} EXPERIMENTS'.format(len(exps)))
 exp_ids = [exp['id'] for exp in exps]
 multiproc(
     func = download_experiment_data,
-    iterator_keys = ['ids'],
-    n_workers = args.n_workers,
-    keep_list = True,
-    ids = exp_ids,
+    iterator_keys = ['id'],
+    n_procs = args.n_workers,
+    id = exp_ids,
     boc = boc
 )
