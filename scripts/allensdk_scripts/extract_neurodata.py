@@ -19,7 +19,8 @@ from progressbar import ProgressBar
 from nemo.data.io.image import write_AIBO_natural_stimuli, write_AIBO_static_grating_stimuli
 from nemo.data.preprocess.image import max_min_scale
 from nemo.data.preprocess.trace import normalize_traces
-from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind, multiproc
+from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
+from nemo.utils import multiproc
 
 
 
@@ -250,50 +251,48 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
                 )
 
 
-def loop_datasets(datasets_by_cont, save_dir):
-    for cont_of_datasets in datasets_by_cont:
-        for dataset in cont_of_datasets:
-            logging.info('WRITING DATA FOR EXPERIMENT {}'.format(
-                dataset.get_metadata()['ophys_experiment_id']
-            ))
-            write_exp_data(
-                dataset = dataset,
-                trace_dir = os.path.join(save_dir, 'NeuralData'),
-                stimuli_dir = os.path.join(save_dir, 'Stimuli')
-            )
+def loop_datasets(cont_of_datasets, save_dir):
+    for dataset in cont_of_datasets:
+        logging.info('WRITING DATA FOR EXPERIMENT {}'.format(
+            dataset.get_metadata()['ophys_experiment_id']
+        ))
+        write_exp_data(
+            dataset = dataset,
+            trace_dir = os.path.join(save_dir, 'NeuralData'),
+            stimuli_dir = os.path.join(save_dir, 'Stimuli')
+        )
 
 
-def write_rfs(datasets, write_dir):
+def write_rfs(dataset, write_dir):
     '''
     https://allensdk.readthedocs.io/en/latest/_static/examples/nb/brain_observatory_analysis.html
     '''
     
-    for dataset in datasets:
-        cell_ids = dataset.get_cell_specimen_ids()
-        session_type = dataset.get_session_type()
+    cell_ids = dataset.get_cell_specimen_ids()
+    session_type = dataset.get_session_type()
+    
+    if 'locally_sparse_noise' in dataset.list_stimuli():
+        logging.info('WRITING RECEPTIVE FIELDS FOR EXPERIMENT {}'.format(
+            dataset.get_metadata()['ophys_experiment_id'])
+        )
+
+        on_dir = os.path.join(write_dir, 'ReceptiveFields', 'on', session_type)
+        off_dir = os.path.join(write_dir, 'ReceptiveFields', 'off', session_type)
+        os.makedirs(on_dir, exist_ok = True)
+        os.makedirs(off_dir, exist_ok = True)
+
+        lsn = LocallySparseNoise(dataset)
+        rfs = lsn.receptive_field
+        rfs[np.isnan(rfs)] = 0
         
-        if 'locally_sparse_noise' in dataset.list_stimuli():
-            logging.info('WRITING RECEPTIVE FIELDS FOR EXPERIMENT {}'.format(
-                dataset.get_metadata()['ophys_experiment_id'])
-            )
+        for ind, cell_id in enumerate(cell_ids):
+            rf = rfs[:, :, ind, :]
+            rf = max_min_scale(rf) * 255
+            on, off = rf.transpose([2, 0, 1])
+            fname = str(cell_id) + '.png'
 
-            on_dir = os.path.join(write_dir, 'ReceptiveFields', 'on', session_type)
-            off_dir = os.path.join(write_dir, 'ReceptiveFields', 'off', session_type)
-            os.makedirs(on_dir, exist_ok = True)
-            os.makedirs(off_dir, exist_ok = True)
-
-            lsn = LocallySparseNoise(dataset)
-            rfs = lsn.receptive_field
-            rfs[np.isnan(rfs)] = 0
-            
-            for ind, cell_id in enumerate(cell_ids):
-                rf = rfs[:, :, ind, :]
-                rf = max_min_scale(rf) * 255
-                on, off = rf.transpose([2, 0, 1])
-                fname = str(cell_id) + '.png'
-
-                cv2.imwrite(os.path.join(on_dir, fname), on)
-                cv2.imwrite(os.path.join(off_dir, fname), off)
+            cv2.imwrite(os.path.join(on_dir, fname), on)
+            cv2.imwrite(os.path.join(off_dir, fname), off)
 
 
 def main(args):
@@ -321,10 +320,9 @@ def main(args):
 
         multiproc(
             func = loop_datasets,
-            iterator_keys = ['datasets_by_cont'],
-            n_workers = args.n_workers,
-            keep_list = True,
-            datasets_by_cont = datasets_by_cont,
+            iterator_keys = ['cont_of_datasets'],
+            n_procs = args.n_workers,
+            cont_of_datasets = datasets_by_cont,
             save_dir = args.save_dir
         )
 
@@ -332,10 +330,9 @@ def main(args):
     if not args.no_rfs:
         multiproc(
             func = write_rfs,
-            iterator_keys = ['datasets'],
-            n_workers = args.n_workers,
-            keep_list = True,
-            datasets = datasets,
+            iterator_keys = ['dataset'],
+            n_procs = args.n_workers,
+            dataset = datasets,
             write_dir = args.save_dir
         )
 
