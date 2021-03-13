@@ -5,7 +5,7 @@ import pandas as pd
 
 
 
-def read_neural_data_file(fpath, stimuli = None):
+def read_neural_data_file(fpath):
     '''
     Reads in a neural data file given an fpath and returns the dataframe.
 
@@ -23,12 +23,5 @@ def read_neural_data_file(fpath, stimuli = None):
     # read the file and get the cell name from the filename
     df = pd.read_csv(fpath)
     cell_id = os.path.splitext(os.path.split(fpath)[1])[0]
-
-    # pull out desired stimuli
-    if stimuli:
-        if not all([stimulus in df.stimulus.unique() for stimulus in stimuli]):
-            return pd.DataFrame(), cell_id
-        else:
-            df = df[df.stimulus.isin(stimuli)]
 
     return df, cell_id
