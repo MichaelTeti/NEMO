@@ -1,55 +1,34 @@
+from glob import glob
 import os
 
 import pandas as pd
 
 
-def load_single_cell_avg_traces(fpath, n_frames_in_time = 9):
+
+def read_neural_data_file(fpath, stimuli = None):
     '''
-    Loads trial-averaged traces as a 1D array for a model. 
+    Reads in a neural data file given an fpath and returns the dataframe.
 
     Args:
-        fpath (str): The file path to the .txt file with the trial-averaged traces.
-        n_frames_in_time (int): The number of consecutive frames in a single sample. 
+        fpath (str): The path to the cell's data file to read in.
+        stimuli (list): List of stimulus names to keep (e.g. natural_movie_one,
+            static_gratings, etc.)
 
     Returns:
-        traces (np.ndarray): A 1D array with the trial-averaged traces over stimulus frames.
+        df (pd.DataFrame): The cell's dataframe. If stimuli given, df.stimulus.unique()
+            should be equal to stimuli.
+        cell_id (str): The cell's ID in the AIBO database. 
     '''
 
-    if n_frames_in_time <= 0:
-        raise ValueError('n_frames_in_time should be > 0.')
-    
-    traces = pd.read_csv(fpath)
-    traces = traces.iloc[:, n_frames_in_time - 1:].to_numpy()[0]
-    
-    return traces
+    # read the file and get the cell name from the filename
+    df = pd.read_csv(fpath)
+    cell_id = os.path.splitext(os.path.split(fpath)[1])[0]
 
-
-def compile_trial_avg_traces(trace_dir):
-    '''
-    Reads in trial-averaged traces and aggregates them into a single dataframe.
-
-    Args:
-        trace_dir (str): The directory containing all of the cellID_*.txt trace files.
-
-    Returns:
-        df (pd.DataFrame): The dataframe of shape # neurons x # frames.
-        cell_ids (list): A list of the cell IDs for those in the dataframe. 
-    '''
-
-    # get paths to all the trace files in the given trace_dir
-    fnames = os.listdir(trace_dir)
-    fnames.sort() # sort them so they'll be lined up regardless of stimuli etc.
-    fpaths = [os.path.join(trace_dir, f) for f in fnames]
-    cell_ids = [os.path.splitext(fname)[0].split('_')[1] for fname in fnames]
-
-    # loop through and read them all into a pandas dataframe
-    for fpath_num, fpath in enumerate(fpaths):
-        if fpath_num == 0:
-            df = pd.read_csv(fpath)
+    # pull out desired stimuli
+    if stimuli:
+        if not all([stimulus in df.stimulus.unique() for stimulus in stimuli]):
+            return pd.DataFrame(), cell_id
         else:
-            df = df.append(pd.read_csv(fpath))
+            df = df[df.stimulus.isin(stimuli)]
 
-    # reset the indices 
-    df = df.reset_index(drop = True)
-
-    return df, cell_ids
+    return df, cell_id

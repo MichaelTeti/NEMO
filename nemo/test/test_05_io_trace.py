@@ -2,62 +2,77 @@
 Unit tests for the functions in data.io.trace.py.
 '''
 
-
-import csv
 import os
 from tempfile import TemporaryDirectory
 import unittest
 
-import numpy as np
+import pandas as pd
 
 from nemo.data.io.trace import (
-    compile_trial_avg_traces,
-    load_single_cell_avg_traces
+    read_neural_data_file
 )
 
 
 class TestIOTrace(unittest.TestCase):
 
-    def test_compile_trial_avg_traces(self):
-        n_frames = 5
-        n_cells = 10
-        write = np.random.randn(n_cells, n_frames) * 100
-
+    def test_read_neural_data_file_df_values_stim_None(self):
         with TemporaryDirectory() as tmp_dir:
-            for i in range(n_cells):
-                write_fpath = os.path.join(tmp_dir, 'cellID_0{}.txt'.format(i))
+            df = pd.DataFrame(
+                {
+                    'stimulus': ['stim1', 'stim2', 'stim3'],
+                    'frame': list(range(3))
+                }
+            )
+            fpath = os.path.join(tmp_dir, '000.txt')
+            df.to_csv(fpath, index = False)
+            df_read, _ = read_neural_data_file(fpath)
 
-                with open(write_fpath, 'w') as f:
-                    writer = csv.writer(f)
-                    writer.writerow(['0{}.png'.format(j) for j in range(n_frames)])
-                    writer.writerow(list(write[i]))
+            self.assertTrue(df.equals(df_read))
 
-            traces, cell_ids = compile_trial_avg_traces(tmp_dir)
-            self.assertAlmostEqual(np.sum(traces.to_numpy() - write), 0.0, places = 12)
 
-    
-    def test_load_single_cell_avg_traces(self):
-        write = np.random.randn(10)
-
+    def test_read_neural_data_file_cell_id(self):
         with TemporaryDirectory() as tmp_dir:
-            write_fpath = os.path.join(tmp_dir, 'cellID_0.txt')
+            df = pd.DataFrame(
+                {
+                    'stimulus': ['stim1', 'stim2', 'stim3'],
+                    'frame': list(range(3))
+                }
+            )
+            fpath = os.path.join(tmp_dir, '000.txt')
+            df.to_csv(fpath, index = False)
+            _, cell_id = read_neural_data_file(fpath)
+            
+            self.assertEqual(cell_id, '000')
 
-            with open(write_fpath, 'w') as f:
-                writer = csv.writer(f)
-                writer.writerow(['0{}.png'.format(j) for j in range(10)])
-                writer.writerow(list(write))
-                
-            for i in range(1, 10):
-                read = load_single_cell_avg_traces(write_fpath, n_frames_in_time = i)
-                self.assertAlmostEqual(np.sum(write[i-1:] - read), 0.0, places = 12)
 
+    def test_read_neural_data_file_df_values_stim_specified_and_present(self):
+        with TemporaryDirectory() as tmp_dir:
+            df = pd.DataFrame(
+                {
+                    'stimulus': ['stim1', 'stim2', 'stim3'],
+                    'frame': list(range(3))
+                }
+            )
+            fpath = os.path.join(tmp_dir, '000.txt')
+            df.to_csv(fpath, index = False)
+            df_read, _ = read_neural_data_file(fpath, stimuli = ['stim1'])
+            
+            self.assertTrue(df_read.equals(df[df.stimulus == 'stim1']))
 
-    def test_load_single_cell_avg_traces_ValueError(self):
-        write = np.random.randn(10)
-        for i in range(-10, 1):
-            with self.assertRaises(ValueError):
-                load_single_cell_avg_traces(write, n_frames_in_time = i)
-
+        
+    def test_read_neural_data_file_df_values_stim_specified_and_not_present(self):
+        with TemporaryDirectory() as tmp_dir:
+            df = pd.DataFrame(
+                {
+                    'stimulus': ['stim1', 'stim2', 'stim3'],
+                    'frame': list(range(3))
+                }
+            )
+            fpath = os.path.join(tmp_dir, '000.txt')
+            df.to_csv(fpath, index = False)
+            df_read, _ = read_neural_data_file(fpath, stimuli = ['stim10'])
+            
+            self.assertTrue(df_read.equals(pd.DataFrame()))
 
 
 if __name__ == '__main__':
