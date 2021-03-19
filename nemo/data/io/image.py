@@ -108,8 +108,13 @@ def write_AIBO_natural_stimuli(template, save_dir, stimulus):
 
     os.makedirs(save_dir, exist_ok = True)
     fnames = [fname + '.png' for fname in get_img_frame_names(template.shape[0])]
+    
+    # scale to [0, 255]
+    template = np.uint8(max_min_scale(template) * 255)
 
     for image, fname in zip(template, fnames):
+
+        # try to filter out some of the pixelation
         image = cv2.bilateralFilter(image, 7, 20, 20)
 
         if 'natural_movie' in stimulus:
