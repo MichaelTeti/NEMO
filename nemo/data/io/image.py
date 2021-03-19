@@ -110,6 +110,8 @@ def write_AIBO_natural_stimuli(template, save_dir, stimulus):
     fnames = [fname + '.png' for fname in get_img_frame_names(template.shape[0])]
 
     for image, fname in zip(template, fnames):
+        image = cv2.bilateralFilter(image, 7, 20, 20)
+
         if 'natural_movie' in stimulus:
             image = monitor.natural_movie_image_to_screen(image, origin = 'upper')
         elif stimulus == 'natural_scenes':
