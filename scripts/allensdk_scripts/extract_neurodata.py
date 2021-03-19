@@ -293,7 +293,7 @@ def write_rfs(dataset, write_dir):
 def main(args):
 
     logging.basicConfig(
-        format='%(asctime)s -- %(message)s', 
+        format='%(levelname)s -- %(asctime)s -- %(message)s', 
         datefmt='%m/%d/%Y %I:%M:%S %p', 
         level = logging.INFO
     )
@@ -304,6 +304,8 @@ def main(args):
 
 
     if not args.no_trace_data:
+        logging.info('WRITING RECEPTIVE FIELDS TO DISK')
+
         trace_dir = os.path.join(args.save_dir, 'NeuralData')
         os.makedirs(trace_dir, exist_ok = True)
 
@@ -337,6 +339,8 @@ def main(args):
 
     
     if not args.no_stim:
+        logging.info('WRITING STIMULI TEMPLATES TO DISK')
+
         stimuli_dir = os.path.join(args.save_dir, 'Stimuli')
         os.makedirs(stimuli_dir, exist_ok = True)
 
@@ -378,6 +382,8 @@ def main(args):
 
 def merge_cont_dfs_and_write(dfs, trace_dir):
     ''' Merges dataframes from all containers and writes to disk '''
+
+    logging.info('WRITING EXPERIMENT DATA TO DISK')
 
     stim_cols = [
         'frame', 
