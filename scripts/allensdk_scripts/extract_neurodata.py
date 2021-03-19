@@ -304,8 +304,6 @@ def main(args):
 
 
     if not args.no_trace_data:
-        logging.info('WRITING RECEPTIVE FIELDS TO DISK')
-
         trace_dir = os.path.join(args.save_dir, 'NeuralData')
         os.makedirs(trace_dir, exist_ok = True)
 
@@ -329,6 +327,8 @@ def main(args):
 
 
     if not args.no_rfs:
+        logging.info('WRITING RECEPTIVE FIELDS TO DISK')
+
         multiproc(
             func = write_rfs,
             iterator_keys = ['dataset'],
