@@ -408,7 +408,7 @@ def merge_cont_dfs_and_write(dfs, trace_dir):
                 )
             else:
                 df_col = df[stim_cols + [col_name]]
-                df_col = df_col.rename(columns = {col_name: '{}_{}'.format(col_name, cont_id)})
+                df_col = df_col.rename(columns = {col_name: str(cont_id)})
 
             if n_dfs == 0:
                 df_agg = df_col 
