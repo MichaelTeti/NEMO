@@ -47,10 +47,10 @@ class TrialAvgNeuralDataset(Dataset):
             )
         )
 
-        self.load_data()
+        self.load_neural_data()
 
 
-    def load_data(self):
+    def load_neural_data(self):
         # read the file and select out the desired stimuli
         data = pd.read_hdf(os.path.join(self.neural_data_dir, 'dff.h5'))
         data = data[data.stimulus.isin(self.stimuli)]
@@ -77,6 +77,12 @@ class TrialAvgNeuralDataset(Dataset):
         logging.info('   - NUM. STIMULUS FRAMES: {}'.format(len(self.data)))
 
 
+    def read_image(self, fpath):
+        frame = cv2.imread(fpath, cv2.IMREAD_GRAYSCALE)
+        frame = cv2.resize(frame, (self.stim_width, self.stim_height))
+        return torch.from_numpy(frame)
+
+
     def __len__(self):
         return len(self.data)
 
@@ -84,11 +90,7 @@ class TrialAvgNeuralDataset(Dataset):
     def __getitem__(self, idx):
         stimulus = self.data.stimulus.to_list()[idx]
         frame_num = int(self.data.frame.to_list()[idx])
-        
         dff = torch.Tensor(self.data.iloc[idx, 2:].to_list())
+        frame = self.read_image(self.stim_frame_fpaths[stimulus][frame_num])
         
-        frame_fpath = self.stim_frame_fpaths[stimulus][frame_num]
-        frame = cv2.imread(frame_fpath, cv2.IMREAD_GRAYSCALE)
-        frame = cv2.resize(frame, (self.stim_width, self.stim_height))
-        
-        return torch.from_numpy(frame), dff
+        return frame, dff
