@@ -49,14 +49,6 @@ class TrialAvgNeuralDataset(Dataset):
 
         self.load_data()
 
-        logging.info('DATA LOADER INITIALIZED')
-        logging.info('   - NEURAL DATA DIR: {}'.format(self.neural_data_dir))
-        logging.info('   - STIMULI DATA DIR: {}'.format(self.stimuli_dir))
-        logging.info('   - STIMULI: {}'.format(self.stimuli))
-        logging.info('   - CRE LINES: {}'.format(self.cre_lines))
-        logging.info('   - NUM. CELLS: {}'.format(len(self.data.columns) - 2))
-        logging.info('   - NUM. STIMULUS FRAMES: {}'.format(len(self.data)))
-
 
     def load_data(self):
         # read the file and select out the desired stimuli
@@ -75,6 +67,14 @@ class TrialAvgNeuralDataset(Dataset):
         data = data[keep_cols + ['frame', 'stimulus']]
         data = data.groupby(['stimulus', 'frame']).mean().reset_index()
         self.data = data.dropna(axis = 1)
+
+        logging.info('DATA LOADER INITIALIZED')
+        logging.info('   - NEURAL DATA DIR: {}'.format(self.neural_data_dir))
+        logging.info('   - STIMULI DATA DIR: {}'.format(self.stimuli_dir))
+        logging.info('   - STIMULI: {}'.format(self.stimuli))
+        logging.info('   - CRE LINES: {}'.format(self.cre_lines))
+        logging.info('   - NUM. CELLS: {}'.format(len(self.data.columns) - 2))
+        logging.info('   - NUM. STIMULUS FRAMES: {}'.format(len(self.data)))
 
 
     def __len__(self):
