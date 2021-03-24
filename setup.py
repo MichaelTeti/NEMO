@@ -19,6 +19,7 @@ setup(
         'opencv-python',
         'pandas==0.25.3',
         'progressbar2',
+        'pytorch-lightning',
         'scipy',
         'seaborn',
         'sklearn',
