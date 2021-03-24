@@ -67,6 +67,9 @@ class TrialAvgNeuralDataset(Dataset):
         data = pd.read_hdf(os.path.join(self.neural_data_dir, 'dff.h5'))
         data = data[data.stimulus.isin(self.stimuli)]
 
+        # get rid of frame -1 (blank gray frame) for this
+        data = data[data.frame != -1]
+
         # keep cells with desired cre lines if given 
         if self.cre_lines is not None:
             cre_line_df = pd.read_hdf(os.path.join(self.neural_data_dir, 'cre_line.h5'))
