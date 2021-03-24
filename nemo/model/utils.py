@@ -77,9 +77,6 @@ def to_tensor(data, dev = None):
     data = torch.Tensor(data)
     
     if dev is not None:
-        try:
-            data = data.cuda(dev)
-        except RuntimeError:
-            pass
+        data = data.cuda(dev)
 
     return data
