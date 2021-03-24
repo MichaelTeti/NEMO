@@ -83,7 +83,7 @@ class TrialAvgNeuralDataset(Dataset):
         data = data.groupby(['stimulus', 'frame']).mean().reset_index()
         self.data = data.dropna(axis = 1)
 
-        logging.info('DATA LOADER INITIALIZED')
+        logging.info('DATASET INITIALIZED')
         logging.info('   - NEURAL DATA DIR: {}'.format(self.neural_data_dir))
         logging.info('   - STIMULI DATA DIR: {}'.format(self.stimuli_dir))
         logging.info('   - STIMULI: {}'.format(self.stimuli))
