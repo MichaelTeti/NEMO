@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 
-def resize_img(img, desired_height, desired_width):
+def resize_img(img, desired_height, desired_width, crop = True):
     '''
     Resizes an image to a new size without warping by cropping the smaller dim.
 
@@ -12,6 +12,10 @@ def resize_img(img, desired_height, desired_width):
         img (np.ndarray): Color or grayscale image to resize.
         desired_height (int): Height to resize img to.
         desired_width (int): Width to resize image to.
+        crop (bool): If True, the height or width of the image will be center cropped 
+            to make the actual aspect ratio equal to the desired aspect ratio before
+            resizing the image. This may be helpful in situations where the desired
+            aspect ratio is very different from the actual aspect ratio.
 
     Returns:
         img_resized (np.ndarray): The resized image with the same aspect ratio as img.
@@ -20,17 +24,18 @@ def resize_img(img, desired_height, desired_width):
     if desired_height <= 0 or desired_width <= 0:
         raise ValueError('desired_height and desired_width must be > 0.')
 
-    h, w = img.shape[:2]
-    desired_aspect = desired_width / desired_height
-    actual_aspect = w / h
+    if crop:
+        h, w = img.shape[:2]
+        desired_aspect = desired_width / desired_height
+        actual_aspect = w / h
 
-    if desired_aspect > actual_aspect:
-        crop_height = int(w * desired_height / desired_width)
-        img = center_crop(img, crop_height = crop_height, crop_width = w)
+        if desired_aspect > actual_aspect:
+            crop_height = int(w * desired_height / desired_width)
+            img = center_crop(img, crop_height = crop_height, crop_width = w)
 
-    elif desired_aspect < actual_aspect:
-        crop_width = int(h * desired_width / desired_height)
-        img = center_crop(img, crop_height = h, crop_width = crop_width)
+        elif desired_aspect < actual_aspect:
+            crop_width = int(h * desired_width / desired_height)
+            img = center_crop(img, crop_height = h, crop_width = crop_width)
 
     img_resized = cv2.resize(img, (desired_width, desired_height))
 
@@ -150,13 +155,13 @@ def create_video_frame_sequences(vid_frame_array, n_frames_in_time = 9):
     return design_mat
 
 
-def read_resize_write(read_fpaths, write_fpaths, desired_height, desired_width, aspect_ratio_tol = 0.26):
+def read_resize_write(read_fpath, write_fpath, desired_height, desired_width, aspect_ratio_tol = 0.26):
     '''
     Read in images based on fpaths, resize, and save in a new fpath.
     
     Args:
-        read_fpaths (list): List of the fpaths to read the pre-resized images from.
-        write_fpaths (list): List of the fpaths to write the post-resized images to.
+        read_fpath (str): fpath to read the pre-resized image from.
+        write_fpath (str): fpath to write the post-resized images to.
         desired_height (int): Height to resize each image.
         desired_width (int): Width to resize each image.
         aspect_ratio_tol (float): Discard images if absolute value between
@@ -170,34 +175,33 @@ def read_resize_write(read_fpaths, write_fpaths, desired_height, desired_width, 
     if aspect_ratio_tol < 0:
         raise ValueError('aspect_ratio_tol should be >= 0.')
     
-    for fpath, new_fpath in zip(read_fpaths, write_fpaths):
-        # read in the image
-        img = cv2.imread(fpath)
-        
-        # calculate aspect ratio
-        original_aspect = img.shape[1] / img.shape[0]
-        
-        # if aspect is not within aspect_ratio_tol of desired aspect, remove new dir then continue
-        desired_aspect = desired_width / desired_height
-        
-        if abs(desired_aspect - original_aspect) > aspect_ratio_tol:
-            if os.path.isdir(os.path.split(new_fpath)[0]): os.rmdir(os.path.split(new_fpath)[0])
-            continue
+    # read in the image
+    img = cv2.imread(read_fpath)
+    
+    # calculate aspect ratio
+    original_aspect = img.shape[1] / img.shape[0]
+    
+    # if aspect is not within aspect_ratio_tol of desired aspect, remove new dir then continue
+    desired_aspect = desired_width / desired_height
+    
+    if abs(desired_aspect - original_aspect) > aspect_ratio_tol:
+        if os.path.isdir(os.path.split(write_fpath)[0]): os.rmdir(os.path.split(write_fpath)[0])
+        return
 
-        # resize the images
-        img = resize_img(img, desired_height, desired_width)
-        
-        # save the resized image
-        cv2.imwrite(new_fpath, img)
+    # resize the images
+    img = resize_img(img, desired_height, desired_width)
+    
+    # save the resized image
+    cv2.imwrite(write_fpath, img)
 
 
-def read_crop_write(read_fpaths, write_fpaths, crop_height, crop_width):
+def read_crop_write(read_fpath, write_fpath, crop_height, crop_width):
     '''
     Read in images, crop them, and resave them.
     
     Args:
-        read_fpaths (list): List of the fpaths to read the pre-cropped images from.
-        write_fpaths (list): List of the fpaths to write the post-cropped images to.
+        read_fpath (str): fpath to read the pre-cropped image from.
+        write_fpath (str): fpath to write the post-cropped images to.
         crop_height (int): Height of the cropped image.
         crop_width (int): Width of the cropped image.
         
@@ -205,27 +209,26 @@ def read_crop_write(read_fpaths, write_fpaths, crop_height, crop_width):
         None
     '''
 
-    for fpath, save_fpath in zip(read_fpaths, write_fpaths):
-        # read in the image
-        img = cv2.imread(fpath)
-        
-        # check if the image is smaller than the specified crop dims
-        if img.shape[0] <= crop_height or img.shape[1] <= crop_width:
-            if os.path.isdir(os.path.split(save_fpath)[0]): os.rmdir(os.path.split(save_fpath)[0])
-            continue
+    # read in the image
+    img = cv2.imread(read_fpath)
+    
+    # check if the image is smaller than the specified crop dims
+    if img.shape[0] <= crop_height or img.shape[1] <= crop_width:
+        if os.path.isdir(os.path.split(write_fpath)[0]): os.rmdir(os.path.split(write_fpath)[0])
+        return
 
-        # crop it and save
-        img = center_crop(img, crop_height, crop_width)
-        cv2.imwrite(save_fpath, img)
+    # crop it and save
+    img = center_crop(img, crop_height, crop_width)
+    cv2.imwrite(write_fpath, img)
 
 
-def read_downsample_write(read_fpaths, write_fpaths, downsample_h = 2, downsample_w = 2):
+def read_downsample_write(read_fpath, write_fpath, downsample_h = 2, downsample_w = 2):
     '''
     Reads in images from fpaths, subsamples, and resaves them.
     
     Args:
-        read_fpaths (list): List of the fpaths to read the pre-downsampled images from.
-        write_fpaths (list): List of the fpaths to write the post-downsampled images to.
+        read_fpath (str): fpath to read the pre-downsampled image from.
+        write_fpath (str): fpath to write the post-downsampled image to.
         downsample_h (int): The factor to downsample the image height by.
         downsample_w (int): The factor to downsample the image width by.
         
@@ -233,21 +236,20 @@ def read_downsample_write(read_fpaths, write_fpaths, downsample_h = 2, downsampl
         None
     '''
 
-    for fpath, save_fpath in zip(read_fpaths, write_fpaths):
-        # read in the video frames and downsample
-        img = cv2.imread(fpath)[::downsample_h, ::downsample_w]
-        
-        # save the downsampled frame
-        cv2.imwrite(save_fpath, img)
+    # read in the video frames and downsample
+    img = cv2.imread(read_fpath)[::downsample_h, ::downsample_w]
+    
+    # save the downsampled frame
+    cv2.imwrite(write_fpath, img)
 
 
-def read_smooth_write(read_fpaths, write_fpaths, neighborhood = 9, sigma_color = 75, sigma_space = 75):
+def read_smooth_write(read_fpath, write_fpath, neighborhood = 9, sigma_color = 75, sigma_space = 75):
     '''
     Read in images based on fpaths, smooth, and save in a new fpath.
 
     Args:
-        read_fpaths (list): List of the fpaths to read the pre-smoothed images from.
-        write_fpaths (list): List of the fpaths to write the post-smoothed images to.
+        read_fpath (str): fpath to read the pre-smoothed image from.
+        write_fpath (str): fpath to write the post-smoothed image to.
         neighborhood (int): Diameter of the pixel neighborhood.
         sigma_color (float): Larger values mean larger differences in colors can be mixed together.
         sigma_space (float): Larger values mean larger differences in space can be mixed together.
@@ -256,54 +258,51 @@ def read_smooth_write(read_fpaths, write_fpaths, neighborhood = 9, sigma_color =
         None
     '''
 
-    for fpath, new_fpath in zip(read_fpaths, write_fpaths):
-        # read in the image
-        img = cv2.imread(fpath)
+    # read in the image
+    img = cv2.imread(read_fpath)
 
-        # smooth the image
-        img = cv2.bilateralFilter(
-            img,
-            d = neighborhood,
-            sigmaColor = sigma_color,
-            sigmaSpace = sigma_space
-        )
+    # smooth the image
+    img = cv2.bilateralFilter(
+        img,
+        d = neighborhood,
+        sigmaColor = sigma_color,
+        sigmaSpace = sigma_space
+    )
 
-        # save the resized image
-        cv2.imwrite(new_fpath, img)
+    # save the resized image
+    cv2.imwrite(write_fpath, img)
 
 
-def read_pre_whiten_write(read_fpaths, write_fpaths, f_0 = None):
+def read_pre_whiten_write(read_fpath, write_fpath, f_0 = None):
     '''
     Read in images based on fpaths, whiten, and save in a new fpath.
     
     Args:
-        read_fpaths (list): List of the fpaths to read the non pre-whitened images from.
-        write_fpaths (list): List of the fpaths to write the pre-whitened images to.
+        read_fpath (str): fpath to read the non pre-whitened image from.
+        write_fpath (str): fpath to write the pre-whitened image to.
         f_0 (int): Cycles/s desired.
         
     Returns:
         None
     '''
 
-    for fpath_num, (fpath, new_fpath) in enumerate(zip(read_fpaths, write_fpaths)):
-        # read in the image and make grayscale
-        img = cv2.imread(fpath)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        h, w = img.shape[0], img.shape[1]
+    # read in the image and make grayscale
+    img = cv2.imread(read_fpath)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    h, w = img.shape[0], img.shape[1]
 
-        # make the filter
-        if fpath_num == 0:
-            if not f_0: f_0 = np.ceil(min(h, w) * 0.4)
-            ffilter = make_lgn_freq_filter(w, h, f_0 = f_0)
+    # make the filter
+    if not f_0: f_0 = np.ceil(min(h, w) * 0.4)
+    ffilter = make_lgn_freq_filter(w, h, f_0 = f_0)
 
-        # fft transform on image, filter, and go back to image
-        img_fft = np.fft.fft2(img)
-        img_fft *= ffilter
-        img_rec = np.absolute(np.fft.ifft2(img_fft))
+    # fft transform on image, filter, and go back to image
+    img_fft = np.fft.fft2(img)
+    img_fft *= ffilter
+    img_rec = np.absolute(np.fft.ifft2(img_fft))
 
-        # scale image to [0, 255] and write image
-        img_scaled = max_min_scale(img_rec) * 255
-        cv2.imwrite(new_fpath, img_scaled)
+    # scale image to [0, 255] and write image
+    img_scaled = max_min_scale(img_rec) * 255
+    cv2.imwrite(write_fpath, img_scaled)
 
 
 def read_whiten_write(read_fpaths, write_fpaths, full_svd = False, scale_method = 'video'):

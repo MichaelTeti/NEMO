@@ -1,57 +1,10 @@
 import csv
 from glob import glob
-from multiprocessing import Process, cpu_count
 import os
 
 import h5py
 import numpy as np
 
-
-def multiproc(func, iterator_keys, n_workers = 4, keep_list = False, **kwargs):
-    '''
-    A general function to use multiprocessing to perform other functions that do not return anything.
-
-    Args:
-        func (function): A previously defined function.
-        iterator_keys (str): A list of keys in kwargs whose values are the lists to divide up
-            among n_workers in separate calls to func.
-        n_workers (int): The number of processes to use. Be careful with this.
-        keep_list (bool): If True and a worker has a list of length 1, then it will keep the item
-            in the list. Otherwise, it will take the item outside of the list.
-        kwargs: keyword arguments to func. The items specified by iterator_keys should be lists.
-
-    Returns:
-        None
-    '''
-
-    # check if all lists to be divided up are same length
-    n_inputs = len(kwargs[iterator_keys[0]])
-    if not all([len(kwargs[key]) == n_inputs for key in iterator_keys]):
-        raise ValueError('lists corresponding to iterator_keys should all have same length.')
-
-    # find out how many inputs to each worker
-    if n_inputs < n_workers: n_workers = n_inputs
-    inputs_per_worker = int(np.ceil(n_inputs / n_workers))
-
-    # loop over inputs and divide up between the workers for each process
-    procs = []
-    for worker_num, input_num in enumerate(range(0, n_inputs, inputs_per_worker)):
-        kwarg_inputs = kwargs.copy()
-        start_ind = input_num
-        end_ind = input_num + inputs_per_worker
-
-        for key in iterator_keys:
-            kwarg_inputs[key] = kwarg_inputs[key][start_ind:end_ind]
-
-            if len(kwarg_inputs[key]) == 1 and not keep_list:
-                kwarg_inputs[key] = kwarg_inputs[key][0]
-
-        process = Process(target = func, kwargs = kwarg_inputs)
-        procs.append(process)
-        process.start()
-
-    for proc in procs:
-        process.join()
 
 
 def change_file_exts(fpaths, desired_ext = '.png'):
@@ -143,7 +96,7 @@ def get_img_frame_names(n_frames):
     return ['0' * (n_decimals - len(str(i))) + str(i) for i in range(n_frames)]
 
 
-def download_experiment_data(ids, boc):
+def download_experiment_data(id, boc):
     '''
     Download AllenSDK experiment container files.
 
@@ -155,8 +108,7 @@ def download_experiment_data(ids, boc):
         None
     '''
 
-    for id in ids:
-        boc.get_ophys_experiment_data(id)
+    boc.get_ophys_experiment_data(id)
 
 
 def write_csv(items, fpath, mode = 'w'):

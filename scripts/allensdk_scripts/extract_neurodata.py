@@ -5,6 +5,7 @@ import os
 import allensdk
 from allensdk.brain_observatory.brain_observatory_exceptions import (
     EpochSeparationException,
+    MissingStimulusException,
     NoEyeTrackingException
 )
 from allensdk.brain_observatory.locally_sparse_noise import LocallySparseNoise
@@ -12,6 +13,7 @@ import allensdk.brain_observatory.stimulus_info as si
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
 import cv2
 import h5py
+import multiprocessing as mp
 import numpy as np
 import pandas as pd
 from progressbar import ProgressBar
@@ -19,91 +21,112 @@ from progressbar import ProgressBar
 from nemo.data.io.image import write_AIBO_natural_stimuli, write_AIBO_static_grating_stimuli
 from nemo.data.preprocess.image import max_min_scale
 from nemo.data.preprocess.trace import normalize_traces
-from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind, multiproc
+from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
+from nemo.utils import multiproc
 
 
 
-def write_natural_movie_data(write_dir, df, data, stimulus):
-
-    '''
-    Writes response and behavioral data to file for natural movie stimuli.
-    '''
+def add_video_data_to_stim_table(df, data, stimulus):
+    ''' Adds trace and behavioral data to natural movie stimulus table '''
     
-    os.makedirs(write_dir, exist_ok = True)
-    
+    # get acquisition frame indices
     inds = list(df['end'])
-    df['pupil_x'] = data['pupil_x'][inds]
-    df['pupil_y'] = data['pupil_y'][inds]
-    df['pupil_size'] = data['pupil_size'][inds]
-    df['run_speed'] = data['run_speed'][inds]
-    df['session_type'] = [data['session_type']] * len(inds)
+    df = df.drop(columns = ['start', 'end'])
+
+    # add data to stimulus table 
     df['stimulus'] = [stimulus] * len(inds)
-    df['dff_ts'] = data['dff_ts'][inds]
-    df['exp_id'] = [data['exp_id']] * len(inds)
-    df['cont_id'] = [data['cont_id']] * len(inds)
-    df['cre_line'] = [data['cre_line']] * len(inds)
+
+    # needs to be compatible with image stimuli dtype
+    df = df.astype({'repeat': np.float32})
+
+    # make compatible with static gratings
+    df['orientation'] = [np.nan] * len(inds)
+    df['spatial_frequency'] = [np.nan] * len(inds)
+    df['phase'] = [np.nan] * len(inds)
+
+    for key, value in data.items():
+        if key in ['cell_ids', 'dff']:
+            continue 
+
+        if type(value) == np.ndarray:
+            df[key] = value[inds]
+        else:
+            df[key] = [value] * len(inds)
+
+    # need to sort column names now to make sure they line up with image stimuli
+    df.sort_index(axis = 1, inplace = True)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
-        df_write = df.copy()
-        df_write['dff'] = cell_traces[inds]
+        df['dff_{}'.format(cell_id)] = cell_traces[inds]
         
-        fname = '{}.xz'.format(cell_id)
-        df_write.to_csv(
-            os.path.join(write_dir, fname), 
-            index = False, 
-            mode = 'a',
-            header = False if fname in os.listdir(write_dir) else True,
-            na_rep = np.nan
-        )
+
+    return df
 
 
-def write_static_image_data(write_dir, df, data):
-
-    '''
-    Writes response and behavioral data to file for static image data.
-    '''
-    
-    os.makedirs(write_dir, exist_ok = True)
+def add_image_data_to_stim_table(df, data, stimulus):
+    ''' Adds trace and behavioral data to natural scene and image stimulus table '''
     
     list_add = []
+    repeats = {}
     for row_num in range(len(df)):
         row = df.iloc[row_num].to_list()
         start, end = row[-2:]
+
+        if stimulus == 'natural_scenes':
+            frame = row[0]
+
+        elif stimulus == 'static_gratings':
+            orientation, spatial_freq, phase = row[:-2]
+            frame = '{}_{}_{}'.format(orientation, spatial_freq, phase)
+            
+        if frame not in repeats.keys():
+            repeats[frame] = 0.0
+            
+        repeat = repeats[frame]
+        repeats[frame] += 1.0
         
         for ind in range(int(start), int(end)):
-            list_add.append(row[:-2] + [ind, ind + 1])
+            list_add.append(row[:-2] + [ind, ind + 1, repeat])
+            repeat += 0.1
             
-    better_df = pd.DataFrame(list_add, columns = list(df.columns)[:-2] + ['start', 'end'])
+    better_df = pd.DataFrame(list_add, columns = list(df.columns)[:-2] + ['start', 'end', 'repeat'])
     
+    # get acquisition frame inds
     inds = list(better_df['end'])
-    better_df['pupil_x'] = data['pupil_x'][inds]
-    better_df['pupil_y'] = data['pupil_y'][inds]
-    better_df['pupil_size'] = data['pupil_size'][inds]
-    better_df['run_speed'] = data['run_speed'][inds]
-    better_df['dff_ts'] = data['dff_ts'][inds]
-    better_df['session_type'] = [data['session_type']] * len(inds)
-    better_df['exp_id'] = [data['exp_id']] * len(inds)
-    better_df['cont_id'] = [data['cont_id']] * len(inds)
-    better_df['cre_line'] = [data['cre_line']] * len(inds)
+    better_df = better_df.drop(columns = ['start', 'end'])
+
+    # add data to stimulus table
+    better_df['stimulus'] = [stimulus] * len(inds)
+
+    # make natural scenes compatible with gratings and gratings compatible
+    # with scenes and videos
+    if stimulus == 'natural_scenes':
+        better_df['orientation'] = [np.nan] * len(inds)
+        better_df['spatial_frequency'] = [np.nan] * len(inds)
+        better_df['phase'] = [np.nan] * len(inds)
+    elif stimulus == 'static_gratings':
+        better_df['frame'] = [np.nan] * len(inds)
+
+    for key, value in data.items():
+        if key in ['cell_ids', 'dff']:
+            continue 
+
+        if type(value) == np.ndarray:
+            better_df[key] = value[inds]
+        else:
+            better_df[key] = [value] * len(inds)
+
+    # need to sort column names now to make sure they line up with video stimuli
+    better_df.sort_index(axis = 1, inplace = True)
     
     for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
-        df_write = better_df.copy()
-        df_write['dff'] = cell_traces[inds]
-        
-        fname = '{}.xz'.format(cell_id)
-        df_write.to_csv(
-            os.path.join(write_dir, fname), 
-            index = False, 
-            mode = 'a',
-            header = False if fname in os.listdir(write_dir) else True,
-            na_rep = np.nan
-        )
+        better_df['dff_{}'.format(cell_id)] = cell_traces[inds]
+
+    return better_df
 
 
 def get_eye_tracking_data(dataset, missing_data_fill_size):
-    '''
-    Gets the eye tracking data from the AIBO dataset.
-    '''
+    ''' Gets the eye tracking data from the AIBO dataset. '''
 
     try:
         _, pupil_loc = dataset.get_pupil_location(as_spherical = False)
@@ -126,13 +149,14 @@ def get_eye_tracking_data(dataset, missing_data_fill_size):
 
 
 def get_AIBO_data(dataset):
+    ''' Get the relevant data for an experiment. '''
+
     data = {}
 
     # get the cell IDs in the dataset 
     data['cell_ids'] = dataset.get_cell_specimen_ids()
 
     # get experiment ID and container ID
-    data['exp_id'] = dataset.get_metadata()['ophys_experiment_id']
     data['cont_id'] = dataset.get_metadata()['experiment_container_id']
 
     # get session type 
@@ -144,8 +168,8 @@ def get_AIBO_data(dataset):
     # get df/f  for all cells in this experiment
     # after these lines, traces is of shape # acquisition frames x # cells
     dff_ts, dff = dataset.get_dff_traces(cell_specimen_ids = data['cell_ids'])
-    dff = normalize_traces(dff.transpose())
-    data['dff'], data['dff_ts'] = dff, dff_ts
+    dff = np.float16(normalize_traces(dff.transpose()))
+    data['dff'], data['ts'] = dff, dff_ts
 
     # get eye tracking info for the animal in this experiment
     data.update(
@@ -164,11 +188,8 @@ def get_AIBO_data(dataset):
     return data
 
 
-def write_exp_data(dataset, trace_dir, stimuli_dir):
-
-    os.makedirs(stimuli_dir, exist_ok = True)
-    os.makedirs(trace_dir, exist_ok = True)
-
+def extract_exp_data(dataset, stimuli_dir):
+    ''' Compiles experiment data across stimulus presentations in a dataframe. '''
 
     try:
         stim_epoch_table = dataset.get_stimulus_epoch_table()
@@ -181,7 +202,8 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
     aibo_data = get_AIBO_data(dataset)
 
 
-    # write out data by stimulus
+    # combine data from each stimulus type
+    stim_dfs = []
     for stimulus in dataset.list_stimuli():
         # stim_frame_table tells you how to index the trace, run, pupil, 
         # etc. data
@@ -190,87 +212,88 @@ def write_exp_data(dataset, trace_dir, stimuli_dir):
 
         # writing traces, pupil coords, etc.
         if 'natural_movie' in stimulus:
-            write_natural_movie_data(
-                write_dir = os.path.join(trace_dir, 'natural_movies'),
-                df = stim_frame_table,
-                data = aibo_data,
-                stimulus = stimulus
+            stim_dfs.append(
+                add_video_data_to_stim_table(
+                    df = stim_frame_table,
+                    data = aibo_data,
+                    stimulus = stimulus
+                )
             )
 
         elif stimulus in ['natural_scenes', 'static_gratings']:
-            write_static_image_data(
-                write_dir = os.path.join(trace_dir, stimulus),
-                df = stim_frame_table,
-                data = aibo_data,
-            )
-            
-            
-        # writing the stimuli
-        if stimulus == 'static_gratings':
-            write_AIBO_static_grating_stimuli(
-                stim_table = stim_frame_table,
-                save_dir = os.path.join(stimuli_dir, stimulus)
-            )
-
-        elif 'natural' in stimulus:
-            if stimulus not in os.listdir(stimuli_dir):
-                write_AIBO_natural_stimuli(
-                    template = dataset.get_stimulus_template(stimulus),
-                    save_dir = os.path.join(stimuli_dir, stimulus),
+            stim_dfs.append(
+                add_image_data_to_stim_table(
+                    df = stim_frame_table,
+                    data = aibo_data,
                     stimulus = stimulus
                 )
-
-
-def loop_datasets(datasets_by_cont, save_dir):
-    for cont_of_datasets in datasets_by_cont:
-        for dataset in cont_of_datasets:
-            logging.info('WRITING DATA FOR EXPERIMENT {}'.format(
-                dataset.get_metadata()['ophys_experiment_id']
-            ))
-            write_exp_data(
-                dataset = dataset,
-                trace_dir = os.path.join(save_dir, 'trace_data'),
-                stimuli_dir = os.path.join(save_dir, 'stimuli')
             )
+            
+
+    return pd.concat(
+        stim_dfs,
+        axis = 0,
+        join = 'outer',  # should not be necessary here, but shouldn't hurt
+        ignore_index = True,
+        verify_integrity = True
+    )
 
 
-def write_rfs(datasets, write_dir):
+def merge_datasets_in_cont(cont_of_datasets, save_dir):
+    ''' Merges all dataframes for all experiments in a container '''
+
+    dfs = []
+
+    for dset_num, dataset in enumerate(cont_of_datasets):
+        logging.info('EXTRACTING DATA FROM EXPERIMENT {}'.format(
+            dataset.get_metadata()['ophys_experiment_id']
+        ))
+        dfs.append(
+            extract_exp_data(
+                dataset = dataset,
+                stimuli_dir = os.path.join(save_dir, 'Stimuli')
+            )    
+        )
+
+    return pd.concat(dfs, axis = 0, sort = True, join = 'outer')
+
+
+def write_rfs(dataset, write_dir):
     '''
     https://allensdk.readthedocs.io/en/latest/_static/examples/nb/brain_observatory_analysis.html
     '''
     
-    for dataset in datasets:
-        cell_ids = dataset.get_cell_specimen_ids()
-        session_type = dataset.get_session_type()
+    cell_ids = dataset.get_cell_specimen_ids()
+    session_type = dataset.get_session_type()
+    
+    if 'locally_sparse_noise' in dataset.list_stimuli():
+        logging.info('WRITING RECEPTIVE FIELDS FOR EXPERIMENT {}'.format(
+            dataset.get_metadata()['ophys_experiment_id'])
+        )
+
+        on_dir = os.path.join(write_dir, 'ReceptiveFields', 'on', session_type)
+        off_dir = os.path.join(write_dir, 'ReceptiveFields', 'off', session_type)
+        os.makedirs(on_dir, exist_ok = True)
+        os.makedirs(off_dir, exist_ok = True)
+
+        lsn = LocallySparseNoise(dataset)
+        rfs = lsn.receptive_field
+        rfs[np.isnan(rfs)] = 0
         
-        if 'locally_sparse_noise' in dataset.list_stimuli():
-            logging.info('WRITING RECEPTIVE FIELDS FOR EXPERIMENT {}'.format(
-                dataset.get_metadata()['ophys_experiment_id'])
-            )
+        for ind, cell_id in enumerate(cell_ids):
+            rf = rfs[:, :, ind, :]
+            rf = max_min_scale(rf) * 255
+            on, off = rf.transpose([2, 0, 1])
+            fname = str(cell_id) + '.png'
 
-            on_dir = os.path.join(write_dir, 'receptive_fields', 'on', session_type)
-            off_dir = os.path.join(write_dir, 'receptive_fields', 'off', session_type)
-            os.makedirs(on_dir, exist_ok = True)
-            os.makedirs(off_dir, exist_ok = True)
-
-            lsn = LocallySparseNoise(dataset)
-            rfs = lsn.receptive_field
-            rfs[np.isnan(rfs)] = 0
-            
-            for ind, cell_id in enumerate(cell_ids):
-                rf = rfs[:, :, ind, :]
-                rf = max_min_scale(rf) * 255
-                on, off = rf.transpose([2, 0, 1])
-                fname = str(cell_id) + '.png'
-
-                cv2.imwrite(os.path.join(on_dir, fname), on)
-                cv2.imwrite(os.path.join(off_dir, fname), off)
+            cv2.imwrite(os.path.join(on_dir, fname), on)
+            cv2.imwrite(os.path.join(off_dir, fname), off)
 
 
 def main(args):
 
     logging.basicConfig(
-        format='%(asctime)s -- %(message)s', 
+        format='%(levelname)s -- %(asctime)s -- %(message)s', 
         datefmt='%m/%d/%Y %I:%M:%S %p', 
         level = logging.INFO
     )
@@ -280,34 +303,127 @@ def main(args):
     datasets = [boc.get_ophys_experiment_data(exp_id) for exp_id in exp_ids]
 
 
-    if not args.no_stim_or_trace_data:
+    if not args.no_trace_data:
+        trace_dir = os.path.join(args.save_dir, 'NeuralData')
+        os.makedirs(trace_dir, exist_ok = True)
+
         # keep datasets from same container together, bc this means that a single process will
-        # loop through all datasets from a single container and we don't have to worry about 
-        # writing to the same cell's .csv file for different datasets at the same time
+        # loop through all datasets from a single container and combine them, which means we can use 
+        # concat instead of merge, which sometimes takes very long for large dataframes
         cont_ids = list(set([dataset.get_metadata()['experiment_container_id'] for dataset in datasets]))
         datasets_by_cont = [
             [dataset for dataset in datasets if dataset.get_metadata()['experiment_container_id'] == cont_id] 
             for cont_id in cont_ids
         ]
 
-        multiproc(
-            func = loop_datasets,
-            iterator_keys = ['datasets_by_cont'],
-            n_workers = args.n_workers,
-            keep_list = True,
-            datasets_by_cont = datasets_by_cont,
+        dfs = multiproc(
+            func = merge_datasets_in_cont,
+            iterator_keys = ['cont_of_datasets'],
+            n_procs = args.n_workers,
+            cont_of_datasets = datasets_by_cont,
             save_dir = args.save_dir
         )
+        merge_cont_dfs_and_write(dfs, trace_dir)
 
 
     if not args.no_rfs:
+        logging.info('WRITING RECEPTIVE FIELDS TO DISK')
+
         multiproc(
             func = write_rfs,
-            iterator_keys = ['datasets'],
-            n_workers = args.n_workers,
-            keep_list = True,
-            datasets = datasets,
+            iterator_keys = ['dataset'],
+            n_procs = args.n_workers,
+            dataset = datasets,
             write_dir = args.save_dir
+        )
+
+    
+    if not args.no_stim:
+        logging.info('WRITING STIMULI TEMPLATES TO DISK')
+
+        stimuli_dir = os.path.join(args.save_dir, 'Stimuli')
+        os.makedirs(stimuli_dir, exist_ok = True)
+
+        # need to loop through datasets for static gratings,
+        # bc some datasets have a few gratings not present 
+        # in others sometimes
+        multiproc(
+            func = write_AIBO_static_grating_stimuli,
+            iterator_keys = ['stim_table'],
+            n_procs = args.n_workers,
+            stim_table = [
+                dset.get_stimulus_table('static_gratings') \
+                for dset in datasets if 'static_gratings' in dset.list_stimuli()
+            ],
+            save_dir = os.path.join(stimuli_dir, 'static_gratings')
+        )
+
+        stimuli = [
+            'natural_movie_one', 
+            'natural_movie_two', 
+            'natural_movie_three', 
+            'natural_scenes'
+        ]
+        templates_by_stim = [
+            [dset for dset in datasets if stim in dset.list_stimuli()][0].get_stimulus_template(stim) \
+            for stim in stimuli
+        ]
+        multiproc(
+            func = write_AIBO_natural_stimuli,
+            iterator_keys = ['template', 'save_dir', 'stimulus'],
+            n_procs = 4,
+            template = templates_by_stim,
+            save_dir = [os.path.join(stimuli_dir, stim) for stim in stimuli],
+            stimulus = stimuli
+        )
+            
+
+
+
+def merge_cont_dfs_and_write(dfs, trace_dir):
+    ''' Merges dataframes from all containers and writes to disk '''
+
+    logging.info('WRITING EXPERIMENT DATA TO DISK')
+
+    stim_cols = [
+        'frame', 
+        'repeat', 
+        'stimulus',  
+        'session_type',
+        'orientation', 
+        'spatial_frequency', 
+        'phase'
+    ]
+    loop_cols = [col for col in dfs[0].columns if (col not in stim_cols + ['cont_id'] and 'dff' not in col)]
+
+    for col_name in loop_cols + ['dff']:
+        for n_dfs, df in enumerate(dfs):
+            cont_id = df.cont_id.to_list()[0]
+
+            if col_name == 'dff':
+                dff_cols = [col for col in df.columns if 'dff' in col]
+                df_col = df[stim_cols + dff_cols]
+                df_col = df_col.rename(
+                    columns = dict(zip(dff_cols, [col[4:] + '_' + str(cont_id) for col in dff_cols]))
+                )
+            else:
+                df_col = df[stim_cols + [col_name]]
+                df_col = df_col.rename(columns = {col_name: str(cont_id)})
+
+            if n_dfs == 0:
+                df_agg = df_col 
+            else:
+                df_agg = pd.merge(
+                    df_agg,
+                    df_col,
+                    how = 'outer',
+                    copy = False
+                )
+
+        df_agg.to_hdf(
+            os.path.join(trace_dir, col_name + '.h5'),
+            key = 'data',
+            complevel = 7
         )
 
 
@@ -330,14 +446,19 @@ if __name__ == '__main__':
         help = 'Where to save all extracted data.'
     )
     parser.add_argument(
-        '--no_stim_or_trace_data',
+        '--no_trace_data',
         action = 'store_true',
-        help = 'If specified, will not write out stimuli or trace data.'
+        help = 'If specified, will not write out trace data.'
     )
     parser.add_argument(
         '--no_rfs',
         action = 'store_true',
         help = 'If specified, will not write out receptive fields.'
+    )
+    parser.add_argument(
+        '--no_stim',
+        action = 'store_true',
+        help = 'If specified, will not write out stimuli templates.'
     )
     parser.add_argument(
         '--n_workers',

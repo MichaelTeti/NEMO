@@ -170,7 +170,8 @@ class TestImagePreprocess(unittest.TestCase):
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
 
-            read_resize_write(fpaths, write_fpaths, 32, 64, 0.0)
+            for read_fpath, write_fpath in zip(fpaths, write_fpaths):
+                read_resize_write(read_fpath, write_fpath, 32, 64, 0.0)
 
             for fpath in write_fpaths:
                 resized_img = cv2.imread(fpath)
@@ -196,7 +197,8 @@ class TestImagePreprocess(unittest.TestCase):
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
 
-            read_resize_write(fpaths, write_fpaths, 32, 64, 0.0)
+            for read_fpath, write_fpath in zip(fpaths, write_fpaths):
+                read_resize_write(read_fpath, write_fpath, 32, 64, 0.0)
 
             for read_fpath, write_fpath in zip(fpaths, write_fpaths):
                 original_img = cv2.cvtColor(cv2.imread(read_fpath), cv2.COLOR_BGR2GRAY)
@@ -226,7 +228,8 @@ class TestImagePreprocess(unittest.TestCase):
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
 
-            read_resize_write(fpaths, write_fpaths, 64, 128, 0.0)
+            for read_fpath, write_fpath in zip(fpaths, write_fpaths):
+                read_resize_write(read_fpath, write_fpath, 64, 128, 0.0)
 
             for read_fpath, write_fpath in zip(fpaths, write_fpaths):
                 original_img = cv2.cvtColor(cv2.imread(read_fpath), cv2.COLOR_BGR2GRAY)
@@ -251,7 +254,8 @@ class TestImagePreprocess(unittest.TestCase):
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
 
-            read_resize_write(fpaths, write_fpaths, 32, 64, 0.0)
+            for read_fpath, write_fpath in zip(fpaths, write_fpaths):
+                read_resize_write(read_fpath, write_fpath, 32, 64, 0.0)
             
             for fpath in write_fpaths:
                 self.assertTrue(os.path.split(fpath)[1] in os.listdir(tmp_dir))
@@ -272,7 +276,7 @@ class TestImagePreprocess(unittest.TestCase):
                 cv2.imwrite(fpath, img)
 
             with self.assertRaises(ValueError):
-                read_resize_write(fpaths, write_fpaths, 32, 64, -10.0)
+                read_resize_write(fpaths[0], write_fpaths[0], 32, 64, -10.0)
 
 
     def test_read_resize_write_over_tol(self):
@@ -287,7 +291,7 @@ class TestImagePreprocess(unittest.TestCase):
             write_fpath = os.path.join(tmp_dir, 'dataset_resize', 'test_img_resize.png')
             cv2.imwrite(read_fpath, img)
 
-            read_resize_write([read_fpath], [write_fpath], 32, 64, aspect_ratio_tol = 1.0)
+            read_resize_write(read_fpath, write_fpath, 32, 64, aspect_ratio_tol = 1.0)
             self.assertTrue('dataset_resize' not in os.listdir(tmp_dir))
 
 
@@ -305,7 +309,8 @@ class TestImagePreprocess(unittest.TestCase):
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
 
-            read_crop_write(fpaths, write_fpaths, 32, 64)
+            for read_fpath, write_fpath in zip(fpaths, write_fpaths):
+                read_crop_write(read_fpath, write_fpath, 32, 64)
 
             for fpath in write_fpaths:
                 resized_img = cv2.imread(fpath)
@@ -326,7 +331,8 @@ class TestImagePreprocess(unittest.TestCase):
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
 
-            read_crop_write(fpaths, write_fpaths, 32, 64)
+            for read_fpath, write_fpath in zip(fpaths, write_fpaths):
+                read_crop_write(read_fpath, write_fpath, 32, 64)
             
             for fpath in write_fpaths:
                 self.assertTrue(os.path.split(fpath)[1] in os.listdir(tmp_dir))
@@ -374,7 +380,7 @@ class TestImagePreprocess(unittest.TestCase):
             fpath = os.path.join(tmp_dir, 'test_img.png')
             write_fpath = os.path.join(tmp_dir, 'test_img_write.png')
             cv2.imwrite(fpath, img)
-            read_downsample_write([fpath], [write_fpath], 2, 2)
+            read_downsample_write(fpath, write_fpath, 2, 2)
             img_downsampled = cv2.imread(write_fpath)
             self.assertCountEqual(img_downsampled.shape[:2], [32, 64])
 
@@ -390,7 +396,7 @@ class TestImagePreprocess(unittest.TestCase):
             fpath = os.path.join(tmp_dir, 'test_img.png')
             write_fpath = os.path.join(tmp_dir, 'test_img_write.png')
             cv2.imwrite(fpath, img)
-            read_downsample_write([fpath], [write_fpath], 2, 2)
+            read_downsample_write(fpath, write_fpath, 2, 2)
             img_downsampled = cv2.imread(write_fpath)
             img_downsampled = cv2.cvtColor(img_downsampled, cv2.COLOR_BGR2GRAY)
             diff = np.sum(img[::2, ::2] - img_downsampled)
@@ -411,7 +417,8 @@ class TestImagePreprocess(unittest.TestCase):
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
 
-            read_downsample_write(fpaths, write_fpaths, 2, 2)
+            for read_fpath, write_fpath in zip(fpaths, write_fpaths):
+                read_downsample_write(read_fpath, write_fpath, 2, 2)
             
             for fpath in write_fpaths:
                 self.assertTrue(os.path.split(fpath)[1] in os.listdir(tmp_dir))
@@ -428,7 +435,7 @@ class TestImagePreprocess(unittest.TestCase):
             fpath = os.path.join(tmp_dir, 'test_img.png')
             write_fpath = os.path.join(tmp_dir, 'test_img_write.png')
             cv2.imwrite(fpath, img)
-            read_smooth_write([fpath], [write_fpath])
+            read_smooth_write(fpath, write_fpath)
             img_smoothed = cv2.imread(write_fpath)
             img_smoothed = cv2.cvtColor(img_smoothed, cv2.COLOR_BGR2GRAY)
             self.assertCountEqual(img_smoothed.shape[:2], [64, 128])
@@ -448,7 +455,8 @@ class TestImagePreprocess(unittest.TestCase):
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
 
-            read_smooth_write(fpaths, write_fpaths)
+            for read_fpath, write_fpath in zip(fpaths, write_fpaths):
+                read_smooth_write(read_fpath, write_fpath)
             
             for fpath in write_fpaths:
                 self.assertTrue(os.path.split(fpath)[1] in os.listdir(tmp_dir))
@@ -465,7 +473,7 @@ class TestImagePreprocess(unittest.TestCase):
             fpath = os.path.join(tmp_dir, 'test_img.png')
             write_fpath = os.path.join(tmp_dir, 'test_img_write.png')
             cv2.imwrite(fpath, img)
-            read_pre_whiten_write([fpath], [write_fpath])
+            read_pre_whiten_write(fpath, write_fpath)
             img_pre_whitened = cv2.imread(write_fpath)
             img_pre_whitened = cv2.cvtColor(img_pre_whitened, cv2.COLOR_BGR2GRAY)
             self.assertCountEqual(img_pre_whitened.shape[:2], [64, 128])
@@ -485,7 +493,8 @@ class TestImagePreprocess(unittest.TestCase):
             for fpath, img in zip(fpaths, imgs):
                 cv2.imwrite(fpath, img)
 
-            read_pre_whiten_write(fpaths, write_fpaths)
+            for read_fpath, write_fpath in zip(fpaths, write_fpaths):
+                read_pre_whiten_write(read_fpath, write_fpath)
             
             for fpath in write_fpaths:
                 self.assertTrue(os.path.split(fpath)[1] in os.listdir(tmp_dir))
