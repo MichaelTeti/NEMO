@@ -9,11 +9,13 @@ from tempfile import TemporaryDirectory
 import unittest 
 
 import numpy as np
+import torch
 
 from nemo.model.utils import (
     cv_splitter_video,
     save_args,
-    shuffle_design_mat
+    shuffle_design_mat,
+    to_tensor
 )
 
 
@@ -75,6 +77,20 @@ class TestModelUtils(unittest.TestCase):
             save_args(args, tmp_dir)
             self.assertTrue('args.txt' in os.listdir(tmp_dir))
 
+
+    @unittest.skipIf(not torch.cuda.is_available(), 'skipping because cuda not available')
+    def test_to_tensor_device(self):
+        data = np.arange(10)
+        data_tensor = to_tensor(data, dev = 0)
+        self.assertEqual(data_tensor.device.index, 0)
+        self.assertCountEqual(data_tensor.cpu().numpy(), data)
+
+
+    def test_to_tensor_no_device(self):
+        data = np.arange(10)
+        data_tensor = to_tensor(data)
+        self.assertEqual(data_tensor.device.type, 'cpu')
+        self.assertCountEqual(data_tensor.numpy(), data)
 
 
 if __name__ == '__main__':
