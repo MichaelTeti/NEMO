@@ -2,6 +2,7 @@ import json
 import os
 
 import numpy as np
+import torch
 
 
 def cv_splitter_video(n_samples, n_folds = 5):
@@ -68,3 +69,17 @@ def shuffle_design_mat(preds, responses):
     np.random.shuffle(data)
 
     return data[:, :-1], data[:, -1]
+
+
+def to_tensor(data, dev = None):
+    ''' Makes data into torch tensor '''
+    
+    data = torch.Tensor(data)
+    
+    if dev is not None:
+        try:
+            data = data.cuda(dev)
+        except RuntimeError:
+            pass
+
+    return data

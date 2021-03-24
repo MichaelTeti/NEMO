@@ -7,6 +7,7 @@ import torch
 from torch.utils.data import Dataset
 
 from nemo.data.utils import get_fpaths_in_dir
+from nemo.model.utils import to_tensor
 
 
 logging.basicConfig(
@@ -18,9 +19,9 @@ logging.basicConfig(
 
 class TrialAvgNeuralDataset(Dataset):
     def __init__(self, data_dir, stimuli, cre_lines = None, stim_height = 32, 
-                 stim_width = 64):
+                 stim_width = 64, n_frames = 1, device = None):
         '''
-        Dataset generator for trial avg trace dataset. 
+        Dataset generator for trial avgeraged recordings. 
 
         Args:
             data_dir (str): The path to the data directory. Should contain both a subdir 
@@ -30,6 +31,8 @@ class TrialAvgNeuralDataset(Dataset):
             cre_lines (list): Keep cells if cre line is in cre_lines.
             stim_height (int): Desired height of the stimulus.
             stim_width (int): Desired width of the stimulus.
+            n_frames (int): Number of stimulus frames to load at a time.
+            device (int): Device to put data on. Default is None.
         '''
 
         self.data_dir = data_dir
@@ -37,6 +40,8 @@ class TrialAvgNeuralDataset(Dataset):
         self.cre_lines = cre_lines
         self.stim_height = stim_height
         self.stim_width = stim_width
+        self.n_frames = n_frames
+        self.device = device
 
         self.neural_data_dir = os.path.join(data_dir, 'NeuralData')
         self.stimuli_dir = os.path.join(data_dir, 'Stimuli')
@@ -49,8 +54,15 @@ class TrialAvgNeuralDataset(Dataset):
 
         self.load_neural_data()
 
+        if self.n_frames < 1:
+            raise ValueError('n_frames should be > 1.')
+        if self.n_frames > len(self.data):
+            raise ValueError('n_frames should be < len(self.data) ({})'.format(len(self.data)))
+
 
     def load_neural_data(self):
+        ''' Load recordings and process them '''
+
         # read the file and select out the desired stimuli
         data = pd.read_hdf(os.path.join(self.neural_data_dir, 'dff.h5'))
         data = data[data.stimulus.isin(self.stimuli)]
@@ -78,19 +90,37 @@ class TrialAvgNeuralDataset(Dataset):
 
 
     def read_image(self, fpath):
+        ''' Read image and resize to desired shape '''
+
         frame = cv2.imread(fpath, cv2.IMREAD_GRAYSCALE)
         frame = cv2.resize(frame, (self.stim_width, self.stim_height))
-        return torch.from_numpy(frame)
+
+        return to_tensor(frame[None, ...], dev = self.device)
 
 
     def __len__(self):
-        return len(self.data)
+        return len(self.data) - (self.n_frames - 1)
+
+
+    def get_stimulus_and_frame(self, idx):
+        ''' Get stimulus and frame given sample index '''
+
+        stimuli = self.data.stimulus.to_list()[idx:idx + self.n_frames]
+        frame_nums = [int(val) for val in self.data.frame.to_list()[idx:idx + self.n_frames]]
+
+        return stimuli, frame_nums
 
 
     def __getitem__(self, idx):
-        stimulus = self.data.stimulus.to_list()[idx]
-        frame_num = int(self.data.frame.to_list()[idx])
-        dff = torch.Tensor(self.data.iloc[idx, 2:].to_list())
-        frame = self.read_image(self.stim_frame_fpaths[stimulus][frame_num])
+        stimuli, frame_nums = self.get_stimulus_and_frame(idx)
+        dff = [
+            to_tensor(self.data.iloc[row, 2:].to_list(), dev = self.device) \
+            for row in range(idx, idx + self.n_frames)
+        ]
+        frame_fpaths = [
+            self.stim_frame_fpaths[stim][frame_num] \
+            for stim, frame_num in zip(stimuli, frame_nums)
+        ]
+        frames = [self.read_image(fpath) for fpath in frame_fpaths]
         
-        return frame, dff
+        return frames, dff
