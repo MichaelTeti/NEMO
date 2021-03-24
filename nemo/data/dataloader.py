@@ -90,6 +90,7 @@ class TrialAvgNeuralDataset(Dataset):
         logging.info('   - CRE LINES: {}'.format(self.cre_lines))
         logging.info('   - NUM. CELLS: {}'.format(len(self.data.columns) - 2))
         logging.info('   - NUM. STIMULUS FRAMES: {}'.format(len(self.data)))
+        logging.info('   - GPU: {}'.format(self.device))
 
 
     def read_image(self, fpath):
