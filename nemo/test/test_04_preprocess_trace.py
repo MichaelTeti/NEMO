@@ -60,13 +60,6 @@ class TestTracePreprocess(unittest.TestCase):
             self.assertAlmostEqual(norm_max[i], 1.0, places = 12)
 
 
-    def test_compute_trial_avgs_AttributeError(self):
-        df = pd.DataFrame({'stimulus': [0, 1], 'frame': [1, 2]})
-        
-        with self.assertRaises(AttributeError):
-            compute_trial_avgs(df)
-
-
     def test_compute_trial_avgs_KeyError(self):
         df = pd.DataFrame({'dff': [0, 1]})
         
