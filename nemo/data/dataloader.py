@@ -2,6 +2,7 @@ import os
 import logging
 
 import cv2
+import numpy as np
 import pandas as pd
 import torch 
 from torch.utils.data import Dataset
@@ -128,7 +129,7 @@ class TrialAvgNeuralDataset(Dataset):
     def __getitem__(self, idx):
         stimuli, frame_nums = self.get_stimulus_and_frame(idx)
         dff = [
-            self.data.iloc[row, 2:].to_list() \
+            self.data.iloc[row, 2:].to_numpy(dtype = np.float32) \
             for row in range(idx, idx + self.n_frames)
         ]
         frame_fpaths = [
