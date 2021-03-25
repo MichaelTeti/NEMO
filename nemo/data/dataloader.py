@@ -19,8 +19,8 @@ logging.basicConfig(
 
 
 class TrialAvgNeuralDataset(Dataset):
-    def __init__(self, data_dir, stimuli, cre_lines = None, stim_height = 32, 
-                 stim_width = 64, n_frames = 1, device = None):
+    def __init__(self, data_dir, stimuli, cre_lines = None, cell_ids = None, 
+                 stim_height = 32, stim_width = 64, n_frames = 1, device = None):
         '''
         Dataset generator for trial avgeraged recordings. 
 
@@ -30,6 +30,7 @@ class TrialAvgNeuralDataset(Dataset):
             stimuli (list): Stimuli to use in this experiment (i.e. natural_movie_one,
                 natural_scenes, etc.).
             cre_lines (list): Keep cells if cre line is in cre_lines.
+            cell_ids (list): Keep cells if cell ID in cell_ids. 
             stim_height (int): Desired height of the stimulus.
             stim_width (int): Desired width of the stimulus.
             n_frames (int): Number of stimulus frames to load at a time.
@@ -39,6 +40,7 @@ class TrialAvgNeuralDataset(Dataset):
         self.data_dir = data_dir
         self.stimuli = stimuli
         self.cre_lines = cre_lines
+        self.cell_ids = cell_ids
         self.stim_height = stim_height
         self.stim_width = stim_width
         self.n_frames = n_frames
@@ -72,14 +74,21 @@ class TrialAvgNeuralDataset(Dataset):
         data = data[data.frame != -1]
 
         # keep cells with desired cre lines if given 
+        keep_cols = [col for col in data.columns if col.split('_')[0].isdigit()]
+            
         if self.cre_lines is not None:
             cre_line_df = pd.read_hdf(os.path.join(self.neural_data_dir, 'cre_line.h5'))
             keep_conts = [col for col in cre_line_df.columns if cre_line_df[col].to_list()[0] in self.cre_lines]
-            keep_cols = [col for col in data.columns if col.split('_')[-1] in keep_conts]
-        else:
-            keep_cols = [col for col in data.columns if col.split('_')[0].isdigit()]
+            keep_cols_cre = [col for col in data.columns if col.split('_')[-1] in keep_conts]
+            keep_cols = list(set(keep_cols) & set(keep_cols_cre))
 
-        data = data[keep_cols + ['frame', 'stimulus']]
+        if self.cell_ids is not None:
+            keep_cols_id = [col for col in data.columns if col.split('_')[0] in self.cell_ids]
+            keep_cols = list(set(keep_cols) & set(keep_cols_id))
+
+        keep_cols = sorted(keep_cols, key = lambda col: col.split('_')[0])
+        self.cell_ids = [col.split('_')[0] for col in keep_cols]
+        data = data[['stimulus', 'frame'] + keep_cols]
 
         # get trial avgs by stimulus and frame number
         data = compute_trial_avgs(data)
