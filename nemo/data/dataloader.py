@@ -8,7 +8,6 @@ from torch.utils.data import Dataset
 
 from nemo.data.preprocess.trace import compute_trial_avgs
 from nemo.data.utils import get_fpaths_in_dir
-from nemo.model.utils import to_tensor
 
 
 logging.basicConfig(
@@ -20,7 +19,7 @@ logging.basicConfig(
 
 class TrialAvgNeuralDataset(Dataset):
     def __init__(self, data_dir, stimuli, cre_lines = None, cell_ids = None, 
-                 stim_height = 32, stim_width = 64, n_frames = 1, device = None):
+                 stim_height = 32, stim_width = 64, n_frames = 1):
         '''
         Dataset generator for trial avgeraged recordings. 
 
@@ -44,7 +43,6 @@ class TrialAvgNeuralDataset(Dataset):
         self.stim_height = stim_height
         self.stim_width = stim_width
         self.n_frames = n_frames
-        self.device = device
 
         self.neural_data_dir = os.path.join(data_dir, 'NeuralData')
         self.stimuli_dir = os.path.join(data_dir, 'Stimuli')
@@ -103,7 +101,6 @@ class TrialAvgNeuralDataset(Dataset):
         logging.info('   - NUM. CELLS: {}'.format(len(self.data.columns) - 2))
         logging.info('   - NUM. ANIMALS: {}'.format(len(self.cont_ids)))
         logging.info('   - NUM. STIMULUS FRAMES: {}'.format(len(self.data)))
-        logging.info('   - GPU: {}'.format(self.device))
 
 
     def read_image(self, fpath):
@@ -112,7 +109,7 @@ class TrialAvgNeuralDataset(Dataset):
         frame = cv2.imread(fpath, cv2.IMREAD_GRAYSCALE)
         frame = cv2.resize(frame, (self.stim_width, self.stim_height))
 
-        return to_tensor(frame[None, ...], dev = self.device)
+        return frame[None, ...]
 
 
     def __len__(self):
@@ -131,7 +128,7 @@ class TrialAvgNeuralDataset(Dataset):
     def __getitem__(self, idx):
         stimuli, frame_nums = self.get_stimulus_and_frame(idx)
         dff = [
-            to_tensor(self.data.iloc[row, 2:].to_list(), dev = self.device) \
+            self.data.iloc[row, 2:].to_list() \
             for row in range(idx, idx + self.n_frames)
         ]
         frame_fpaths = [
