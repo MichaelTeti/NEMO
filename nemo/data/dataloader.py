@@ -88,6 +88,7 @@ class TrialAvgNeuralDataset(Dataset):
 
         keep_cols = sorted(keep_cols, key = lambda col: col.split('_')[0])
         self.cell_ids = [col.split('_')[0] for col in keep_cols]
+        self.cont_ids = list(set([col.split('_')[1] for col in keep_cols]))
         data = data[['stimulus', 'frame'] + keep_cols]
 
         # get trial avgs by stimulus and frame number
@@ -100,6 +101,7 @@ class TrialAvgNeuralDataset(Dataset):
         logging.info('   - STIMULI: {}'.format(self.stimuli))
         logging.info('   - CRE LINES: {}'.format(self.cre_lines))
         logging.info('   - NUM. CELLS: {}'.format(len(self.data.columns) - 2))
+        logging.info('   - NUM. ANIMALS: {}'.format(len(self.cont_ids)))
         logging.info('   - NUM. STIMULUS FRAMES: {}'.format(len(self.data)))
         logging.info('   - GPU: {}'.format(self.device))
 
