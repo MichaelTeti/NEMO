@@ -34,15 +34,12 @@ def compute_trial_avgs(df):
     '''
 
     try:
-        df = df.groupby(['stimulus', 'frame']).dff.mean().reset_index()
-    except AttributeError:
-        print('df must have a column named dff.')
-        raise 
+        df = df.groupby(['stimulus', 'frame']).mean().reset_index()
     except KeyError:
         print('df must have columns named stimulus and frame.')
         raise 
     else:
-        df = df.sort_values(by = ['stimulus', 'frame'])
+        df = df.sort_values(by = ['stimulus', 'frame']).reset_index(drop = True)
 
     return df
 

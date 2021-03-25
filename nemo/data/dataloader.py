@@ -6,6 +6,7 @@ import pandas as pd
 import torch 
 from torch.utils.data import Dataset
 
+from nemo.data.preprocess.trace import compute_trial_avgs
 from nemo.data.utils import get_fpaths_in_dir
 from nemo.model.utils import to_tensor
 
@@ -78,9 +79,10 @@ class TrialAvgNeuralDataset(Dataset):
         else:
             keep_cols = [col for col in data.columns if col.split('_')[0].isdigit()]
 
-        # get trial avgs by stimulus and frame number
         data = data[keep_cols + ['frame', 'stimulus']]
-        data = data.groupby(['stimulus', 'frame']).mean().reset_index()
+
+        # get trial avgs by stimulus and frame number
+        data = compute_trial_avgs(data)
         self.data = data.dropna(axis = 1)
 
         logging.info('DATASET INITIALIZED')
