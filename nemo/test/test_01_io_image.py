@@ -58,7 +58,9 @@ class TestIOImage(unittest.TestCase):
             write_AIBO_natural_stimuli(
                 template,
                 tmp_dir, 
-                'natural_movie_one'
+                'natural_movie_one',
+                height = 1200,
+                width = 1920
             )
             self.assertEqual(len(os.listdir(tmp_dir)), 10)
 
@@ -70,7 +72,9 @@ class TestIOImage(unittest.TestCase):
             write_AIBO_natural_stimuli(
                 template,
                 tmp_dir, 
-                'natural_movie_one'
+                'natural_movie_one',
+                height = 1200,
+                width = 1920
             )
             written = [os.path.join(tmp_dir, f) for f in os.listdir(tmp_dir)]
             
@@ -86,7 +90,9 @@ class TestIOImage(unittest.TestCase):
             write_AIBO_natural_stimuli(
                 template,
                 tmp_dir, 
-                'natural_scenes'
+                'natural_scenes',
+                height = 1200,
+                width = 1920
             )
             written = [os.path.join(tmp_dir, f) for f in os.listdir(tmp_dir)]
             
@@ -102,7 +108,9 @@ class TestIOImage(unittest.TestCase):
             write_AIBO_natural_stimuli(
                 template,
                 tmp_dir, 
-                'natural_scenes'
+                'natural_scenes',
+                height = 1200,
+                width = 1920
             )
             self.assertEqual(len(os.listdir(tmp_dir)), 10)
 
@@ -117,7 +125,12 @@ class TestIOImage(unittest.TestCase):
         )
         
         with TemporaryDirectory() as tmp_dir:
-            write_AIBO_static_grating_stimuli(stim_table, tmp_dir)
+            write_AIBO_static_grating_stimuli(
+                stim_table, 
+                tmp_dir,
+                height = 1200,
+                width = 1920
+            )
             self.assertEqual(len(os.listdir(tmp_dir)), 3 ** 3)
 
 
@@ -131,7 +144,12 @@ class TestIOImage(unittest.TestCase):
         )
         
         with TemporaryDirectory() as tmp_dir:
-            write_AIBO_static_grating_stimuli(stim_table, tmp_dir)
+            write_AIBO_static_grating_stimuli(
+                stim_table, 
+                tmp_dir,
+                height = 1200,
+                width = 1920
+            )
             written = [os.path.join(tmp_dir, f) for f in os.listdir(tmp_dir)]
 
             for fpath in written:

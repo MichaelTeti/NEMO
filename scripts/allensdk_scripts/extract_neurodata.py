@@ -355,7 +355,9 @@ def main(args):
                 dset.get_stimulus_table('static_gratings') \
                 for dset in datasets if 'static_gratings' in dset.list_stimuli()
             ],
-            save_dir = os.path.join(stimuli_dir, 'static_gratings')
+            save_dir = os.path.join(stimuli_dir, 'static_gratings'),
+            height = args.stim_height,
+            width = args.stim_width
         )
 
         stimuli = [
@@ -374,7 +376,9 @@ def main(args):
             n_procs = 4,
             template = templates_by_stim,
             save_dir = [os.path.join(stimuli_dir, stim) for stim in stimuli],
-            stimulus = stimuli
+            stimulus = stimuli,
+            height = args.stim_height,
+            width = args.stim_width
         )
             
 
@@ -466,6 +470,24 @@ if __name__ == '__main__':
         default = 4,
         help = 'Number of datasets to write in parallel.'
     )
+
+    stimulus_args = parser.add_argument_group(
+        'stim_args',
+        description = 'Arguments for processing the stimulus templates.'
+    )
+    stimulus_args.add_argument(
+        '--stim_height',
+        type = int,
+        default = 160,
+        help = 'Height to resize stimulus templates to before writing.'
+    )
+    stimulus_args.add_argument(
+        '--stim_width',
+        type = int,
+        default = 256,
+        help = 'Width to resize stimulus templates to before writing.'
+    )
+
     args = parser.parse_args()
 
     main(args)

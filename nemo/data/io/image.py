@@ -98,7 +98,7 @@ def read_frames(dir, return_type = 'array', gray = False):
         return frames
 
 
-def write_AIBO_natural_stimuli(template, save_dir, stimulus):
+def write_AIBO_natural_stimuli(template, save_dir, stimulus, height = 160, width = 256):
     '''
     Takes the natural_movie_* or natural_scenes stimulus template, and 
     writes the images/frames as they would appear on the monitor. 
@@ -124,11 +124,14 @@ def write_AIBO_natural_stimuli(template, save_dir, stimulus):
 
         cv2.imwrite(
             os.path.join(save_dir, fname), 
-            monitor.warp_image(image)
+            cv2.resize(
+                monitor.warp_image(image),
+                (width, height)
+            )
         )
 
 
-def write_AIBO_static_grating_stimuli(stim_table, save_dir):
+def write_AIBO_static_grating_stimuli(stim_table, save_dir, height = 160, width = 256):
     '''
     Obtains and writes the static grating stimuli from the AIBO database.
     '''
@@ -144,13 +147,14 @@ def write_AIBO_static_grating_stimuli(stim_table, save_dir):
                     
                 fname = '{}_{}_{}.png'.format(orient, freq, phase)
                 if fname not in os.listdir(save_dir):
+                    frame = monitor.warp_image(
+                        monitor.grating_to_screen(
+                            phase = phase, 
+                            spatial_frequency = freq, 
+                            orientation = orient
+                        )
+                    )
                     cv2.imwrite(
                         os.path.join(save_dir, fname), 
-                        monitor.warp_image(
-                            monitor.grating_to_screen(
-                                phase = phase, 
-                                spatial_frequency = freq, 
-                                orientation = orient
-                            )
-                        )
+                        cv2.resize(frame, (width, height))
                     )
