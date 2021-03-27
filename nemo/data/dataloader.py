@@ -87,13 +87,14 @@ class TrialAvgNeuralDataset(Dataset):
             keep_cols = list(set(keep_cols) & set(keep_cols_id))
 
         keep_cols = sorted(keep_cols, key = lambda col: col.split('_')[0])
-        self.cell_ids = [col.split('_')[0] for col in keep_cols]
-        self.cont_ids = list(set([col.split('_')[1] for col in keep_cols]))
         data = data[['stimulus', 'frame'] + keep_cols]
 
         # get trial avgs by stimulus and frame number
         data = compute_trial_avgs(data)
         self.data = data.dropna(axis = 1)
+
+        self.cell_ids = [col.split('_')[0] for col in self.data.columns[2:]]
+        self.cont_ids = list(set([col.split('_')[1] for col in self.data.columns[2:]]))
 
         logging.info('DATASET INITIALIZED')
         logging.info('   - NEURAL DATA DIR: {}'.format(self.neural_data_dir))
