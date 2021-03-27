@@ -7,6 +7,7 @@ import pandas as pd
 import torch 
 from torch.utils.data import Dataset
 
+from nemo.data.preprocess.image import max_min_scale
 from nemo.data.preprocess.trace import compute_trial_avgs
 from nemo.data.utils import get_fpaths_in_dir
 
@@ -110,7 +111,7 @@ class TrialAvgNeuralDataset(Dataset):
         frame = cv2.imread(fpath, cv2.IMREAD_GRAYSCALE)
         frame = cv2.resize(frame, (self.stim_width, self.stim_height))
 
-        return frame[None, ...]
+        return np.float32(max_min_scale(frame))[None, ...]
 
 
     def __len__(self):

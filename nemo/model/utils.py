@@ -74,7 +74,7 @@ def shuffle_design_mat(preds, responses):
 def to_tensor(data, dev = None):
     ''' Makes data into torch tensor '''
     
-    data = torch.Tensor(data)
+    data = torch.FloatTensor(data)
     
     if dev is not None:
         data = data.cuda(dev)
