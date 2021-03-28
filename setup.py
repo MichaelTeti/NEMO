@@ -22,6 +22,7 @@ setup(
         'progressbar2',
         'psutil',
         'pytorch-lightning',
+        'ray[tune]',
         'scipy',
         'seaborn',
         'sklearn',
