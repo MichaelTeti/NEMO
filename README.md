@@ -18,10 +18,10 @@ Next, activate the newly-created conda environment
 ```
 conda activate nemo
 ```
-Finally, install GNU Octave, Lua, and JupyterLab in this environment (all other libraries will be installed 
+Finally, install GNU Octave, Lua, JupyterLab, and Google-Protobuf in this environment (all other libraries will be installed 
 to this environment below when running setup.py).
 ```
-conda install -c conda-forge octave lua jupyterlab
+conda install -c conda-forge octave lua jupyterlab protobuf
 ```
 
 ### Cloning the Repository and Installing Python Packages
