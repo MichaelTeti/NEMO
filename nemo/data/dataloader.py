@@ -94,13 +94,13 @@ class TrialAvgNeuralDataset(Dataset):
 
         # get trial avgs by stimulus and frame number
         data = compute_trial_avgs(data)
-        self.data = data.dropna(axis = 1)
+        data = data.dropna(axis = 1)
 
         # apply transform if provided
         if self.col_transform is not None:
-            for col in self.data.columns[2:]:
-                self.data[col] = self.col_transform(self.data[col])
-
+            data.iloc[:, 2:] = self.col_transform(data.iloc[:, 2:])
+            
+        self.data = data
         self.cell_ids = [col.split('_')[0] for col in self.data.columns[2:]]
         self.cont_ids = list(set([col.split('_')[1] for col in self.data.columns[2:]]))
 
