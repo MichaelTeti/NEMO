@@ -49,11 +49,12 @@ class ElasticNet(LightningModule):
         self.optim = config['optim'] if 'optim' in config.keys() else torch.optim.Adam
         self.loss_fn = config['loss_fn'] if 'loss_fn' in config.keys() else torch.nn.MSELoss()
         self.act_fn = config['act_fn'] if 'act_fn' in config.keys() else Identity()
+        self.norm_fn = config['norm_fn'] if 'norm_fn' in config.keys() else Identity()
 
         
     def forward(self, x):
         x = (x - torch.mean(x, 0)) / (torch.std(x, 0) + 1e-8)
-        y_hat = self.strf(x)
+        y_hat = self.norm_fn(self.strf(x))
         
         return self.act_fn(y_hat)
     
