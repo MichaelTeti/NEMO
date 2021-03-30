@@ -86,25 +86,27 @@ def to_tensor(data, dev = None):
     return data
 
 
-def tune_model(config, ptl_model, dset, train_inds, n_workers, n_val, tune_metrics = None, 
-               mode = 'tune', **trainer_kwargs):
+def tune_model(config, ptl_model, dset, train_inds, n_workers, n_val = None, 
+               val_inds = None, tune_metrics = None, mode = 'tune', **trainer_kwargs):
     ''' A generic function to hp-tuning and model training with ray and pytorch-lightning '''
     
     model = ptl_model(config = config)
     
-    shuffle(train_inds)
+    if val_inds is None:
+        shuffle(train_inds)
+
     train_dl = DataLoader(
         dset,
         batch_size = config['batch_size'],
         num_workers = n_workers,
-        sampler = RandomSampler(train_inds[n_val:]),
+        sampler = RandomSampler(train_inds[n_val:] if val_inds is None else train_inds),
         drop_last = True
     )
     val_dl = DataLoader(
         dset,
         num_workers = n_workers,
         batch_size = config['batch_size'],
-        sampler = SequentialSampler(train_inds[:n_val]),
+        sampler = SequentialSampler(train_inds[:n_val] if val_inds is None else val_inds),
         drop_last = True
     )
     
