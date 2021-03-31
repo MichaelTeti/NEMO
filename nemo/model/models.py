@@ -24,8 +24,8 @@ class ElasticNet(LightningModule):
         self.callbacks = [
             EarlyStopping(
                 monitor = 'val_loss',
-                patience = 4,
-                min_delta = 1e-4,
+                patience = self.patience,
+                min_delta = self.tol,
                 mode = 'min'
             )
         ]
@@ -50,6 +50,8 @@ class ElasticNet(LightningModule):
         self.loss_fn = config['loss_fn'] if 'loss_fn' in config.keys() else torch.nn.MSELoss()
         self.act_fn = config['act_fn'] if 'act_fn' in config.keys() else Identity()
         self.norm_fn = config['norm_fn'] if 'norm_fn' in config.keys() else Identity()
+        self.patience = config['patience'] if 'patience' in config.keys() else 5
+        self.tol = config['tol'] if 'tol' in config.keys() else 1.0
 
         
     def forward(self, x):
