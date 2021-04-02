@@ -76,3 +76,65 @@ def population_sparsity(feat_maps, eps = 1e-12):
     square_sum = np.sum(feat_maps ** 2, 1)
 
     return (1 - (1 / n_neurons) * (sum_square + eps) / (square_sum + eps)) / (1 - 1 / n_neurons)
+
+
+def signal_power(df):
+    ''' 
+    Compute signal power of a neuron's responses over trials as in 
+    https://www.frontiersin.org/articles/10.3389/fncom.2016.00010/full
+
+    Args:
+        df (pd.DataFrame): DataFrame with a 'repeat' and 'frame' column and columns for 
+            each cell's responses.
+
+    Returns:
+        power (np.ndarray): Vector of length len(df.columns) - 1 with each cell's 
+            signal power given the responses.
+    '''
+
+    try:
+        N = df.repeat.max() + 1
+        var_sum = df.drop(columns = 'repeat').groupby('frame').sum().var(axis = 0).to_numpy()
+        sum_var = df.drop(columns = 'frame').groupby('repeat').var().sum(axis = 0).to_numpy()
+    except (AttributeError, KeyError):
+        print("df should have a column called 'repeat' and one called 'frame'.")
+        raise 
+    
+    return (var_sum - sum_var) / (N * (N - 1))
+
+
+def cc_norm(true, pred, SP):
+    ''' 
+    Compute CC_norm between true and predicted responses as in 
+    https://www.frontiersin.org/articles/10.3389/fncom.2016.00010/full
+
+    Args:
+        true (np.ndarray): A vector of true trial-averaged responses for a single neuron.
+        pred (np.ndarray): A vector of predicted responses corresponding to true.
+        SP (float): Signal power for this neuron.
+
+    Returns:
+        cc_norm (float): Correlation of pred with true given relative to amount of 
+            explainable variance.
+    '''
+
+    cov = np.cov(true, pred)
+    cc_norm = cov[0, 1] / np.sqrt(cov[1, 1] * SP)
+    
+    return cc_norm
+
+
+def cc_max(true, SP):
+    ''' 
+    Computes CC_max of measured responses as in 
+    https://www.frontiersin.org/articles/10.3389/fncom.2016.00010/full
+
+    Args:
+        true (np.ndarray): A vector of true trial-averaged responses for a single neuron.
+        SP (float): Signal power for the neuron.
+
+    Returns:
+        cc_max (float): Explainable variance of the neuron's responses.
+    '''
+
+    return np.sqrt(SP / np.var(true, ddof = 1))
