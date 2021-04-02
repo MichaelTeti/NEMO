@@ -7,10 +7,12 @@ from tempfile import TemporaryDirectory
 import unittest 
 
 import numpy as np
+import pandas as pd
 
 from nemo.model.analysis.metrics import (
     lifetime_sparsity,
-    population_sparsity
+    population_sparsity,
+    signal_power
 )
 
 
@@ -62,6 +64,29 @@ class TestModelAnalysisMetrics(unittest.TestCase):
         self.assertAlmostEqual(sparsity[2], 0.0)
         
 
+    def test_signal_power_AttributeError_no_repeat_col(self):
+        df = pd.DataFrame(
+            {
+                'cell_1': np.arange(1000),
+                'cell_2': np.arange(1000)
+            }
+        )
+        
+        with self.assertRaises(AttributeError):
+            signal_power(df)
+
+        
+    def test_signal_power_KeyError_no_frame_col(self):
+        df = pd.DataFrame(
+            {
+                'cell_1': np.arange(1000),
+                'cell_2': np.arange(1000),
+                'repeat': np.arange(1000)
+            }
+        )
+
+        with self.assertRaises(KeyError):
+            signal_power(df)        
 
 
 if __name__ == '__main__':
