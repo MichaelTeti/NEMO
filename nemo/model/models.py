@@ -48,17 +48,20 @@ class ElasticNet(LightningModule):
         self.lambd = config['lambd'] if 'lambd' in config.keys() else 1e-4
         self.optim = config['optim'] if 'optim' in config.keys() else torch.optim.Adam
         self.loss_fn = config['loss_fn'] if 'loss_fn' in config.keys() else torch.nn.MSELoss()
-        self.act_fn = config['act_fn'] if 'act_fn' in config.keys() else Identity()
-        self.norm_fn = config['norm_fn'] if 'norm_fn' in config.keys() else Identity()
+        self.act_fn = config['act_fn']() if config['act_fn'] is not None else Identity()
+        self.norm_fn = config['norm_fn'](self.n_neurons) if config['norm_fn'] is not None else Identity()
+        self.input_norm_fn = config['input_norm_fn'](
+            self.in_h * self.in_w * self.n_frames
+        ) if config['input_norm_fn'] is not None else Identity()
         self.patience = config['patience'] if 'patience' in config.keys() else 5
         self.tol = config['tol'] if 'tol' in config.keys() else 1.0
 
         
     def forward(self, x):
-        x = (x - torch.mean(x, 0)) / (torch.std(x, 0) + 1e-8)
-        y_hat = self.norm_fn(self.strf(x))
+        x = self.input_norm_fn(x)
+        y_hat = self.norm_fn(self.act_fn(self.strf(x)))
         
-        return self.act_fn(y_hat)
+        return y_hat
     
     
     def configure_optimizers(self):
