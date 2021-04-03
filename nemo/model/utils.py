@@ -1,8 +1,12 @@
 import json
 import os
+from random import shuffle
 
 import numpy as np
+from pytorch_lightning.trainer.trainer import Trainer as PLTrainer
+from ray.tune.integration.pytorch_lightning import TuneReportCallback
 import torch
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 
 
 def cv_splitter_video(n_samples, n_folds = 5):
@@ -80,3 +84,42 @@ def to_tensor(data, dev = None):
         data = data.cuda(dev)
 
     return data
+
+
+def tune_model(config, ptl_model, dset, train_inds, n_workers, n_val = None, 
+               val_inds = None, tune_metrics = None, mode = 'tune', **trainer_kwargs):
+    ''' A generic function to hp-tuning and model training with ray and pytorch-lightning '''
+    
+    model = ptl_model(config = config)
+    
+    if val_inds is None:
+        shuffle(train_inds)
+
+    train_dl = DataLoader(
+        dset,
+        batch_size = config['batch_size'],
+        num_workers = n_workers,
+        sampler = RandomSampler(train_inds[n_val:] if val_inds is None else train_inds),
+        drop_last = True
+    )
+    val_dl = DataLoader(
+        dset,
+        num_workers = n_workers,
+        batch_size = config['batch_size'],
+        sampler = SequentialSampler(train_inds[:n_val] if val_inds is None else val_inds),
+        drop_last = True
+    )
+    
+    callbacks = model.callbacks
+    if mode == 'tune':
+        callbacks += [
+            TuneReportCallback(
+                tune_metrics, 
+                on = 'validation_end'
+            )
+        ]
+
+    trainer = PLTrainer(callbacks = callbacks, **trainer_kwargs)
+    trainer.fit(model, train_dl, val_dl)
+    
+    return trainer

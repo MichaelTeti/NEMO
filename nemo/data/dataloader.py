@@ -21,7 +21,7 @@ logging.basicConfig(
 
 class TrialAvgNeuralDataset(Dataset):
     def __init__(self, data_dir, stimuli, cre_lines = None, cell_ids = None, 
-                 stim_height = 32, stim_width = 64, n_frames = 1):
+                 stim_height = 32, stim_width = 64, n_frames = 1, col_transform = None):
         '''
         Dataset generator for trial avgeraged recordings. 
 
@@ -36,6 +36,8 @@ class TrialAvgNeuralDataset(Dataset):
             stim_width (int): Desired width of the stimulus.
             n_frames (int): Number of stimulus frames to load at a time.
             device (int): Device to put data on. Default is None.
+            col_transform (func): Describes how to transform each column after taking trial
+                averages.
         '''
 
         self.data_dir = data_dir
@@ -45,6 +47,7 @@ class TrialAvgNeuralDataset(Dataset):
         self.stim_height = stim_height
         self.stim_width = stim_width
         self.n_frames = n_frames
+        self.col_transform = col_transform
 
         self.neural_data_dir = os.path.join(data_dir, 'NeuralData')
         self.stimuli_dir = os.path.join(data_dir, 'Stimuli')
@@ -91,8 +94,13 @@ class TrialAvgNeuralDataset(Dataset):
 
         # get trial avgs by stimulus and frame number
         data = compute_trial_avgs(data)
-        self.data = data.dropna(axis = 1)
+        data = data.dropna(axis = 1)
 
+        # apply transform if provided
+        if self.col_transform is not None:
+            data.iloc[:, 2:] = self.col_transform(data.iloc[:, 2:])
+            
+        self.data = data
         self.cell_ids = [col.split('_')[0] for col in self.data.columns[2:]]
         self.cont_ids = list(set([col.split('_')[1] for col in self.data.columns[2:]]))
 
