@@ -10,6 +10,7 @@ from torch.utils.data import Dataset
 from nemo.data.preprocess.image import max_min_scale
 from nemo.data.preprocess.trace import compute_trial_avgs
 from nemo.data.utils import get_fpaths_in_dir
+from nemo.model.analysis.metrics import signal_power, cc_max
 
 
 logging.basicConfig(
@@ -76,25 +77,31 @@ class TrialAvgNeuralDataset(Dataset):
         # get rid of frame -1 (blank gray frame) for this
         data = data[data.frame != -1]
 
-        # keep cells with desired cre lines if given 
+        # get columns that correspond to cell responses, not stimulus info
         keep_cols = [col for col in data.columns if col.split('_')[0].isdigit()]
             
+        # pull out cell columns if their container is in cre_lines if cre_lines was specified
         if self.cre_lines is not None:
             cre_line_df = pd.read_hdf(os.path.join(self.neural_data_dir, 'cre_line.h5'))
             keep_conts = [col for col in cre_line_df.columns if cre_line_df[col].to_list()[0] in self.cre_lines]
             keep_cols_cre = [col for col in data.columns if col.split('_')[-1] in keep_conts]
             keep_cols = list(set(keep_cols) & set(keep_cols_cre))
 
+        # pull out cell columns if their cell ID is in cell_ids if cell_ids was specified
         if self.cell_ids is not None:
             keep_cols_id = [col for col in data.columns if col.split('_')[0] in self.cell_ids]
             keep_cols = list(set(keep_cols) & set(keep_cols_id))
 
         keep_cols = sorted(keep_cols, key = lambda col: col.split('_')[0])
+        self.signal_power = signal_power(data[keep_cols + ['stimulus', 'frame', 'repeat', 'session_type']])
         data = data[['stimulus', 'frame'] + keep_cols]
 
         # get trial avgs by stimulus and frame number
         data = compute_trial_avgs(data)
         data = data.dropna(axis = 1)
+        
+        # get cc_max by cell-stimulus combo
+        self.cc_max = cc_max(data.drop(columns = 'frame'), self.signal_power)
 
         # apply transform if provided
         if self.col_transform is not None:

@@ -84,20 +84,41 @@ def signal_power(df):
     https://www.frontiersin.org/articles/10.3389/fncom.2016.00010/full
 
     Args:
-        df (pd.DataFrame): DataFrame with a 'repeat' and 'frame' column and columns for 
-            each cell's responses.
+        df (pd.DataFrame): DataFrame with a 'repeat', 'frame', 'stimulus', and 'session_type'
+            column and columns for each cell's responses.
 
     Returns:
-        power (pd.Series): Series of length len(df.columns) - 2 with each cell's signal 
-            power.
+        power (pd.DataFrame): DataFrame of length len(df.columns) - 4 with each cell's signal 
+            power for each stimulus.
     '''
 
     try:
-        N = df.repeat.max() + 1
-        var_sum = df.drop(columns = 'repeat').groupby('frame').sum().var(axis = 0)
-        sum_var = df.drop(columns = 'frame').groupby('repeat').var().sum(axis = 0)
+        N_stim = df.drop(columns = ['frame', 'repeat', 'session_type']).groupby('stimulus').count() 
+        N_frames = df[['stimulus', 'frame']].groupby('stimulus').max() + 1
+        N = N_stim.apply(lambda x: x.divide(np.squeeze(N_frames.to_numpy())))
+        
+        var_sum = df.drop(
+            columns = ['repeat', 'session_type']
+        ).groupby(
+            ['stimulus', 'frame']
+        ).sum().reset_index().drop(
+            columns = 'frame'
+        ).groupby(
+            'stimulus'
+        ).var()
+
+        sum_var = df.drop(
+            columns = 'frame'
+        ).groupby(
+            ['stimulus', 'session_type', 'repeat']
+        ).var().reset_index().drop(
+            columns = ['session_type', 'repeat']
+        ).groupby(
+            'stimulus'
+        ).sum()
+
     except (AttributeError, KeyError):
-        print("df should have a column called 'repeat' and one called 'frame'.")
+        print("df should have 'repeat', 'stimulus', 'frame', and 'session_type' columns.")
         raise 
     
     return (var_sum - sum_var) / (N * (N - 1))
@@ -130,14 +151,14 @@ def cc_max(true, SP):
     https://www.frontiersin.org/articles/10.3389/fncom.2016.00010/full
 
     Args:
-        true (pd.DataFrame): A DataFrame with N columns where each column
-            is a trial averaged response vector for a single neuron.
-        SP (pd.Series): Signal power for each neuron in true. 
+        true (pd.DataFrame): A DataFrame with N + 1 columns corresponding to the trial-averaged 
+            response vectors of N cells, as well as a column called stimulus.
+        SP (pd.DataFrame): Signal power for each neuron / stimulus in true. 
 
     Returns:
-        cc_max (pd.Series): the maximum correlation coefficient between the recorded firing 
+        cc_max (pd.DataFrame): the maximum correlation coefficient between the recorded firing 
             rate and the best prediction that a perfect model could theoretically achieve 
-            for each neuron.
+            for each neuron and stimulus.
     '''
 
-    return np.sqrt(SP / true.var(axis = 0))
+    return np.sqrt(SP / true.groupby('stimulus').var())
