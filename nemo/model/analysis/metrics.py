@@ -88,14 +88,14 @@ def signal_power(df):
             each cell's responses.
 
     Returns:
-        power (np.ndarray): Vector of length len(df.columns) - 1 with each cell's 
-            signal power given the responses.
+        power (pd.Series): Series of length len(df.columns) - 2 with each cell's signal 
+            power.
     '''
 
     try:
         N = df.repeat.max() + 1
-        var_sum = df.drop(columns = 'repeat').groupby('frame').sum().var(axis = 0).to_numpy()
-        sum_var = df.drop(columns = 'frame').groupby('repeat').var().sum(axis = 0).to_numpy()
+        var_sum = df.drop(columns = 'repeat').groupby('frame').sum().var(axis = 0)
+        sum_var = df.drop(columns = 'frame').groupby('repeat').var().sum(axis = 0)
     except (AttributeError, KeyError):
         print("df should have a column called 'repeat' and one called 'frame'.")
         raise 
@@ -130,11 +130,14 @@ def cc_max(true, SP):
     https://www.frontiersin.org/articles/10.3389/fncom.2016.00010/full
 
     Args:
-        true (np.ndarray): A vector of true trial-averaged responses for a single neuron.
-        SP (float): Signal power for the neuron.
+        true (pd.DataFrame): A DataFrame with N columns where each column
+            is a trial averaged response vector for a single neuron.
+        SP (pd.Series): Signal power for each neuron in true. 
 
     Returns:
-        cc_max (float): Explainable variance of the neuron's responses.
+        cc_max (pd.Series): the maximum correlation coefficient between the recorded firing 
+            rate and the best prediction that a perfect model could theoretically achieve 
+            for each neuron.
     '''
 
-    return np.sqrt(SP / np.var(true, ddof = 1))
+    return np.sqrt(SP / true.var(axis = 0))
