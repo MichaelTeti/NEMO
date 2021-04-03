@@ -151,9 +151,9 @@ def cc_max(true, SP):
     https://www.frontiersin.org/articles/10.3389/fncom.2016.00010/full
 
     Args:
-        true (pd.DataFrame): A DataFrame with N columns where each column
-            is a trial averaged response vector for a single neuron.
-        SP (pd.Series): Signal power for each neuron in true. 
+        true (pd.DataFrame): A DataFrame with N + 1 columns corresponding to the trial-averaged 
+            response vectors of N cells, as well as a column called stimulus.
+        SP (pd.DataFrame): Signal power for each neuron / stimulus in true. 
 
     Returns:
         cc_max (pd.DataFrame): the maximum correlation coefficient between the recorded firing 
@@ -161,4 +161,4 @@ def cc_max(true, SP):
             for each neuron and stimulus.
     '''
 
-    return np.sqrt(SP / true.drop(columns = 'frame').groupby('stimulus').var())
+    return np.sqrt(SP / true.groupby('stimulus').var())

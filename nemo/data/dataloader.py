@@ -101,7 +101,7 @@ class TrialAvgNeuralDataset(Dataset):
         data = data.dropna(axis = 1)
         
         # get cc_max by cell-stimulus combo
-        self.cc_max = cc_max(data, self.signal_power)
+        self.cc_max = cc_max(data.drop(columns = 'frame'), self.signal_power)
 
         # apply transform if provided
         if self.col_transform is not None:
