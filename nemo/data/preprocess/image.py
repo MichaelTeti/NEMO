@@ -2,6 +2,7 @@ import os
 
 import cv2
 import numpy as np
+from scipy.signal.windows import gaussian 
 
 
 def resize_img(img, desired_height, desired_width, crop = True):
@@ -381,3 +382,22 @@ def standardize_preds(design_mat, mean_vec = None, std_vec = None, eps = 1e-12):
     design_mat = (design_mat - mean_vec) / (std_vec + eps)
     
     return design_mat
+
+
+def gaussian_img_filter(img_h, img_w):
+    ''' 
+    Creates a gaussian filter for images.
+
+    Args:
+        img_h (int): The height of the images.
+        img_w (int): The width of the images.
+
+    Returns:
+        gauss_filter (np.ndarray): Array of shape img_h * img_w.
+    '''
+
+    gauss_h = gaussian(img_h, img_h // 4)
+    gauss_w = gaussian(img_w, img_w // 4)
+    gauss_mg = np.meshgrid(gauss_w, gauss_h)
+    
+    return gauss_mg[0] * gauss_mg[1]

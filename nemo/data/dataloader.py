@@ -22,7 +22,8 @@ logging.basicConfig(
 
 class TrialAvgNeuralDataset(Dataset):
     def __init__(self, data_dir, stimuli, cre_lines = None, cell_ids = None, 
-                 stim_height = 32, stim_width = 64, n_frames = 1, col_transform = None):
+                 stim_height = 32, stim_width = 64, n_frames = 1, col_transform = None,
+                 img_transform = None):
         '''
         Dataset generator for trial avgeraged recordings. 
 
@@ -39,6 +40,8 @@ class TrialAvgNeuralDataset(Dataset):
             device (int): Device to put data on. Default is None.
             col_transform (func): Describes how to transform each column after taking trial
                 averages.
+            img_transform (func): A function that determines the processing that is 
+                performed on each individual image after it is read in.
         '''
 
         self.data_dir = data_dir
@@ -49,6 +52,7 @@ class TrialAvgNeuralDataset(Dataset):
         self.stim_width = stim_width
         self.n_frames = n_frames
         self.col_transform = col_transform
+        self.img_transform = img_transform
 
         self.neural_data_dir = os.path.join(data_dir, 'NeuralData')
         self.stimuli_dir = os.path.join(data_dir, 'Stimuli')
@@ -126,6 +130,9 @@ class TrialAvgNeuralDataset(Dataset):
 
         frame = cv2.imread(fpath, cv2.IMREAD_GRAYSCALE)
         frame = cv2.resize(frame, (self.stim_width, self.stim_height))
+
+        if self.img_transform is not None:
+            frame = self.img_transform(frame)
 
         return np.float32(max_min_scale(frame))[None, ...]
 
