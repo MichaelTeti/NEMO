@@ -396,8 +396,29 @@ def gaussian_img_filter(img_h, img_w):
         gauss_filter (np.ndarray): Array of shape img_h * img_w.
     '''
 
-    gauss_h = gaussian(img_h, img_h // 4)
-    gauss_w = gaussian(img_w, img_w // 4)
-    gauss_mg = np.meshgrid(gauss_w, gauss_h)
+    gauss_mg = np.meshgrid(
+        gaussian(img_w, img_w // 4), 
+        gaussian(img_h, img_h // 4)
+    )
     
     return gauss_mg[0] * gauss_mg[1]
+
+
+def hanning_img_filter(img_h, img_w):
+    '''
+    Creates a hanning filter for images.
+
+    Args:
+        img_h (int): The height of the images.
+        img_w (int): The width of the images.
+
+    Returns:
+        hann_filter (np.ndarray): Array of shape img_h * img_w.
+    '''
+
+    hann_mg = np.meshgrid(
+        np.hanning(img_w),
+        np.hanning(img_h)
+    ) 
+
+    return hann_mg[0] * hann_mg[1]
