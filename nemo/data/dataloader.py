@@ -113,7 +113,7 @@ class TrialAvgNeuralDataset(Dataset):
             
         self.data = data
         self.cell_ids = [col.split('_')[0] for col in self.data.columns[2:]]
-        self.cont_ids = list(set([col.split('_')[1] for col in self.data.columns[2:]]))
+        self.cont_ids = [col.split('_')[1] for col in self.data.columns[2:]]
 
         logging.info('DATASET INITIALIZED')
         logging.info('   - NEURAL DATA DIR: {}'.format(self.neural_data_dir))
@@ -121,7 +121,7 @@ class TrialAvgNeuralDataset(Dataset):
         logging.info('   - STIMULI: {}'.format(self.stimuli))
         logging.info('   - CRE LINES: {}'.format(self.cre_lines))
         logging.info('   - NUM. CELLS: {}'.format(len(self.data.columns) - 2))
-        logging.info('   - NUM. ANIMALS: {}'.format(len(self.cont_ids)))
+        logging.info('   - NUM. ANIMALS: {}'.format(len(list(set(self.cont_ids)))))
         logging.info('   - NUM. STIMULUS FRAMES: {}'.format(len(self.data)))
 
 
