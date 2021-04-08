@@ -15,3 +15,6 @@ NonsharedWeights/
 
 # jupyter notebooks
 .ipynb_checkpoints/
+
+# results
+results/
