@@ -49,12 +49,20 @@ class ElasticNet(LightningModule):
         self.optim = config['optim'] if 'optim' in config.keys() else torch.optim.Adam
         self.loss_fn = config['loss_fn'] if 'loss_fn' in config.keys() else torch.nn.MSELoss()
         self.act_fn = config['act_fn'] if config['act_fn'] is not None else Identity()
-        self.norm_fn = config['norm_fn'](self.n_neurons) if config['norm_fn'] is not None else Identity()
-        self.input_norm_fn = config['input_norm_fn'](
-            self.in_h * self.in_w * self.n_frames
-        ) if config['input_norm_fn'] is not None else Identity()
         self.patience = config['patience'] if 'patience' in config.keys() else 5
         self.tol = config['tol'] if 'tol' in config.keys() else 1.0
+
+        if config['norm_fn'] is None:
+            self.norm_fn = Identity()
+        else:
+            self.norm_fn = config['norm_fn']
+            self.norm_fn.reset_parameters() # needed for hp tuning
+
+        if config['input_norm_fn'] is None:
+            self.input_norm_fn = Identity()
+        else:
+            self.input_norm_fn = config['input_norm_fn']
+            self.input_norm_fn.reset_parameters()
 
         
     def forward(self, x):
