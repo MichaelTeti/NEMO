@@ -2,6 +2,8 @@ from functools import reduce
 
 import numpy as np
 import pandas as pd
+from scipy.signal import convolve
+from scipy.signal.windows import gaussian
 
 
 def normalize_traces(traces):
@@ -40,8 +42,7 @@ def compute_trial_avgs(df):
         raise 
     else:
         df = df.sort_values(by = ['stimulus', 'frame']).reset_index(drop = True)
-
-    return df
+        return df
 
 
 def aggregate_cell_data(dfs, cell_ids = None, keep_cols = None):
@@ -76,3 +77,7 @@ def aggregate_cell_data(dfs, cell_ids = None, keep_cols = None):
         ]
 
     return reduce(lambda left, right: pd.merge(left, right, how = 'outer'), dfs)
+
+
+def gaussian_smooth_multi_cell(trace_mat):
+    return convolve(np.absolute(trace_mat), gaussian(9, 1)[None, :], 'same')
