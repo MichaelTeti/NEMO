@@ -20,7 +20,7 @@ from progressbar import ProgressBar
 
 from nemo.data.io.image import write_AIBO_natural_stimuli, write_AIBO_static_grating_stimuli
 from nemo.data.preprocess.image import max_min_scale
-from nemo.data.preprocess.trace import normalize_traces
+from nemo.data.preprocess.trace import normalize_traces, gaussian_smooth_multi_cell
 from nemo.data.utils import get_img_frame_names, monitor_coord_to_image_ind
 from nemo.utils import multiproc
 
@@ -56,7 +56,7 @@ def add_video_data_to_stim_table(df, data, stimulus):
     # need to sort column names now to make sure they line up with image stimuli
     df.sort_index(axis = 1, inplace = True)
     
-    for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
+    for cell_traces, cell_id in zip(data['dff'], data['cell_ids']):
         df['dff_{}'.format(cell_id)] = cell_traces[inds]
         
 
@@ -119,7 +119,7 @@ def add_image_data_to_stim_table(df, data, stimulus):
     # need to sort column names now to make sure they line up with video stimuli
     better_df.sort_index(axis = 1, inplace = True)
     
-    for cell_traces, cell_id in zip(data['dff'].transpose(), data['cell_ids']):
+    for cell_traces, cell_id in zip(data['dff'], data['cell_ids']):
         better_df['dff_{}'.format(cell_id)] = cell_traces[inds]
 
     return better_df
@@ -168,21 +168,21 @@ def get_AIBO_data(dataset):
     # get df/f  for all cells in this experiment
     # after these lines, traces is of shape # acquisition frames x # cells
     dff_ts, dff = dataset.get_dff_traces(cell_specimen_ids = data['cell_ids'])
-    dff = np.float16(normalize_traces(dff.transpose()))
+    dff = np.float16(gaussian_smooth_multi_cell(dff))
     data['dff'], data['ts'] = dff, dff_ts
 
     # get eye tracking info for the animal in this experiment
     data.update(
         get_eye_tracking_data(
             dataset,
-            missing_data_fill_size = dff.shape[0]
+            missing_data_fill_size = dff.shape[1]
         )
     ) 
 
     # get the running speed 
     data['run_speed'] = dataset.get_running_speed()[1]
 
-    if data['run_speed'].shape[0] != dff.shape[0] or dff.shape[0] != data['pupil_x'].shape[0]:
+    if data['run_speed'].shape[0] != dff.shape[1] or dff.shape[1] != data['pupil_x'].shape[0]:
         raise ValueError
 
     return data
