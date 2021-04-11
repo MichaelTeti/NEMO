@@ -96,18 +96,18 @@ def tune_model(config, ptl_model, dset, train_inds, n_workers, n_val = None,
         shuffle(train_inds)
 
     train_dl = DataLoader(
-        dset,
+        torch.utils.data.Subset(dset, train_inds[n_val:] if val_inds is None else train_inds),
         batch_size = config['batch_size'],
         num_workers = n_workers,
-        sampler = RandomSampler(train_inds[n_val:] if val_inds is None else train_inds),
-        drop_last = True
+        drop_last = True,
+        shuffle = True
     )
     val_dl = DataLoader(
-        dset,
+        torch.utils.data.Subset(dset, train_inds[:n_val] if val_inds is None else val_inds),
         num_workers = n_workers,
         batch_size = config['batch_size'],
-        sampler = SequentialSampler(train_inds[:n_val] if val_inds is None else val_inds),
-        drop_last = True
+        drop_last = True,
+        shuffle = False
     )
     
     callbacks = model.callbacks
