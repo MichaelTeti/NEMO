@@ -138,7 +138,7 @@ class TrialAvgNeuralDataset(Dataset):
 
 
     def __len__(self):
-        return len(self.data) - (self.n_frames - 1)
+        return len(self.data)
 
 
     def get_stimulus_and_frame(self, idx):
