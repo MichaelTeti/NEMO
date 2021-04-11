@@ -15,6 +15,10 @@ class ElasticNet(LightningModule):
 
         if self.alpha < 0.0 or self.alpha > 1.0:
             raise ValueError('alpha should be >= 0.0 and <= 1.0')
+
+        if self.weight_samples:
+            if self.loss_fn.reduction != 'none':
+                raise ValueError('loss_fn should have reduction=none if weight_samples is True.')
         
         self.strf = torch.nn.Linear(
             self.in_h * self.in_w * self.n_frames, 
@@ -51,6 +55,7 @@ class ElasticNet(LightningModule):
         self.act_fn = config['act_fn'] if config['act_fn'] is not None else Identity()
         self.patience = config['patience'] if 'patience' in config.keys() else 5
         self.tol = config['tol'] if 'tol' in config.keys() else 1.0
+        self.weight_samples = config['weight_samples'] if 'weight_samples' in config.keys() else False
 
         if config['norm_fn'] is None:
             self.norm_fn = Identity()
@@ -101,8 +106,14 @@ class ElasticNet(LightningModule):
     def _get_loss(self, batch):
         x, y = self._prepare_batch(batch)
         y_hat = self(x)
+        loss = self.loss_fn(y_hat, y)
 
-        return self.loss_fn(y_hat, y) 
+        if self.weight_samples:
+            mean_response = torch.mean(y, 0)
+            loss_weights = (y - mean_response) ** 2
+            loss = torch.mean(loss * loss_weights)
+        
+        return loss
 
     
     def training_step(self, batch, batch_idx):
