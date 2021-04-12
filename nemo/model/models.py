@@ -197,7 +197,7 @@ class ElasticNetRNN(LightningModule):
         self.lambd = config['lambd'] if 'lambd' in config.keys() else 1e-4
         self.optim = config['optim'] if 'optim' in config.keys() else torch.optim.Adam
         self.loss_fn = config['loss_fn'] if 'loss_fn' in config.keys() else torch.nn.MSELoss()
-        self.act_fn = config['act_fn'] if config['act_fn'] is not None else Identity()
+        self.act_fn = config['act_fn'] if config['act_fn'] is not None else 'relu'
         self.patience = config['patience'] if 'patience' in config.keys() else 5
         self.tol = config['tol'] if 'tol' in config.keys() else 1.0
         self.weight_samples = config['weight_samples'] if 'weight_samples' in config.keys() else False
