@@ -164,9 +164,10 @@ class ElasticNetRNN(LightningModule):
             if self.loss_fn.reduction != 'none':
                 raise ValueError('loss_fn should have reduction=none if weight_samples is True.')
         
-        self.strf = torch.nn.Linear(
-            self.in_h * self.in_w * self.n_frames, 
-            self.n_neurons
+        self.strf = torch.nn.RNN(
+            input_size = self.in_h * self.in_w, 
+            hidden_size = self.n_neurons,
+            nonlinearity = self.act_fn
         )
 
         self.callbacks = [
