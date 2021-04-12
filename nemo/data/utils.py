@@ -108,7 +108,10 @@ def download_experiment_data(id, boc):
         None
     '''
 
-    boc.get_ophys_experiment_data(id)
+    try:
+        boc.get_ophys_experiment_data(id)
+    except Exception: # if allensdk can't find the container file
+        return
 
 
 def write_csv(items, fpath, mode = 'w'):
