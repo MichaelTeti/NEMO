@@ -229,7 +229,7 @@ class ElasticNetRNN(LightningModule):
     def get_penalty(self):
         L1, L2 = 0, 0
         for name, param in self.named_parameters():
-            if 'norm' in name or name == 'strf.weight':
+            if 'strf.bias' not in name:
                 L1 = L1 + torch.sum(torch.abs(param))
                 L2 = L2 + torch.sum(param ** 2)
         
