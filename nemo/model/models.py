@@ -82,10 +82,16 @@ class ElasticNet(LightningModule):
     
     
     def get_penalty(self):
-        l1 = self.strf.weight.norm(1) * self.alpha
-        l2 = self.strf.weight.norm(2) * (1 - self.alpha)
+        L1, L2 = 0, 0
+        for name, param in self.named_parameters():
+            if 'norm' in name or name == 'strf.weight':
+                L1 = L1 + torch.sum(torch.abs(param))
+                L2 = L2 + torch.sum(param ** 2)
+        
+        L1 = L1 * self.alpha
+        L2 = torch.sqrt(L2) * (1 - self.alpha)
 
-        return self.lambd * (l1 + l2)
+        return self.lambd * (L1 + L2)
 
 
     def _prepare_batch(self, batch):
@@ -110,7 +116,7 @@ class ElasticNet(LightningModule):
 
         if self.weight_samples:
             mean_response = torch.mean(y, 0)
-            loss_weights = (y - mean_response) ** 2
+            loss_weights = 1 + (y - mean_response) ** 2
             loss = torch.mean(loss * loss_weights)
         
         return loss
