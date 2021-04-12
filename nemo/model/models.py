@@ -217,7 +217,7 @@ class ElasticNetRNN(LightningModule):
         
     def forward(self, x):
         x = self.input_norm_fn(x)
-        y_hat = self.norm_fn(self.act_fn(self.strf(x)))
+        y_hat = self.norm_fn(self.strf(x)[-1])
         
         return y_hat
     
@@ -245,11 +245,11 @@ class ElasticNetRNN(LightningModule):
         batch_size = y.shape[0]
         
         if len(x) > 1:
-            x = torch.cat(x, 1)
+            x = torch.cat([frame[None, ...] for frame in x], 0)
         else:
-            x = x[0]
+            raise ValueError('The input to ElasticNetRNN is a sequence of inputs.')
             
-        x = x.reshape([batch_size, -1])
+        x = x.reshape([self.n_frames, batch_size, -1])
 
         return x, y
 
