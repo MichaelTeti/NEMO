@@ -348,6 +348,7 @@ class ElasticNetConvRNN(LightningModule):
         self.patience = config['patience'] if 'patience' in config.keys() else 5
         self.tol = config['tol'] if 'tol' in config.keys() else 1.0
         self.weight_samples = config['weight_samples'] if 'weight_samples' in config.keys() else False
+        self.n_filters = config['n_filters'] if 'n_filters' in config.keys() else 32
 
         if config['norm_fn'] is None:
             self.norm_fn = Identity()
