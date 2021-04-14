@@ -84,7 +84,7 @@ class ElasticNet(LightningModule):
     def get_penalty(self):
         L1, L2 = 0, 0
         for name, param in self.named_parameters():
-            if 'norm' in name or name == 'strf.weight':
+            if name != 'strf.bias':
                 L1 = L1 + torch.sum(torch.abs(param))
                 L2 = L2 + torch.sum(param ** 2)
         
@@ -116,7 +116,7 @@ class ElasticNet(LightningModule):
 
         if self.weight_samples:
             mean_response = torch.mean(y, 0)
-            loss_weights = 1 + (y - mean_response) ** 2
+            loss_weights = 1 + torch.sqrt((y - mean_response) ** 2)
             loss = torch.mean(loss * loss_weights)
         
         return loss
@@ -167,7 +167,7 @@ class ElasticNetRNN(LightningModule):
         self.strf = torch.nn.RNN(
             input_size = self.in_h * self.in_w, 
             hidden_size = self.n_neurons,
-            nonlinearity = self.act_fn
+            nonlinearity = self.rnn_act_fn
         )
 
         self.callbacks = [
@@ -197,7 +197,8 @@ class ElasticNetRNN(LightningModule):
         self.lambd = config['lambd'] if 'lambd' in config.keys() else 1e-4
         self.optim = config['optim'] if 'optim' in config.keys() else torch.optim.Adam
         self.loss_fn = config['loss_fn'] if 'loss_fn' in config.keys() else torch.nn.MSELoss()
-        self.act_fn = config['act_fn'] if config['act_fn'] is not None else 'relu'
+        self.rnn_act_fn = config['rnn_act_fn'] if config['rnn_act_fn'] is not None else 'tanh'
+        self.act_fn = config['act_fn'] if config['act_fn'] is not None else Identity()
         self.patience = config['patience'] if 'patience' in config.keys() else 5
         self.tol = config['tol'] if 'tol' in config.keys() else 1.0
         self.weight_samples = config['weight_samples'] if 'weight_samples' in config.keys() else False
@@ -217,7 +218,7 @@ class ElasticNetRNN(LightningModule):
         
     def forward(self, x):
         x = self.input_norm_fn(x)
-        y_hat = self.norm_fn(self.strf(x)[-1])
+        y_hat = self.norm_fn(self.act_fn(self.strf(x)[0][-1]))
         
         return y_hat
     
@@ -229,7 +230,7 @@ class ElasticNetRNN(LightningModule):
     def get_penalty(self):
         L1, L2 = 0, 0
         for name, param in self.named_parameters():
-            if 'strf.bias' not in name:
+            if name != 'strf.bias_ih_l0':
                 L1 = L1 + torch.sum(torch.abs(param))
                 L2 = L2 + torch.sum(param ** 2)
         
@@ -261,7 +262,7 @@ class ElasticNetRNN(LightningModule):
 
         if self.weight_samples:
             mean_response = torch.mean(y, 0)
-            loss_weights = 1 + (y - mean_response) ** 2
+            loss_weights = 1 + torch.sqrt((y - mean_response) ** 2)
             loss = torch.mean(loss * loss_weights)
         
         return loss
