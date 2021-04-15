@@ -319,8 +319,8 @@ class ElasticNetConvRNN(LightningModule):
             padding = (self.kernel_size - 1) // 2
         )
         
-        self.strf = torch.nn.RNN(
-            input_size = self.in_h * self.in_w, 
+        self.rnn = torch.nn.RNN(
+            input_size = (self.in_h // self.stride) * (self.in_w // self.stride) * self.n_filters, 
             hidden_size = self.n_neurons,
             nonlinearity = self.rnn_act_fn
         )
