@@ -401,14 +401,6 @@ class ElasticNetConvRNN(LightningModule):
     def _prepare_batch(self, batch):
         x, y = batch
         y = y[-1]
-        batch_size = y.shape[0]
-        
-        if len(x) > 1:
-            x = torch.cat([frame[None, ...] for frame in x], 0)
-        else:
-            raise ValueError('The input to ElasticNetRNN is a sequence of inputs.')
-            
-        x = x.reshape([self.n_frames, batch_size, -1])
 
         return x, y
 
