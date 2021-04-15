@@ -315,7 +315,7 @@ class ElasticNetConvRNN(LightningModule):
             1,
             self.n_filters,
             kernel_size = self.kernel_size,
-            self.stride = self.stride,
+            stride = self.stride,
             padding = (self.kernel_size - 1) // 2
         )
         
