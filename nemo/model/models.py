@@ -349,6 +349,8 @@ class ElasticNetConvRNN(LightningModule):
         self.tol = config['tol'] if 'tol' in config.keys() else 1.0
         self.weight_samples = config['weight_samples'] if 'weight_samples' in config.keys() else False
         self.n_filters = config['n_filters'] if 'n_filters' in config.keys() else 32
+        self.stride = config['stride'] if 'stride' in config.keys() else 1 
+        self.kernel_size = config['kernel_size'] if 'kernel_size' in config.keys() else 11
 
         if config['norm_fn'] is None:
             self.norm_fn = Identity()
