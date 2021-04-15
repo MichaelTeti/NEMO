@@ -104,7 +104,7 @@ class ElasticNet(LightningModule):
         else:
             x = x[0]
             
-        x = x.reshape([batch_size, -1])
+        x = x.view(batch_size, -1)
 
         return x, y
 
@@ -230,7 +230,7 @@ class ElasticNetRNN(LightningModule):
     def get_penalty(self):
         L1, L2 = 0, 0
         for name, param in self.named_parameters():
-            if name != 'strf.bias_ih_l0':
+            if name not in ['strf.bias_ih_l0', 'strf.bias_hh_l0']:
                 L1 = L1 + torch.sum(torch.abs(param))
                 L2 = L2 + torch.sum(param ** 2)
         
@@ -250,7 +250,7 @@ class ElasticNetRNN(LightningModule):
         else:
             raise ValueError('The input to ElasticNetRNN is a sequence of inputs.')
             
-        x = x.reshape([self.n_frames, batch_size, -1])
+        x = x.view(self.n_frames, batch_size, -1)
 
         return x, y
 
@@ -375,8 +375,11 @@ class ElasticNetConvRNN(LightningModule):
 
         
     def forward(self, x):
-        x = self.input_norm_fn(x)
-        y_hat = self.norm_fn(self.act_fn(self.strf(x)[0][-1]))
+        conv_out = [self.norm_fn(self.act_fn(self.conv(self.input_norm_fn(frame)))) for frame in x]
+        conv_out = torch.stack(conv_out)
+        conv_out = conv_out.view(conv_out.shape[0], conv_out.shape[1], -1)
+
+        y_hat = self.rnn(conv_out)[0][-1]
         
         return y_hat
     
@@ -388,7 +391,7 @@ class ElasticNetConvRNN(LightningModule):
     def get_penalty(self):
         L1, L2 = 0, 0
         for name, param in self.named_parameters():
-            if name != 'strf.bias_ih_l0':
+            if 'rnn.weight' in name:
                 L1 = L1 + torch.sum(torch.abs(param))
                 L2 = L2 + torch.sum(param ** 2)
         
@@ -401,14 +404,6 @@ class ElasticNetConvRNN(LightningModule):
     def _prepare_batch(self, batch):
         x, y = batch
         y = y[-1]
-        batch_size = y.shape[0]
-        
-        if len(x) > 1:
-            x = torch.cat([frame[None, ...] for frame in x], 0)
-        else:
-            raise ValueError('The input to ElasticNetRNN is a sequence of inputs.')
-            
-        x = x.reshape([self.n_frames, batch_size, -1])
 
         return x, y
 
