@@ -309,6 +309,15 @@ class ElasticNetConvRNN(LightningModule):
         if self.weight_samples:
             if self.loss_fn.reduction != 'none':
                 raise ValueError('loss_fn should have reduction=none if weight_samples is True.')
+
+
+        self.conv = torch.nn.Conv2d(
+            1,
+            self.n_filters,
+            kernel_size = self.kernel_size,
+            self.stride = self.stride,
+            padding = (self.kernel_size - 1) // 2
+        )
         
         self.strf = torch.nn.RNN(
             input_size = self.in_h * self.in_w, 
