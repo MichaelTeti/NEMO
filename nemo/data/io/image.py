@@ -115,20 +115,23 @@ def write_AIBO_natural_stimuli(template, save_dir, stimulus, height = 160, width
     for image, fname in zip(template, fnames):
 
         # try to filter out some of the pixelation
-        image = cv2.bilateralFilter(image, 7, 20, 20)
+        image = cv2.bilateralFilter(image, 7, 40, 40)
 
         if 'natural_movie' in stimulus:
             image = monitor.natural_movie_image_to_screen(image, origin = 'upper')
         elif stimulus == 'natural_scenes':
             image = monitor.natural_scene_image_to_screen(image, origin = 'upper')
 
-        cv2.imwrite(
-            os.path.join(save_dir, fname), 
-            cv2.resize(
-                monitor.warp_image(image),
-                (width, height)
-            )
-        )
+        # warp image as it was shown on monitor
+        image = monitor.warp_image(image)
+
+        # resize
+        image = cv2.resize(image, (width, height))
+
+        # contrast enhance
+        image = cv2.equalizeHist(image)
+
+        cv2.imwrite(os.path.join(save_dir, fname), image)
 
 
 def write_AIBO_static_grating_stimuli(stim_table, save_dir, height = 160, width = 256):
