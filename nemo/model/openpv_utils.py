@@ -333,6 +333,7 @@ def np_to_pvp_shared_weight_file(tensors, fpaths, openpv_path):
         None
     '''
     
+    oct2py.octave.addpath(openpv_path)
     for file_num, (tensor, fpath) in enumerate(zip(tensors, fpaths)):
         os.makedirs(os.path.split(fpath)[0], exist_ok = True)
         data = [{'time': 0.0, 'values': [tensor]}]
