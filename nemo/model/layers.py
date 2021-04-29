@@ -9,7 +9,7 @@ class Identity(torch.nn.Module):
         return x
 
 
-class SpatioTemporalConv(torch.nn.Module):
+class SpatioTemporalFiltering(torch.nn.Module):
     ''' PyTorch Layer that does 3D convolution with fixed weight tensor. ''' 
 
     def __init__(self, fbank, stride):
