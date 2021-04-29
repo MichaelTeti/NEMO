@@ -317,3 +317,23 @@ def read_simple_cell_weight_files(fpaths, n_features_x, n_features_y,
         weights_agg.append(weights)
 
     return weights_agg
+
+
+def np_to_pvp_shared_weight_file(tensors, fpaths, openpv_path):
+    ''' 
+    Writes numpy arrays as a pvp shared weight files.
+    
+    Args:
+        tensors (list): np.ndarrays to write to pvp shared weight files.
+        fpaths (list): File paths corresponding to the write location of each tensor.
+        openpv_path (str): Path to */OpenPV/mlab/util.
+        
+    Returns:
+        None
+    '''
+    
+    for file_num, (tensor, fpath) in enumerate(zip(tensors, fpaths)):
+        os.makedirs(os.path.split(fpath)[0], exist_ok = True)
+        data = [{'time': 0.0, 'values': [tensor]}]
+        oct2py.octave.push(['data', 'fpath'], [data, fpath])
+        oct2py.octave.eval('writepvpsharedweightfile(fpath, data)')
