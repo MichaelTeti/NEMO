@@ -32,7 +32,8 @@ gamma = 0.67;
 
 
 %mean of the temporal Gaussian
-t0 = 1.75;
+%t0 = 1.75;
+t0 = 2.25;
 
 %standard deviation of the temporal Gaussian
 tau = 2.75;
