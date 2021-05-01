@@ -32,11 +32,11 @@ gamma = 0.67;
 
 
 %mean of the temporal Gaussian
-%t0 = 1.75;
-t0 = 2.25;
+t0 = 1.75;
 
 %standard deviation of the temporal Gaussian
-tau = 2.75;
+%tau = 2.75;
+tau = 6.0;
 
 %calculate the spatial wavelength using the following relation
 lambda = lambda0*sqrt(1+v^2);
