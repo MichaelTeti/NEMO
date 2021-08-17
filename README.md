@@ -1,13 +1,11 @@
 # NEMO (Neural Encoding Models for Ophys Data)
 ## Setup
-### System Specifications
-Experiments were run on systems with the following specifications:
-* CentOS 7.8 / Ubuntu 18.04
-* NVIDIA Cuda Toolkit 10.2
-* NVIDIA CUDNN 7
-* Python 3.7
-* Power9 Processors
-* Tesla V100 GPUs
+### Prerequisites
+- Required
+  * [Anaconda](https://docs.anaconda.com/anaconda/install/)
+- Optional
+  * Cuda Toolkit>=10.2
+  * Cudnn>=7.6.5
 
 ### Create an Anaconda Environment
 Begginning with anaconda already installed, create an environment for this repo 
