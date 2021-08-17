@@ -4,8 +4,8 @@
 - Required
   * [Anaconda](https://docs.anaconda.com/anaconda/install/)
 - Optional
-  * Cuda Toolkit>=10.2
-  * Cudnn>=7.6.5
+  * Cuda Toolkit >= 10.2
+  * Cudnn >= 7.6.5
 
 ### Create an Anaconda Environment
 Begginning with anaconda already installed, create an environment for this repo 
