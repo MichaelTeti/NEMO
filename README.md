@@ -27,7 +27,7 @@ conda install -c conda-forge octave lua jupyterlab protobuf
 ### Cloning the Repository and Installing Python Packages
 First, clone this repository (https shown) and run setup.py.
 ```
-git clone https://github.com/MichaelTeti/NEMO.git &&
+git clone git@github.com:MichaelTeti/NEMO.git &&
 cd NEMO &&
 python -m pip install --editable .
 ```
